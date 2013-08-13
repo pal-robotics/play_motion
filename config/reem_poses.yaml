@@ -1,0 +1,315 @@
+# Controllers to use to reach the desired poses. They must expose a FollowJointTrajectory action interface
+play_motion:
+  controllers:
+    - right_arm_torso_controller
+    - left_arm_controller
+    - right_hand_controller
+    - head_traj_controller
+
+  poses:
+    home:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint: 0.0
+      arm_right_2_joint: 0.0
+      arm_right_3_joint: 0.0
+      arm_right_4_joint: 0.0
+      arm_right_5_joint: 0.0
+      arm_right_6_joint: 0.0
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  0.0
+      arm_left_3_joint:  0.0
+      arm_left_4_joint:  0.0
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+
+    init:
+      torso_1_joint:      0.0
+      torso_2_joint:      0.0
+      head_1_joint:       0.0
+      head_2_joint:       0.0
+      arm_right_1_joint: -0.4
+      arm_right_2_joint:  0.1
+      arm_right_3_joint: -0.1
+      arm_right_4_joint:  0.6109
+      arm_right_5_joint:  0.0
+      arm_right_6_joint:  0.0
+      arm_right_7_joint:  0.0
+      arm_left_1_joint:  -0.4
+      arm_left_2_joint:   0.1
+      arm_left_3_joint:  -0.1
+      arm_left_4_joint:   0.6109
+      arm_left_5_joint:   0.0
+      arm_left_6_joint:   0.0
+      arm_left_7_joint:   0.0
+
+    surrender:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint: 0.0
+      arm_right_2_joint: 1.5708
+      arm_right_3_joint: 1.5708
+      arm_right_4_joint: 1.5708
+      arm_right_5_joint: 0.0
+      arm_right_6_joint: 0.0
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  1.5708
+      arm_left_3_joint:  1.5708
+      arm_left_4_joint:  1.5708
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+
+    hands_up:
+      torso_1_joint:      0.0
+      torso_2_joint:      0.0
+      head_1_joint:       0.0
+      head_2_joint:       0.34
+      arm_right_1_joint:  1.2
+      arm_right_2_joint:  0.0
+      arm_right_3_joint: -1.6
+      arm_right_4_joint:  1.4
+      arm_right_5_joint: -0.5
+      arm_right_6_joint:  0.0
+      arm_right_7_joint:  0.0
+      arm_left_1_joint:   0.9
+      arm_left_2_joint:   0.2
+      arm_left_3_joint:  -1.6
+      arm_left_4_joint:   1.3
+      arm_left_5_joint:   -0.5
+
+    raise_left_hand:
+      torso_1_joint:      0.0
+      torso_2_joint:      0.0
+      head_1_joint:       0.0
+      head_2_joint:       0.34
+      arm_right_1_joint:  1.2
+      arm_right_2_joint:  0.0
+      arm_right_3_joint: -1.6
+      arm_right_4_joint:  1.4
+      arm_right_5_joint: -0.5
+      arm_left_1_joint:   1.7
+      arm_left_2_joint:  -0.1
+      arm_left_3_joint:  -1.7
+      arm_left_4_joint:   1.5708
+      arm_left_5_joint:   0.0
+      arm_left_6_joint:   0.0
+      arm_left_7_joint:   0.0
+
+    hold_lady:
+      torso_1_joint:      0.0137113833752
+      torso_2_joint:     -0.0192237098171
+      head_1_joint:       0.0
+      head_2_joint:       0.0
+      arm_right_1_joint:  0.413466402682
+      arm_right_2_joint:  0.291085568367
+      arm_right_3_joint:  0.0328059426067
+      arm_right_4_joint:  0.924701196518
+      arm_right_5_joint:  1.48944895753
+      arm_right_6_joint:   -1.2681119075
+      arm_right_7_joint:  -0.186894387367
+      arm_left_1_joint:   0.0
+      arm_left_2_joint:   0.577942709219
+      arm_left_3_joint:   0.273189889462
+      arm_left_4_joint:   1.86785569035
+      arm_left_5_joint:   1.47837256588
+      arm_left_6_joint:   -0.61148719652
+      arm_left_7_joint:   0.11964535727
+
+    inventory_pilot:
+      torso_1_joint:      1.080747890991709
+      torso_2_joint:     -0.02332999923
+      head_1_joint:       0.0
+      head_2_joint:       0.0
+      arm_right_1_joint:  1.3098951620538093
+      arm_right_2_joint:  -0.33758718723471148
+      arm_right_3_joint:  -1.4469682277793
+      arm_right_4_joint:  1.32752938764
+      arm_right_5_joint:  0.70
+      arm_right_6_joint:  -0.6491250212029
+      arm_right_7_joint:   0.2055295624
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  0.0
+      arm_left_3_joint:  0.0
+      arm_left_4_joint:   0.0
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+    #  arm_left_1_joint:   0.6
+    #  arm_left_2_joint:   1.0
+    #  arm_left_3_joint:   -1.293844935584455
+    #  arm_left_4_joint:   2.05
+    #  arm_left_5_joint:   1.57168503091409
+    #  arm_left_6_joint:   -0.3803622625345
+    #  arm_left_7_joint:   -0.581909618849869
+
+    close_right:
+      hand_right_joint:   1.0
+
+    open_right:
+      hand_right_joint:   0.0
+
+    left_cabinet:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint: 0.0
+      arm_right_2_joint: 0.0
+      arm_right_3_joint: 0.0
+      arm_right_4_joint: 0.0
+      arm_right_5_joint: 0.0
+      arm_right_6_joint: 0.0
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:   1.21461665362
+      arm_left_2_joint:   -0.205003820937
+      arm_left_3_joint:   -1.54045623684
+      arm_left_4_joint:   0.213935555447
+      arm_left_5_joint:   1.49936854436
+      arm_left_6_joint:   -0.868054938462
+      arm_left_7_joint:   -0.700740451195
+
+    pose_t:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint: 0.0
+      arm_right_2_joint: 1.61845375085
+      arm_right_3_joint: 0.0
+      arm_right_4_joint: 0.0
+      arm_right_5_joint: 0.0
+      arm_right_6_joint: 0.0
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  1.63474829429
+      arm_left_3_joint:  0.0
+      arm_left_4_joint:  0.0
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+
+    who_knows:
+      torso_1_joint:   0.0974774292339
+      torso_2_joint:   -0.08750766037
+      arm_left_1_joint:   0.398277983176
+      arm_left_2_joint:   0.343815155777
+      arm_left_3_joint:   -0.440246753357
+      arm_left_4_joint:   1.09202581634
+      arm_left_5_joint:   0.564270038339
+      arm_left_6_joint:   0.0345075876472
+      arm_left_7_joint:   0.534218953041
+      arm_right_1_joint:   1.25386552199
+      arm_right_2_joint:   0.00836658118517
+      arm_right_3_joint:   -0.349521460623
+      arm_right_4_joint:   0.340460479913
+      arm_right_5_joint:   0.2152335831
+      arm_right_6_joint:   0.0684298450158
+      arm_right_7_joint:   0.167246038882
+
+    shake_hand:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint:   0.848440316579
+      arm_right_2_joint:   0.22269794206
+      arm_right_3_joint:   -0.841131311478
+      arm_right_4_joint:   0.721500732896
+      arm_right_5_joint: 0.0
+      arm_right_6_joint: 0.0
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  0.0
+      arm_left_3_joint:  0.0
+      arm_left_4_joint:  0.0
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+
+    wave:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint:   2.83935815389
+      arm_right_2_joint:   1.18831101753
+      arm_right_3_joint:   -1.51517063082
+      arm_right_4_joint:   1.8007006993
+      arm_right_5_joint: 0.0
+      arm_right_6_joint: 0.0
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  0.0
+      arm_left_3_joint:  0.0
+      arm_left_4_joint:  0.0
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+
+    hug:
+      torso_1_joint:     0.0
+      torso_2_joint:     0.0
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_left_1_joint:   1.2135985117
+      arm_left_2_joint:   0.164743897888
+      arm_left_3_joint:   -0.929571323876
+      arm_left_4_joint:   0.594564300531
+      arm_left_5_joint:   1.1682934814
+      arm_left_6_joint:   -0.827469184181
+      arm_left_7_joint:   -0.508706755384
+      arm_right_1_joint:   1.46158997327
+      arm_right_2_joint:   0.0600493599679
+      arm_right_3_joint:   -1.51517063082
+      arm_right_4_joint:   0.26806745082
+      arm_right_5_joint:   1.38715386242
+      arm_right_6_joint:   -0.869713878796
+      arm_right_7_joint:   0.0
+
+    photo_hug:
+      torso_1_joint:   -0.188858381441
+      torso_2_joint:   -0.145512325211
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint:   0.00162058210823
+      arm_right_2_joint:   2.09439510239
+      arm_right_3_joint:   -0.959125018819
+      arm_right_4_joint:   0.926549423953
+      arm_right_5_joint:   1.46079616517
+      arm_right_6_joint:   -0.557004487456
+      arm_left_1_joint:  0.0
+      arm_left_2_joint:  0.0
+      arm_left_3_joint:  0.0
+      arm_left_4_joint:  0.0
+      arm_left_5_joint:  0.0
+      arm_left_6_joint:  0.0
+      arm_left_7_joint:  0.0
+
+    get_coffee:
+      torso_1_joint:     0.0
+      torso_2_joint:   0.38104182821
+      head_1_joint:      0.0
+      head_2_joint:      0.0
+      arm_right_1_joint:   0.168162947197
+      arm_right_2_joint:   0.103584741042
+      arm_right_3_joint: 0.0
+      arm_right_4_joint:   0.34524742823
+      arm_right_5_joint: 0.0
+      arm_right_6_joint:   -0.0513630543757
+      arm_right_7_joint: 0.0
+      arm_left_1_joint:   1.04486078186
+      arm_left_2_joint:   0.0264892193202
+      arm_left_3_joint:   -1.26791256519
+      arm_left_4_joint:   0.442981376437
+      arm_left_5_joint:   0.458539656511
+      arm_left_6_joint:   -0.0583292187176
+      arm_left_7_joint:   0.85361855223
+

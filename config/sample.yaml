@@ -1,0 +1,7 @@
+play_motion:
+  controllers:
+    - fake_controller
+  poses:
+    say_hi:
+      fake_joint_1:  0.2
+      fake_joint_2: -0.4

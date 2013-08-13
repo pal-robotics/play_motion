@@ -1,0 +1,18 @@
+<package>
+  <description brief="play_motion">
+
+     play_motion
+
+  </description>
+  <author>Paul Mathieu</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/play_motion</url>
+
+  <depend package="roscpp" />
+  <depend package="actionlib" />
+  <depend package="control_msgs" />
+
+</package>
+
+
