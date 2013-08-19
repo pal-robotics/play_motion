@@ -50,6 +50,8 @@ namespace play_motion
     al_server_(nh_, "play_motion", false)
   {
     initControllerList();
+    if (!ros::ok())
+      return;
     rp->setAlCb(boost::bind(&PlayMotionServer::reachPoseCb, this, _1));
     al_server_.registerGoalCallback(boost::bind(&PlayMotionServer::alCallback, this));
     al_server_.start();
@@ -83,19 +85,25 @@ namespace play_motion
   void PlayMotionServer::initControllerList()
   {
     ros::NodeHandle nh_controllers("~");
-    clist_.clear();
+    std::vector<std::string> clist;
 
     XmlRpc::XmlRpcValue controller_names;
-    nh_controllers.getParam("controllers", controller_names);
+    if (!nh_controllers.getParam("controllers", controller_names))
+    {
+      ROS_FATAL("no controllers could be loaded, taking the node down");
+      ros::shutdown();
+      return;
+    }
+
     ROS_ASSERT(controller_names.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
     for (int32_t i = 0; i < controller_names.size(); ++i)
     {
       ROS_ASSERT(controller_names[i].getType() == XmlRpc::XmlRpcValue::TypeString);
-      clist_.push_back(static_cast<std::string>(controller_names[i]));
-      ROS_INFO_STREAM("adding a controller: " << clist_.back());
+      clist.push_back(static_cast<std::string>(controller_names[i]));
+      ROS_INFO_STREAM("adding a controller: " << clist.back());
     }
 
-    rp_->setControllerList(clist_);
+    rp_->setControllerList(clist);
   }
 }
