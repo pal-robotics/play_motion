@@ -107,7 +107,7 @@ namespace play_motion
       for (std::size_t i = 0; i < group_joint_names.size(); ++i)
       {
         // Fetch joint position value from pose specification
-        ROS_DEBUG_STREAM("fetching param: " << pose + group_joint_names[i]);
+        ROS_DEBUG_STREAM("fetching param: " << pose << "." << group_joint_names[i]);
         if (!nh_.getParamCached("poses/" + pose + "/" + group_joint_names[i], group_joint_positions[i]))
         {
           //...and if unspecified, use current joint position
