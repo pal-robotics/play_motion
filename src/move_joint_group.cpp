@@ -38,6 +38,9 @@
 #include "play_motion/move_joint_group.h"
 
 #include <ros/ros.h>
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
 
 namespace play_motion
 {
@@ -85,28 +88,71 @@ namespace play_motion
     ROS_INFO_STREAM("controller '" << controller_name_ << "' configured");
   }
 
-  bool MoveJointGroup::sendGoal(const std::vector<double>& pose, const ros::Duration& duration, const Callback& cb)
+  void MoveJointGroup::alCallback()
+  {
+    bool success = getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+    if (!success)
+      ROS_WARN_STREAM("controller " << controller_name_ << " failed with err " << client_.getResult()->error_code);
+    active_cb_(success);
+  }
+
+  bool MoveJointGroup::isControllingJoint(const std::string& joint_name)
+  {
+    if (!client_.isServerConnected())
+      return false;
+
+    foreach (const std::string& jn, joint_names_)
+      if (joint_name == jn)
+        return true;
+
+    return false;
+  }
+
+  bool MoveJointGroup::sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration)
   {
     ROS_DEBUG_STREAM("sending trajectory goal to " << controller_name_);
 
     if (joint_names_.size() < 1) // empty vector, nothing to send (controller might not even be connected)
       return false;
 
-    // Goal pose for right_arm_torso group
-    if (pose.size() != joint_names_.size())
-    {
-      ROS_ERROR_STREAM("Pose size mismatch. Expected: " << joint_names_.size() << ", got: " << pose.size() << ".");
-      return false;
-    }
     ActionGoal goal;
     goal.trajectory.joint_names = joint_names_;
-    goal.trajectory.points.resize(1);
-    goal.trajectory.points[0].positions = pose;                            // Reach these joint positions...
-    goal.trajectory.points[0].velocities.resize(joint_names_.size(), 0.0); // ...with zero-velocity
-    goal.trajectory.points[0].time_from_start = duration;                  // ...in this time
+    goal.trajectory.points.reserve(traj.size());
 
-    active_cb_ = cb;
+    foreach (const TrajPoint& p, traj)
+    {
+      if (p.positions.size() != joint_names_.size())
+      {
+        ROS_ERROR_STREAM("Pose size mismatch. Expected: " << joint_names_.size()
+            << ", got: " << p.positions.size() << ".");
+        return false;
+      }
+      trajectory_msgs::JointTrajectoryPoint point;
+
+      point.positions = p.positions;                            // Reach these joint positions...
+      if (p.velocities.size() != joint_names_.size())
+        point.velocities.resize(joint_names_.size(), 0.0); // ...with zero-velocity
+      else
+        point.velocities = p.velocities;
+      point.time_from_start = p.time_from_start + duration;                  // ...in this time
+
+      goal.trajectory.points.push_back(point);
+    }
     client_.sendGoal(goal, boost::bind(&MoveJointGroup::alCallback, this));
     return true;
   }
+#if 0 // the following code is here for future reference in case we need backwards compatibility
+      // it should be removed in the next commit
+
+  bool MoveJointGroup::sendPoseGoal(const std::vector<double>& pose, const ros::Duration& duration)
+  {
+    std::vector<TrajPoint> traj(1);
+    TrajPoint& p = traj[0];
+
+    p.positions = pose;
+    p.time_from_start = 0.0;
+
+    sendTrajGoal(traj, duration);
+  }
+#endif
 }

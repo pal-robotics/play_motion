@@ -40,35 +40,36 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <ros/ros.h>
+
+#include "move_joint_group.h"
 
 namespace sensor_msgs
 { ROS_DECLARE_MESSAGE(JointState); }
 
 namespace play_motion
 {
-  class MoveJointGroup;
-
   /** Move robot joints to a given pose.
    * Poses are specified in the parameter server, and are identified by name.
    */
-  class ReachPose
+  class PlayMotion
   {
     private:
       typedef boost::shared_ptr<MoveJointGroup>     MoveJointGroupPtr;
       typedef std::vector<std::string>              ControllerList;
-      typedef std::pair<std::string, double>        JointState;
       typedef boost::function<void(bool)>           Callback;
       typedef std::vector<Callback>                 CallbackList;
-      typedef std::map<std::string, double>         Pose;
+      typedef MoveJointGroup::TrajPoint             TrajPoint;
+      typedef std::vector<TrajPoint>                Trajectory;
 
     public:
-      ReachPose(ros::NodeHandle& nh);
+      PlayMotion(ros::NodeHandle& nh);
 
-      /// \brief Send pose goal request and \e block until execution completes.
-      /// \param pose Name of pose to execute.
+      /// \brief Send motion goal request
+      /// \param motion_name Name of motion to execute.
       /// \param duration Motion duration.
-      bool run(const std::string& pose, const ros::Duration& duration);
+      bool run(const std::string& motion_name, const ros::Duration& duration);
       void setAlCb(const Callback& cb) { client_cb_ = cb; }
       void setControllerList(const ControllerList& controller_list);
 
@@ -76,13 +77,18 @@ namespace play_motion
       void jointStateCb(const sensor_msgs::JointStatePtr& msg);
       void controllerCb(bool success);
 
+      bool getGroupTraj(MoveJointGroupPtr move_joint_group,
+          const std::vector<std::string>& motion_joints,
+          const Trajectory& motion_points, Trajectory& traj_group);
+      bool getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints);
+      bool getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
+      bool checkControllers(const std::vector<std::string>& motion_joints);
+
       ros::NodeHandle                  nh_;
       std::vector<MoveJointGroupPtr>   move_joint_groups_;
-      ControllerList                   controller_list_;
-      std::vector<JointState>          joint_states_;
+      std::map<std::string, double>    joint_states_;
       ros::Subscriber                  joint_states_sub_;
       Callback                         client_cb_;
-      std::map<std::string, Pose>      poses_;
 
       CallbackList                     controller_cb_list_;
       int                              current_active_controllers_;

@@ -38,21 +38,21 @@
 
 #include <boost/foreach.hpp>
 
-#include "play_motion/reach_pose.h"
+#include "play_motion/play_motion.h"
 
 #define foreach BOOST_FOREACH
 
 namespace play_motion
 {
-  PlayMotionServer::PlayMotionServer(const ros::NodeHandle& nh, const ReachPosePtr& rp) :
+  PlayMotionServer::PlayMotionServer(const ros::NodeHandle& nh, const PlayMotionPtr& pm) :
     nh_(nh),
-    rp_(rp),
+    pm_(pm),
     al_server_(nh_, "play_motion", false)
   {
     initControllerList();
     if (!ros::ok())
       return;
-    rp->setAlCb(boost::bind(&PlayMotionServer::reachPoseCb, this, _1));
+    pm_->setAlCb(boost::bind(&PlayMotionServer::playMotionCb, this, _1));
     al_server_.registerGoalCallback(boost::bind(&PlayMotionServer::alCallback, this));
     al_server_.start();
   }
@@ -60,7 +60,7 @@ namespace play_motion
   PlayMotionServer::~PlayMotionServer()
   {}
 
-  void PlayMotionServer::reachPoseCb(bool success)
+  void PlayMotionServer::playMotionCb(bool success)
   {
     if (success)
     {
@@ -77,8 +77,8 @@ namespace play_motion
   void PlayMotionServer::alCallback()
   {
     const AlServer::GoalConstPtr& goal = al_server_.acceptNewGoal();
-    ROS_INFO_STREAM("sending pose '" << goal-> motion_name << "' to controllers");
-    if (!rp_->run(goal->motion_name, goal->duration))
+    ROS_INFO_STREAM("sending motion '" << goal-> motion_name << "' to controllers");
+    if (!pm_->run(goal->motion_name, goal->duration))
       al_server_.setAborted(AlServer::Result());
   }
 
@@ -104,6 +104,6 @@ namespace play_motion
       ROS_INFO_STREAM("adding a controller: " << clist.back());
     }
 
-    rp_->setControllerList(clist);
+    pm_->setControllerList(clist);
   }
 }

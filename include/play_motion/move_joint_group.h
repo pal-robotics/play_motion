@@ -58,21 +58,26 @@ namespace play_motion
       typedef boost::function<void(bool)> Callback;
 
     public:
+      struct TrajPoint
+      {
+        std::vector<double> positions;
+        std::vector<double> velocities;
+        ros::Duration       time_from_start;
+      };
+
       MoveJointGroup(const std::string& controller_name);
-      bool sendGoal(const std::vector<double>& pose, const ros::Duration& duration, const Callback& cb = Callback());
+      bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
+      bool isControllingJoint(const std::string& joint_name);
+
+      void setCallback(const Callback& cb) { active_cb_ = cb; }
       const std::vector<std::string>& getJointNames() const {return joint_names_;}
       actionlib::SimpleClientGoalState getState() {return client_.getState();}
+
       std::string get_name();
 
     private:
       void configure();
-      void alCallback()
-      {
-        bool success = getState() == actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED;
-        if (!success)
-          ROS_WARN_STREAM("controller " << controller_name_ << " failed with err " << client_.getResult()->error_code);
-        active_cb_(success);
-      }
+      void alCallback();
 
       ros::NodeHandle          nh_;               ///< Default node handle.
       std::string              controller_name_;  ///< Controller name.

@@ -40,11 +40,11 @@
 #include <ros/ros.h>
 
 #include "play_motion/play_motion_server.h"
-#include "play_motion/reach_pose.h"
+#include "play_motion/play_motion.h"
 
 int main(int argc, char** argv)
 {
-  typedef boost::shared_ptr<play_motion::ReachPose> ReachPosePtr;
+  typedef boost::shared_ptr<play_motion::PlayMotion> PlayMotionPtr;
   // Init the ROS node
   ros::init(argc, argv, "play_motion");
 
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
   ROS_INFO("starting");
   // Initialize the actionlib server
-  play_motion::PlayMotionServer pms(nh, ReachPosePtr(new play_motion::ReachPose(nh_private)));
+  play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh_private)));
 
   // guruguru
   ros::spin();

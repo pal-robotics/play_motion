@@ -18,7 +18,7 @@ if(USE_ROSBUILD)
 
   rosbuild_add_executable(play_motion
       src/move_joint_group.cpp
-      src/reach_pose.cpp
+      src/play_motion.cpp
       src/play_motion_server.cpp
       src/play_motion_main.cpp)
 
@@ -26,7 +26,9 @@ if(USE_ROSBUILD)
 
 else()
 
-  find_package(catkin REQUIRED COMPONENTS roscpp genmsg control_msgs actionlib_msgs)
+  project(play_motion)
+
+  find_package(catkin REQUIRED COMPONENTS roscpp genmsg control_msgs actionlib)
 
   add_action_files(DIRECTORY action FILES PlayMotion.action)
   generate_messages(DEPENDENCIES actionlib_msgs)
@@ -38,7 +40,7 @@ else()
   add_executable(play_motion
     src/play_motion_main.cpp
     src/play_motion_server.cpp
-    src/reach_pose.cpp
+    src/play_motion.cpp
     src/move_joint_group.cpp)
 
   target_link_libraries(play_motion ${catkin_LIBRARIES})

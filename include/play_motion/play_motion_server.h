@@ -48,25 +48,25 @@
 
 namespace play_motion
 {
-  class ReachPose;
+  class PlayMotion;
 
   class PlayMotionServer
   {
     public:
       typedef actionlib::SimpleActionServer<play_motion::PlayMotionAction> AlServer;
-      typedef boost::shared_ptr<ReachPose> ReachPosePtr;
+      typedef boost::shared_ptr<PlayMotion> PlayMotionPtr;
 
-      PlayMotionServer(const ros::NodeHandle& nh, const ReachPosePtr& rp);
+      PlayMotionServer(const ros::NodeHandle& nh, const PlayMotionPtr& pm);
       virtual ~PlayMotionServer();
 
     private:
       void alCallback();
-      void reachPoseCb(bool success);
+      void playMotionCb(bool success);
       void initControllerList();
 
       ros::NodeHandle          nh_;
       std::vector<std::string> clist_;
-      ReachPosePtr             rp_;
+      PlayMotionPtr             pm_;
       AlServer                 al_server_;
   };
 }
