@@ -1,126 +1,51 @@
-# Controllers to use to reach the desired poses. They must expose a FollowJointTrajectory action interface
 play_motion:
-  controllers:
-    - right_arm_controller
-    - left_arm_controller
-    - left_leg_controller
-    - right_leg_controller
-    - head_controller
-    - torso_controller
-
-  poses:
-    home:
-      torso_1_joint:     0.0
-      torso_2_joint:     0.0
-      head_1_joint:      0.0
-      head_2_joint:      0.0
-      arm_right_1_joint: 0.0
-      arm_right_2_joint: 0.0
-      arm_right_3_joint: 0.0
-      arm_right_4_joint: 0.0
-      arm_right_5_joint: 0.0
-      arm_right_6_joint: 0.0
-      arm_right_7_joint: 0.0
-      arm_left_1_joint:  0.0
-      arm_left_2_joint:  0.0
-      arm_left_3_joint:  0.0
-      arm_left_4_joint:  0.0
-      arm_left_5_joint:  0.0
-      arm_left_6_joint:  0.0
-      arm_left_7_joint:  0.0
-      leg_left_1_joint:  0.0
-      leg_left_2_joint:  0.0
-      leg_left_3_joint:  0.0
-      leg_left_4_joint:  0.0
-      leg_left_5_joint:  0.0
-      leg_left_6_joint:  0.0
-      leg_right_1_joint: 0.0
-      leg_right_2_joint: 0.0
-      leg_right_3_joint: 0.0
-      leg_right_4_joint: 0.0
-      leg_right_5_joint: 0.0
-      leg_right_6_joint: 0.0
-
-    small_squat:
-      leg_right_3_joint: &small_squat_leg_3 -0.5
-      leg_right_4_joint: &small_squat_leg_4 1.0
-      leg_right_5_joint: &small_squat_leg_5 -0.5
-      leg_left_3_joint:  *small_squat_leg_3
-      leg_left_4_joint:  *small_squat_leg_4
-      leg_left_5_joint:  *small_squat_leg_5
-
-    squat:
-      torso_1_joint:     0.0
-      torso_2_joint:     -0.15
-      head_1_joint:      0.0
-      head_2_joint:      0.25
-      arm_right_1_joint: 0.0
-      arm_right_2_joint: &squat_arm_2 1.3
-      arm_right_3_joint: 0.0
-      arm_right_4_joint: &squat_arm_4 0.9
-      arm_right_5_joint: 0.0
-      arm_right_6_joint: 0.0
-      arm_right_7_joint: 0.0
-      arm_left_1_joint:  0.0
-      arm_left_2_joint:  *squat_arm_2
-      arm_left_3_joint:  0.0
-      arm_left_4_joint:  *squat_arm_4
-      arm_left_5_joint:  0.0
-      arm_left_6_joint:  0.0
-      arm_left_7_joint:  0.0
-      leg_right_1_joint: 0.0
-      leg_right_2_joint: 0.0
-      leg_right_3_joint: &squat_leg_3 -1.35
-      leg_right_4_joint: &squat_leg_4 2.6
-      leg_right_5_joint: &squat_leg_5 -1.3
-      leg_right_6_joint: 0.0
-      leg_left_1_joint:  0.0
-      leg_left_2_joint:  0.0
-      leg_left_3_joint:  *squat_leg_3
-      leg_left_4_joint:  *squat_leg_4
-      leg_left_5_joint:  *squat_leg_5
-      leg_left_6_joint:  0.0
-
-    hands_front:
-      arm_right_1_joint: &hands_front_arm_1  1.2
-      arm_right_2_joint: &hands_front_arm_2  0.3
-      arm_right_3_joint: &hands_front_arm_3 -1.0
-      arm_right_4_joint: &hands_front_arm_4  1.65
-      arm_left_1_joint:  *hands_front_arm_1
-      arm_left_2_joint:  *hands_front_arm_2
-      arm_left_3_joint:  *hands_front_arm_3
-      arm_left_4_joint:  *hands_front_arm_4
-
-    hands_up:
-      torso_1_joint:      0.0
-      torso_2_joint:      0.0
-      head_1_joint:       0.0
-      head_2_joint:       0.34
-      arm_right_1_joint:  1.2
-      arm_right_2_joint:  0.0
-      arm_right_3_joint: -1.6
-      arm_right_4_joint:  1.4
-      arm_right_5_joint: -0.5
-      arm_right_6_joint:  0.0
-      arm_right_7_joint:  0.0
-      arm_left_1_joint:   0.9
-      arm_left_2_joint:   0.2
-      arm_left_3_joint:  -1.6
-      arm_left_4_joint:   1.3
-      arm_left_5_joint:   -0.5
-
+  controllers: [right_arm_controller, left_arm_controller, left_leg_controller, right_leg_controller,
+    head_controller, torso_controller]
   motions:
-    wave:
-      joints:
-        - arm_right_1_joint
-        - arm_right_2_joint
-        - arm_right_3_joint
-        - arm_right_4_joint
-        - arm_right_5_joint
+    hands_front:
+      joints: [arm_right_3_joint, arm_right_4_joint, arm_right_1_joint, arm_left_4_joint,
+        arm_left_1_joint, arm_left_2_joint, arm_right_2_joint, arm_left_3_joint]
       points:
-        - positions: [0, 1, 2, 3, 4]
-          velocities: [.0, .1, .2, .3, .4]
-          time_from_start: 0.0
-        - positions: [0, 2, 4, 6, 8]
-          velocities: [.0, .1, .2, .3, .4]
-          time_from_start: 3.1
+      - positions: [-1.0, 1.65, 1.2, 1.65, 1.2, 0.3, 0.3, -1.0]
+        time_from_start: 0.0
+    hands_up:
+      joints: [torso_2_joint, arm_right_6_joint, arm_right_5_joint, arm_left_5_joint,
+        torso_1_joint, arm_left_4_joint, head_2_joint, arm_right_2_joint, arm_left_3_joint,
+        head_1_joint, arm_right_7_joint, arm_right_3_joint, arm_right_4_joint, arm_right_1_joint,
+        arm_left_1_joint, arm_left_2_joint]
+      points:
+      - positions: [0.0, 0.0, -0.5, -0.5, 0.0, 1.3, 0.34, 0.0, -1.6, 0.0, 0.0, -1.6,
+          1.4, 1.2, 0.9, 0.2]
+        time_from_start: 0.0
+    home:
+      joints: [arm_left_7_joint, leg_left_1_joint, arm_right_6_joint, torso_2_joint,
+        arm_right_5_joint, arm_left_5_joint, arm_left_6_joint, arm_left_1_joint, torso_1_joint,
+        arm_left_4_joint, head_2_joint, leg_right_3_joint, leg_left_2_joint, arm_right_2_joint,
+        leg_left_6_joint, head_1_joint, leg_right_6_joint, arm_right_7_joint, arm_right_3_joint,
+        leg_left_5_joint, leg_right_4_joint, arm_right_4_joint, arm_left_3_joint,
+        leg_right_1_joint, leg_left_4_joint, leg_right_5_joint, arm_left_2_joint,
+        arm_right_1_joint, leg_right_2_joint, leg_left_3_joint]
+      points:
+      - positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0]
+        time_from_start: 0.0
+    small_squat:
+      joints: [leg_left_4_joint, leg_right_3_joint, leg_right_5_joint, leg_left_5_joint,
+        leg_right_4_joint, leg_left_3_joint]
+      points:
+      - positions: [1.0, -0.5, -0.5, -0.5, 1.0, -0.5]
+        time_from_start: 0.0
+    squat:
+      joints: [arm_left_7_joint, leg_left_1_joint, arm_right_6_joint, torso_2_joint,
+        arm_right_5_joint, arm_left_5_joint, arm_left_6_joint, arm_left_1_joint, torso_1_joint,
+        arm_left_4_joint, head_2_joint, leg_right_3_joint, leg_left_2_joint, arm_right_2_joint,
+        leg_left_6_joint, head_1_joint, leg_right_6_joint, arm_right_7_joint, arm_right_3_joint,
+        leg_left_5_joint, leg_right_4_joint, arm_right_4_joint, arm_left_3_joint,
+        leg_right_1_joint, leg_left_4_joint, leg_right_5_joint, arm_left_2_joint,
+        arm_right_1_joint, leg_right_2_joint, leg_left_3_joint]
+      points:
+      - positions: [0.0, 0.0, 0.0, -0.15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.9, 0.25, -1.35,
+          0.0, 1.3, 0.0, 0.0, 0.0, 0.0, 0.0, -1.3, 2.6, 0.9, 0.0, 0.0, 2.6, -1.3,
+          1.3, 0.0, 0.0, -1.35]
+        time_from_start: 0.0
