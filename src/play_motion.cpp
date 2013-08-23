@@ -157,7 +157,7 @@ namespace play_motion
           const XmlRpc::XmlRpcValue::Type& expected_type, T& output)
       {
         XmlRpc::XmlRpcValue val;
-        if (nh.getParam(param_name, val))
+        if (!nh.getParamCached(param_name, val))
         {
           ROS_ERROR("could not load parameter '%s'. (namespace: %s)",
                   param_name.c_str(), nh.getNamespace().c_str());
@@ -236,14 +236,14 @@ namespace play_motion
       RETHROW(xr::getStructMember(name_value, "positions", XmlRpcValue::TypeArray, positions));
       point.positions.resize(positions.size());
       for (int j = 0; j < positions.size(); ++j)
-        RETHROW(xr::getArrayItem(positions, j, XmlRpcValue::TypeDouble, point.positions[i]));
+        RETHROW(xr::getArrayItem(positions, j, XmlRpcValue::TypeDouble, point.positions[j]));
       if (name_value.hasMember("velocities"))
       {
         XmlRpcValue velocities;
         RETHROW(xr::getStructMember(name_value, "velocities", XmlRpcValue::TypeArray, velocities));
         point.velocities.resize(velocities.size());
         for (int j = 0; j < velocities.size(); ++j)
-          RETHROW(xr::getArrayItem(velocities, j, XmlRpcValue::TypeDouble, point.velocities[i]));
+          RETHROW(xr::getArrayItem(velocities, j, XmlRpcValue::TypeDouble, point.velocities[j]));
       }
       motion_points.push_back(point);
     }
@@ -256,10 +256,11 @@ namespace play_motion
     {
       foreach (MoveJointGroupPtr ctrlr, move_joint_groups_)
         if (ctrlr->isControllingJoint(jn))
-          break;
+          goto next_joint;
 
       ROS_ERROR_STREAM("no controller was found for joint '" << jn << "'");
       return false;
+next_joint:;
     }
     return true;
   }
