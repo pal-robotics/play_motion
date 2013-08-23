@@ -68,6 +68,8 @@ namespace play_motion
       MoveJointGroup(const std::string& controller_name);
       bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
       bool isControllingJoint(const std::string& joint_name);
+      bool isIdle() { return getState().isDone(); }
+      void cancel() { client_.cancelAllGoals(); }
 
       void setCallback(const Callback& cb) { active_cb_ = cb; }
       const std::vector<std::string>& getJointNames() const {return joint_names_;}

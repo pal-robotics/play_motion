@@ -40,9 +40,10 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <ros/ros.h>
 #include <boost/shared_ptr.hpp>
-#include <actionlib/server/simple_action_server.h>
+#include <actionlib/server/action_server.h>
 
 #include "play_motion/PlayMotionAction.h"
 
@@ -53,21 +54,24 @@ namespace play_motion
   class PlayMotionServer
   {
     public:
-      typedef actionlib::SimpleActionServer<play_motion::PlayMotionAction> AlServer;
+      typedef actionlib::ActionServer<play_motion::PlayMotionAction> AlServer;
       typedef boost::shared_ptr<PlayMotion> PlayMotionPtr;
 
       PlayMotionServer(const ros::NodeHandle& nh, const PlayMotionPtr& pm);
       virtual ~PlayMotionServer();
 
     private:
-      void alCallback();
-      void playMotionCb(bool success);
+      void playMotionCb(bool success, int goal_id);
       void initControllerList();
+      void alCancelCb(AlServer::GoalHandle gh);
+      void alGoalCb(AlServer::GoalHandle gh);
+      bool findGoalId(AlServer::GoalHandle gh, int& goal_id);
 
-      ros::NodeHandle          nh_;
-      std::vector<std::string> clist_;
-      PlayMotionPtr             pm_;
-      AlServer                 al_server_;
+      ros::NodeHandle                     nh_;
+      std::vector<std::string>            clist_;
+      PlayMotionPtr                       pm_;
+      AlServer                            al_server_;
+      std::map<int, AlServer::GoalHandle> al_goals_;
   };
 }
 

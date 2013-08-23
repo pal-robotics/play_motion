@@ -52,34 +52,60 @@ namespace play_motion
     initControllerList();
     if (!ros::ok())
       return;
-    pm_->setAlCb(boost::bind(&PlayMotionServer::playMotionCb, this, _1));
-    al_server_.registerGoalCallback(boost::bind(&PlayMotionServer::alCallback, this));
+    al_server_.registerGoalCallback(boost::bind(&PlayMotionServer::alGoalCb, this, _1));
+    al_server_.registerCancelCallback(boost::bind(&PlayMotionServer::alCancelCb, this, _1));
     al_server_.start();
   }
 
   PlayMotionServer::~PlayMotionServer()
   {}
 
-  void PlayMotionServer::playMotionCb(bool success)
+  bool PlayMotionServer::findGoalId(AlServer::GoalHandle gh, int& goal_id)
+  {
+    typedef std::pair<int, AlServer::GoalHandle> goal_pair_t;
+    foreach (const goal_pair_t& p, al_goals_)
+      if (goal_id = p.first, p.second == gh)
+        return true;
+
+    return false;
+  }
+
+  void PlayMotionServer::playMotionCb(bool success, int goal_id)
   {
     if (success)
     {
       ROS_INFO("motion played sucecssfully");
-      al_server_.setSucceeded();
+      al_goals_[goal_id].setSucceeded();
     }
     else
     {
       ROS_WARN("motion ended with an error");
-      al_server_.setAborted();
+      al_goals_[goal_id].setAborted();
     }
+    al_goals_.erase(goal_id);
   }
 
-  void PlayMotionServer::alCallback()
+  void PlayMotionServer::alCancelCb(AlServer::GoalHandle gh)
   {
-    const AlServer::GoalConstPtr& goal = al_server_.acceptNewGoal();
-    ROS_INFO_STREAM("sending motion '" << goal-> motion_name << "' to controllers");
-    if (!pm_->run(goal->motion_name, goal->duration))
-      al_server_.setAborted(AlServer::Result());
+    int goal_id;
+    if (findGoalId(gh, goal_id))
+      pm_->cancel(goal_id);
+    else
+      ROS_ERROR("cancel request could not be fulfilled. Goal not running?");
+
+    gh.setCanceled();
+  }
+
+  void PlayMotionServer::alGoalCb(AlServer::GoalHandle gh)
+  {
+    AlServer::GoalConstPtr goal = gh.getGoal(); //XXX: can this fail? should we check it?
+    ROS_INFO_STREAM("sending motion '" << goal->motion_name << "' to controllers");
+    int goal_id;
+    if (!pm_->run(goal->motion_name, goal->duration, goal_id))
+      gh.setRejected();
+    gh.setAccepted();
+    pm_->setAlCb(goal_id, boost::bind(&PlayMotionServer::playMotionCb, this, _1, _2));
+    al_goals_[goal_id] = gh;
   }
 
   void PlayMotionServer::initControllerList()

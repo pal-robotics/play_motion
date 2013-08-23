@@ -58,10 +58,22 @@ namespace play_motion
     private:
       typedef boost::shared_ptr<MoveJointGroup>     MoveJointGroupPtr;
       typedef std::vector<std::string>              ControllerList;
-      typedef boost::function<void(bool)>           Callback;
+      typedef boost::function<void(bool, int)>      Callback;
       typedef std::vector<Callback>                 CallbackList;
       typedef MoveJointGroup::TrajPoint             TrajPoint;
       typedef std::vector<TrajPoint>                Trajectory;
+
+      struct Goal
+      {
+        bool                           success;
+        int                            active_controllers;
+        Callback                       cb;
+        std::vector<MoveJointGroupPtr> controllers;
+
+        Goal() : success(true) {}
+        void addController(const MoveJointGroupPtr& ctrl)
+        { controllers.push_back(ctrl); active_controllers++; }
+      };
 
     public:
       PlayMotion(ros::NodeHandle& nh);
@@ -69,13 +81,15 @@ namespace play_motion
       /// \brief Send motion goal request
       /// \param motion_name Name of motion to execute.
       /// \param duration Motion duration.
-      bool run(const std::string& motion_name, const ros::Duration& duration);
-      void setAlCb(const Callback& cb) { client_cb_ = cb; }
+      /// \param[out] goal_id contains the goal ID if function returns true
+      bool run(const std::string& motion_name, const ros::Duration& duration, int& goal_id);
+      void cancel(int goal_id);
+      void setAlCb(int goal_id, const Callback& cb);
       void setControllerList(const ControllerList& controller_list);
 
     private:
       void jointStateCb(const sensor_msgs::JointStatePtr& msg);
-      void controllerCb(bool success);
+      void controllerCb(bool success, int goal_id);
 
       bool getGroupTraj(MoveJointGroupPtr move_joint_group,
           const std::vector<std::string>& motion_joints,
@@ -84,15 +98,13 @@ namespace play_motion
       bool getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
       bool checkControllers(const std::vector<std::string>& motion_joints);
 
+      static int goal_next_id;
+
       ros::NodeHandle                  nh_;
       std::vector<MoveJointGroupPtr>   move_joint_groups_;
       std::map<std::string, double>    joint_states_;
       ros::Subscriber                  joint_states_sub_;
-      Callback                         client_cb_;
-
-      CallbackList                     controller_cb_list_;
-      int                              current_active_controllers_;
-      bool                             current_success_;
+      std::map<int, Goal>              goals_;
   };
 }
 

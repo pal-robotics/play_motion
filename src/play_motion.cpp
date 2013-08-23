@@ -54,6 +54,8 @@
 
 namespace play_motion
 {
+  int PlayMotion::goal_next_id = 37; // or whatever.
+
   PlayMotion::PlayMotion(ros::NodeHandle& nh) :
     nh_(nh), joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this))
   {}
@@ -65,12 +67,13 @@ namespace play_motion
       move_joint_groups_.push_back(MoveJointGroupPtr(new MoveJointGroup(controller_name)));
   }
 
-  void PlayMotion::controllerCb(bool success)
+  void PlayMotion::controllerCb(bool success, int goal_id)
   {
-    ROS_DEBUG("return from joint group, %d active controllers", current_active_controllers_-1);
-    current_success_ &= success;
-    if (--current_active_controllers_ < 1)
-      client_cb_(current_success_);
+    Goal& goal = goals_[goal_id];
+    ROS_DEBUG("return from joint group, %d active controllers", goal.active_controllers - 1);
+    goal.success &= success;
+    if (--goal.active_controllers < 1)
+      goal.cb(goal.success, goal_id);
   };
 
   void PlayMotion::jointStateCb(const sensor_msgs::JointStatePtr& msg)
@@ -275,7 +278,24 @@ next_joint:;
     return false;
   }
 
-  bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration)
+  void PlayMotion::setAlCb(int goal_id, const Callback& cb)
+  {
+    if (goals_.count(goal_id) > 0)
+      goals_[goal_id].cb = cb;
+  }
+
+  void PlayMotion::cancel(int goal_id)
+  {
+    if (goals_.count(goal_id) < 1)
+      return;
+
+    foreach (MoveJointGroupPtr mjg, goals_[goal_id].controllers)
+      mjg->cancel();
+
+    goals_.erase(goal_id);
+  }
+
+  bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration, int& goal_id)
   {
     std::vector<Trajectory>  joint_group_traj; // Desired motion split into joint groups
     std::vector<std::string> motion_joints;
@@ -295,8 +315,8 @@ next_joint:;
       joint_group_traj.push_back(traj);
     }
 
-    current_active_controllers_ = 0;
-    current_success_= true;
+    Goal goal;
+    goal_id = PlayMotion::goal_next_id++;
 
     // Send pose commands
     for (std::size_t i = 0; i < move_joint_groups_.size(); ++i)
@@ -304,14 +324,18 @@ next_joint:;
       if (joint_group_traj[i].empty()) // nothing for this controller
         continue;
 
-      move_joint_groups_[i]->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1));
+      if (!move_joint_groups_[i]->isIdle()) // busy right now, call back later (that's what she said)
+        return false;
+
+      move_joint_groups_[i]->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_id));
       RETHROW(move_joint_groups_[i]->sendGoal(joint_group_traj[i], duration));
-      current_active_controllers_++;
+      goal.addController(move_joint_groups_[i]);
     }
 
-    if (current_active_controllers_ < 1)
+    if (goal.controllers.empty())
       return false;
 
+    goals_[goal_id] = goal;
     return true;
   }
 }
