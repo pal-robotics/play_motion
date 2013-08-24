@@ -36,12 +36,8 @@
 
 #include "play_motion/play_motion.h"
 
-#include <cassert>
-#include <iostream>
-#include <sstream>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
@@ -49,6 +45,8 @@
 #include <sensor_msgs/JointState.h>
 
 #include "play_motion/move_joint_group.h"
+#include "play_motion/rethrow.h"
+#include "play_motion/xmlrpc_helpers.h"
 
 #define foreach BOOST_FOREACH
 
@@ -136,84 +134,18 @@ namespace play_motion
     return true;
   }
 
-#define RETHROW(x) \
-  do { if( !(x) ) return false; } while(0)
-
-  namespace xr
-  {
-    bool checkParamType(const XmlRpc::XmlRpcValue& val, const XmlRpc::XmlRpcValue::Type& expected_type,
-        const std::string& param_name = "")
-    {
-      if (val.getType() != expected_type)
-      {
-        if (param_name.empty())
-          ROS_ERROR("wrong parameter type");
-        else
-          ROS_ERROR("wrong parameter type for param '%s'", param_name.c_str());
-        return false;
-      }
-      return true;
-    }
-
-    template <class T>
-      bool fetchParam(ros::NodeHandle nh, const std::string& param_name,
-          const XmlRpc::XmlRpcValue::Type& expected_type, T& output)
-      {
-        XmlRpc::XmlRpcValue val;
-        if (!nh.getParamCached(param_name, val))
-        {
-          ROS_ERROR("could not load parameter '%s'. (namespace: %s)",
-                  param_name.c_str(), nh.getNamespace().c_str());
-          return false;
-        }
-        RETHROW(checkParamType(val, expected_type, param_name));
-        output = static_cast<T>(val);
-        return true;
-      }
-
-    bool checkSubItem(const XmlRpc::XmlRpcValue& col, int index)
-    {
-      RETHROW(checkParamType(col, XmlRpc::XmlRpcValue::TypeArray));
-      if(index < col.size())
-        return true;
-      ROS_ERROR("index '%d' is over array capacity", index);
-      return false;
-    }
-    bool checkSubItem(const XmlRpc::XmlRpcValue& col, const std::string& member)
-    {
-      RETHROW(checkParamType(col, XmlRpc::XmlRpcValue::TypeStruct));
-      if (col.hasMember(member))
-        return true;
-      ROS_ERROR("could not find member '%s'", member.c_str());
-      return false;
-    }
-
-    template <class T, class U>
-      bool getSubItem(XmlRpc::XmlRpcValue& col, U member,
-          const XmlRpc::XmlRpcValue::Type& expected_type, T& output)
-      {
-        RETHROW(checkSubItem(col, member));
-        RETHROW(checkParamType(col[member], expected_type));
-        output = static_cast<T>(col[member]);
-        return true;
-      }
-
-#define getArrayItem getSubItem
-#define getStructMember getSubItem
-  }
-
   bool PlayMotion::getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints)
   {
     using namespace XmlRpc;
     ros::NodeHandle nh("~");
     XmlRpcValue joint_names;
 
-    RETHROW(xr::fetchParam(nh, "motions/" + motion_name + "/joints", XmlRpcValue::TypeArray, joint_names));
+    RETHROW(xh::fetchParam(nh, "motions/" + motion_name + "/joints", XmlRpcValue::TypeArray, joint_names));
 
     motion_joints.clear();
     motion_joints.resize(joint_names.size());
     for (int i = 0; i < joint_names.size(); ++i)
-      RETHROW(xr::getArrayItem(joint_names, i, XmlRpcValue::TypeString, motion_joints[i]));
+      RETHROW(xh::getArrayItem(joint_names, i, XmlRpcValue::TypeString, motion_joints[i]));
 
     return true;
   }
@@ -224,7 +156,7 @@ namespace play_motion
     ros::NodeHandle nh("~");
     XmlRpcValue traj_points;
 
-    RETHROW(xr::fetchParam(nh, "motions/" + motion_name + "/points", XmlRpcValue::TypeArray, traj_points));
+    RETHROW(xh::fetchParam(nh, "motions/" + motion_name + "/points", XmlRpcValue::TypeArray, traj_points));
 
     motion_points.clear();
     motion_points.reserve(traj_points.size());
@@ -232,21 +164,21 @@ namespace play_motion
     {
       XmlRpcValue &name_value = traj_points[i];
       TrajPoint point;
-      RETHROW(xr::getStructMember(name_value, "time_from_start",
+      RETHROW(xh::getStructMember(name_value, "time_from_start",
             XmlRpcValue::TypeDouble, point.time_from_start));
 
       XmlRpcValue positions;
-      RETHROW(xr::getStructMember(name_value, "positions", XmlRpcValue::TypeArray, positions));
+      RETHROW(xh::getStructMember(name_value, "positions", XmlRpcValue::TypeArray, positions));
       point.positions.resize(positions.size());
       for (int j = 0; j < positions.size(); ++j)
-        RETHROW(xr::getArrayItem(positions, j, XmlRpcValue::TypeDouble, point.positions[j]));
+        RETHROW(xh::getArrayItem(positions, j, XmlRpcValue::TypeDouble, point.positions[j]));
       if (name_value.hasMember("velocities"))
       {
         XmlRpcValue velocities;
-        RETHROW(xr::getStructMember(name_value, "velocities", XmlRpcValue::TypeArray, velocities));
+        RETHROW(xh::getStructMember(name_value, "velocities", XmlRpcValue::TypeArray, velocities));
         point.velocities.resize(velocities.size());
         for (int j = 0; j < velocities.size(); ++j)
-          RETHROW(xr::getArrayItem(velocities, j, XmlRpcValue::TypeDouble, point.velocities[j]));
+          RETHROW(xh::getArrayItem(velocities, j, XmlRpcValue::TypeDouble, point.velocities[j]));
       }
       motion_points.push_back(point);
     }

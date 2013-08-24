@@ -112,7 +112,7 @@ namespace play_motion
   {
     ROS_DEBUG_STREAM("sending trajectory goal to " << controller_name_);
 
-    if (joint_names_.size() < 1) // empty vector, nothing to send (controller might not even be connected)
+    if (joint_names_.empty()) // empty vector, nothing to send (controller might not even be connected)
       return false;
 
     ActionGoal goal;
@@ -141,18 +141,4 @@ namespace play_motion
     client_.sendGoal(goal, boost::bind(&MoveJointGroup::alCallback, this));
     return true;
   }
-#if 0 // the following code is here for future reference in case we need backwards compatibility
-      // it should be removed in the next commit
-
-  bool MoveJointGroup::sendPoseGoal(const std::vector<double>& pose, const ros::Duration& duration)
-  {
-    std::vector<TrajPoint> traj(1);
-    TrajPoint& p = traj[0];
-
-    p.positions = pose;
-    p.time_from_start = 0.0;
-
-    sendTrajGoal(traj, duration);
-  }
-#endif
 }

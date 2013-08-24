@@ -32,27 +32,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \author Adolfo Rodriguez Tsouroukdissian. */
-/** \author Paul Mathieu.                     */
+/** \author Paul Mathieu. */
 
-#include <ros/ros.h>
+#ifndef RETHROW_H
+#define RETHROW_H
 
-#include "play_motion/play_motion_server.h"
-#include "play_motion/play_motion.h"
+#define RETHROW(x) \
+      do { if( !(x) ) return false; } while(0)
 
-int main(int argc, char** argv)
-{
-  typedef boost::shared_ptr<play_motion::PlayMotion> PlayMotionPtr;
-  // Init the ROS node
-  ros::init(argc, argv, "play_motion");
-
-  // Node handle scoped to where the poses are specified
-  ros::NodeHandle nh, nh_private("~");
-
-  ROS_INFO("starting");
-  // Initialize the actionlib server
-  play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh_private)));
-
-  // guruguru
-  ros::spin();
-}
+#endif
