@@ -62,7 +62,6 @@ namespace play_motion
 
     private:
       void playMotionCb(bool success, int goal_id);
-      void initControllerList();
       void alCancelCb(AlServer::GoalHandle gh);
       void alGoalCb(AlServer::GoalHandle gh);
       bool findGoalId(AlServer::GoalHandle gh, int& goal_id);

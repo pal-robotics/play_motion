@@ -47,11 +47,11 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "play_motion");
 
   // Node handle scoped to where the poses are specified
-  ros::NodeHandle nh, nh_private("~");
+  ros::NodeHandle nh;
 
   ROS_INFO("starting");
   // Initialize the actionlib server
-  play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh_private)));
+  play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh)));
 
   // guruguru
   ros::spin();

@@ -53,9 +53,11 @@ namespace play_motion
   class MoveJointGroup
   {
     private:
-      typedef actionlib::SimpleActionClient <control_msgs::FollowJointTrajectoryAction> ActionClient;
+      typedef actionlib::SimpleActionClient
+        <control_msgs::FollowJointTrajectoryAction>   ActionClient;
       typedef control_msgs::FollowJointTrajectoryGoal ActionGoal;
-      typedef boost::function<void(bool)> Callback;
+      typedef boost::function<void(bool)>             Callback;
+      typedef std::vector<std::string>                JointNames;
 
     public:
       struct TrajPoint
@@ -65,7 +67,7 @@ namespace play_motion
         ros::Duration       time_from_start;
       };
 
-      MoveJointGroup(const std::string& controller_name);
+      MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
       bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
       bool isControllingJoint(const std::string& joint_name);
       bool isIdle() { return getState().isDone(); } //XXX: actionlib whines when calling this on an
@@ -78,12 +80,11 @@ namespace play_motion
       const std::string& getName() { return controller_name_; }
 
     private:
-      void configure();
       void alCallback();
 
       ros::NodeHandle          nh_;               ///< Default node handle.
       std::string              controller_name_;  ///< Controller name.
-      std::vector<std::string> joint_names_;      ///< Names of controller joints.
+      JointNames               joint_names_;      ///< Names of controller joints.
       ActionClient             client_;           ///< Action client used to trigger motions.
       Callback                 active_cb_;        ///< Call this when we are called back from the controller
       ros::Timer               configure_timer_;  ///< To periodically check for controller actionlib server

@@ -44,49 +44,11 @@
 
 namespace play_motion
 {
-  MoveJointGroup::MoveJointGroup(const std::string& controller_name)
-    : controller_name_(controller_name),
-    client_(controller_name_ + "/follow_joint_trajectory")
-  {
-      configure();
-  }
-
-  void MoveJointGroup::configure()
-  {
-    if (!client_.isServerConnected())
-    {
-      configure_timer_ = nh_.createTimer(ros::Duration(1.0), boost::bind(&MoveJointGroup::configure, this), true);
-      return;
-    }
-
-    // Get list of joints used by the controller
-    joint_names_.clear();
-    using namespace XmlRpc;
-    XmlRpcValue joint_names;
-    ros::NodeHandle nh(controller_name_);
-    if (!nh.getParam("joints", joint_names))
-    {
-      ROS_ERROR("No joints given. (namespace: %s)", nh.getNamespace().c_str());
-      return;
-    }
-    if (joint_names.getType() != XmlRpcValue::TypeArray)
-    {
-      ROS_ERROR("Malformed joint specification.  (namespace: %s)", nh.getNamespace().c_str());
-      return;
-    }
-    for (int i = 0; i < joint_names.size(); ++i)
-    {
-      XmlRpcValue &name_value = joint_names[i];
-      if (name_value.getType() != XmlRpcValue::TypeString)
-      {
-        ROS_ERROR("Array of joint names should contain all strings.  (namespace: %s)",
-            nh.getNamespace().c_str());
-        return;
-      }
-      joint_names_.push_back(static_cast<std::string>(name_value));
-    }
-    ROS_INFO_STREAM("controller '" << controller_name_ << "' configured");
-  }
+  MoveJointGroup::MoveJointGroup(const std::string& controller_name, const JointNames& joint_names) :
+    controller_name_(controller_name),
+    joint_names_(joint_names),
+    client_(controller_name_ + "/follow_joint_trajectory", false)
+  { }
 
   void MoveJointGroup::alCallback()
   {
@@ -111,9 +73,6 @@ namespace play_motion
   bool MoveJointGroup::sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration)
   {
     ROS_DEBUG_STREAM("sending trajectory goal to " << controller_name_);
-
-    if (joint_names_.empty()) // empty vector, nothing to send (controller might not even be connected)
-      return false;
 
     ActionGoal goal;
     goal.trajectory.joint_names = joint_names_;

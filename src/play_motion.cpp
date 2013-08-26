@@ -55,14 +55,25 @@ namespace play_motion
   int PlayMotion::goal_next_id = 37; // or whatever.
 
   PlayMotion::PlayMotion(ros::NodeHandle& nh) :
-    nh_(nh), joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this))
-  {}
-
-  void PlayMotion::setControllerList(const ControllerList& controller_list)
+    nh_(nh),
+    joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this)),
+    ctrlr_updater_(nh_)
   {
+    ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
+  }
+
+  void PlayMotion::updateControllersCb(const ControllerUpdater::ControllerStates& states,
+      const ControllerUpdater::ControllerJoints& joints)
+  {
+    typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
     move_joint_groups_.clear();
-    foreach (const std::string& controller_name, controller_list)
-      move_joint_groups_.push_back(MoveJointGroupPtr(new MoveJointGroup(controller_name)));
+    foreach (const ctrlr_state_pair_t& p, states)
+    {
+      if (p.second != ControllerUpdater::RUNNING)
+        continue;
+      move_joint_groups_.push_back(MoveJointGroupPtr(new MoveJointGroup(p.first, joints.at(p.first))));
+      ROS_DEBUG_STREAM("controller '" << p.first << "' with " << joints.at(p.first).size() << " joints");
+    }
   }
 
   void PlayMotion::controllerCb(bool success, int goal_id)

@@ -43,7 +43,8 @@
 #include <map>
 #include <ros/ros.h>
 
-#include "move_joint_group.h"
+#include "play_motion/move_joint_group.h"
+#include "play_motion/controller_updater.h"
 
 namespace sensor_msgs
 { ROS_DECLARE_MESSAGE(JointState); }
@@ -85,7 +86,6 @@ namespace play_motion
       bool run(const std::string& motion_name, const ros::Duration& duration, int& goal_id);
       void cancel(int goal_id);
       void setAlCb(int goal_id, const Callback& cb);
-      void setControllerList(const ControllerList& controller_list);
 
     private:
       void jointStateCb(const sensor_msgs::JointStatePtr& msg);
@@ -97,6 +97,8 @@ namespace play_motion
       bool getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints);
       bool getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
       bool checkControllers(const std::vector<std::string>& motion_joints);
+      void updateControllersCb(const ControllerUpdater::ControllerStates& states,
+          const ControllerUpdater::ControllerJoints& joints);
 
       static int goal_next_id;
 
@@ -105,6 +107,7 @@ namespace play_motion
       std::map<std::string, double>    joint_states_;
       ros::Subscriber                  joint_states_sub_;
       std::map<int, Goal>              goals_;
+      ControllerUpdater                ctrlr_updater_;
   };
 }
 

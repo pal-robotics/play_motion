@@ -58,10 +58,12 @@ public:
     STOPPED
   };
 
-  typedef std::map<std::string, ControllerState> ControllerStates;
+  typedef std::map<std::string, ControllerState>           ControllerStates;
+  typedef std::map<std::string, std::vector<std::string> > ControllerJoints;
 
 private:
-  typedef boost::function<void(const ControllerStates& states)> Callback;
+  typedef boost::function<void(const ControllerStates& states,
+      const ControllerJoints& joints)> Callback;
 
 public:
   ControllerUpdater(ros::NodeHandle nh);

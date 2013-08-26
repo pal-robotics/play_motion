@@ -44,10 +44,15 @@
 namespace play_motion
 {
 
+static ros::ServiceClient initCmClient(ros::NodeHandle nh)
+{
+  return nh.serviceClient<controller_manager_msgs::ListControllers>
+    ("controller_manager/list_controllers", true);
+}
+
 ControllerUpdater::ControllerUpdater(ros::NodeHandle nh) : nh_(nh)
 {
-  cm_client_   = nh_.serviceClient<controller_manager_msgs::ListControllers>
-    ("controller_manager/list_controllers", true);
+  cm_client_ = initCmClient(nh_);
   main_thread_ = boost::thread(&ControllerUpdater::mainLoop, this);
 }
 
@@ -76,6 +81,8 @@ void ControllerUpdater::mainLoop()
 
     controller_manager_msgs::ListControllers srv;
 
+    if (!cm_client_)
+      cm_client_ = initCmClient(nh_);
     if(!cm_client_.call(srv))
     {
       ROS_WARN_THROTTLE(5.0, "could not get list of controllers from controller manager");
@@ -83,18 +90,21 @@ void ControllerUpdater::mainLoop()
     }
 
     ControllerStates states;
+    ControllerJoints joints;
     typedef controller_manager_msgs::ControllerState cstate_t;
     foreach (const cstate_t& cs, srv.response.controller)
     {
-      if (!isJointTrajectoryController(cs.name))
+      if (!isJointTrajectoryController(cs.type))
         continue;
       states[cs.name] = (cs.state == "running" ? RUNNING : STOPPED);
+      joints[cs.name] = cs.resources;
     }
 
     if (states == last_cstates_)
       continue;
 
-    nh_.createTimer(ros::Duration(0), boost::bind(update_cb_, states));
+    ROS_INFO("detected a change in joint controllers, reloading them");
+    update_timer_ = nh_.createTimer(ros::Duration(0), boost::bind(update_cb_, states, joints), true);
     last_cstates_ = states;
   }
 }
