@@ -71,7 +71,7 @@ namespace play_motion
     ROS_DEBUG("return from joint group, %d active controllers", goal.active_controllers - 1);
     goal.success &= success;
     if (--goal.active_controllers < 1)
-      goal.cb(goal.success, goal_id);
+      goal.cb(goal.success);
   };
 
   void PlayMotion::jointStateCb(const sensor_msgs::JointStatePtr& msg)

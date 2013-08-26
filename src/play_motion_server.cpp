@@ -102,9 +102,13 @@ namespace play_motion
     ROS_INFO_STREAM("sending motion '" << goal->motion_name << "' to controllers");
     int goal_id;
     if (!pm_->run(goal->motion_name, goal->duration, goal_id))
+    {
+      ROS_WARN_STREAM("motion '" << goal->motion_name << "' could not be played");
       gh.setRejected();
+      return;
+    }
     gh.setAccepted();
-    pm_->setAlCb(goal_id, boost::bind(&PlayMotionServer::playMotionCb, this, _1, _2));
+    pm_->setAlCb(goal_id, boost::bind(&PlayMotionServer::playMotionCb, this, _1, goal_id));
     al_goals_[goal_id] = gh;
   }
 

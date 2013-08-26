@@ -58,7 +58,7 @@ namespace play_motion
     private:
       typedef boost::shared_ptr<MoveJointGroup>     MoveJointGroupPtr;
       typedef std::vector<std::string>              ControllerList;
-      typedef boost::function<void(bool, int)>      Callback;
+      typedef boost::function<void(bool)>           Callback;
       typedef std::vector<Callback>                 CallbackList;
       typedef MoveJointGroup::TrajPoint             TrajPoint;
       typedef std::vector<TrajPoint>                Trajectory;
