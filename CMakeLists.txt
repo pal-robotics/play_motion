@@ -20,7 +20,8 @@ if(USE_ROSBUILD)
       src/move_joint_group.cpp
       src/play_motion.cpp
       src/play_motion_server.cpp
-      src/play_motion_main.cpp)
+      src/play_motion_main.cpp
+      src/controller_updater.cpp)
 
   rosbuild_link_boost(play_motion thread)
 
@@ -28,7 +29,8 @@ else()
 
   project(play_motion)
 
-  find_package(catkin REQUIRED COMPONENTS roscpp genmsg control_msgs actionlib)
+  find_package(catkin REQUIRED COMPONENTS roscpp genmsg control_msgs actionlib
+    controller_manager_msgs)
 
   add_action_files(DIRECTORY action FILES PlayMotion.action)
   generate_messages(DEPENDENCIES actionlib_msgs)
@@ -41,7 +43,8 @@ else()
     src/play_motion_main.cpp
     src/play_motion_server.cpp
     src/play_motion.cpp
-    src/move_joint_group.cpp)
+    src/move_joint_group.cpp
+    src/controller_updater.cpp)
 
   target_link_libraries(play_motion ${catkin_LIBRARIES})
   add_dependencies(play_motion ${PROJECT_NAME}_gencpp)
