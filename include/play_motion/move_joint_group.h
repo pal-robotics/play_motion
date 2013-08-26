@@ -68,14 +68,14 @@ namespace play_motion
       MoveJointGroup(const std::string& controller_name);
       bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
       bool isControllingJoint(const std::string& joint_name);
-      bool isIdle() { return getState().isDone(); }
+      bool isIdle() { return getState().isDone(); } //XXX: actionlib whines when calling this on an
+                                                    //     uninitialized goal. We have to keep the record ;-__-
       void cancel() { client_.cancelAllGoals(); }
-
       void setCallback(const Callback& cb) { active_cb_ = cb; }
+
       const std::vector<std::string>& getJointNames() const {return joint_names_;}
       actionlib::SimpleClientGoalState getState() {return client_.getState();}
-
-      std::string get_name();
+      const std::string& getName() { return controller_name_; }
 
     private:
       void configure();

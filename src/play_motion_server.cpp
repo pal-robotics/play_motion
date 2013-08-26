@@ -72,6 +72,11 @@ namespace play_motion
 
   void PlayMotionServer::playMotionCb(bool success, int goal_id)
   {
+    if (al_goals_.find(goal_id) == al_goals_.end())
+    {
+      ROS_ERROR("goal callback called with an invalid goal_id: %d", goal_id);
+      return;
+    }
     if (success)
     {
       ROS_INFO("motion played sucecssfully");

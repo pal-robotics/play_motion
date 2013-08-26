@@ -70,7 +70,7 @@ namespace play_motion
         Callback                       cb;
         std::vector<MoveJointGroupPtr> controllers;
 
-        Goal() : success(true) {}
+        Goal() : success(true), active_controllers(0) {}
         void addController(const MoveJointGroupPtr& ctrl)
         { controllers.push_back(ctrl); active_controllers++; }
       };

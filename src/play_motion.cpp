@@ -229,45 +229,43 @@ next_joint:;
 
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration, int& goal_id)
   {
-    std::vector<Trajectory>  joint_group_traj; // Desired motion split into joint groups
-    std::vector<std::string> motion_joints;
-    Trajectory               motion_points;
+    std::vector<std::string>                motion_joints;
+    Trajectory                              motion_points;
+    std::map<MoveJointGroupPtr, Trajectory> joint_group_traj;
 
     RETHROW(getMotionJoints(motion_name, motion_joints));
     RETHROW(checkControllers(motion_joints));
     RETHROW(getMotionPoints(motion_name, motion_points));
 
     // Seed target pose with current joint state
-    joint_group_traj.reserve(move_joint_groups_.size());
     foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
     {
-      Trajectory traj;
-      if (hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
-        RETHROW(getGroupTraj(move_joint_group, motion_joints, motion_points, traj));
-      joint_group_traj.push_back(traj);
-    }
-
-    Goal goal;
-    goal_id = PlayMotion::goal_next_id++;
-
-    // Send pose commands
-    for (std::size_t i = 0; i < move_joint_groups_.size(); ++i)
-    {
-      if (joint_group_traj[i].empty()) // nothing for this controller
+      if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
         continue;
-
-      if (!move_joint_groups_[i]->isIdle()) // busy right now, call back later (that's what she said)
+      RETHROW(getGroupTraj(move_joint_group, motion_joints, motion_points, joint_group_traj[move_joint_group]));
+      if (!move_joint_group->isIdle())
         return false;
-
-      move_joint_groups_[i]->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_id));
-      RETHROW(move_joint_groups_[i]->sendGoal(joint_group_traj[i], duration));
-      goal.addController(move_joint_groups_[i]);
     }
-
-    if (goal.controllers.empty())
+    if (joint_group_traj.empty())
       return false;
 
-    goals_[goal_id] = goal;
+    goal_id = PlayMotion::goal_next_id++;
+    Goal& goal = goals_[goal_id];
+
+    // Send pose commands
+    typedef std::pair<MoveJointGroupPtr, Trajectory> traj_pair_t;
+    foreach (const traj_pair_t& p, joint_group_traj)
+    {
+      goal.addController(p.first);
+      p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_id));
+      if (!p.first->sendGoal(p.second, duration))
+      {
+        ROS_ERROR_STREAM("controller '" << p.first->getName() << "' did not accept trajectory, "
+                         "canceling everything");
+        cancel(goal_id);
+        return false;
+      }
+    }
     return true;
   }
 }
