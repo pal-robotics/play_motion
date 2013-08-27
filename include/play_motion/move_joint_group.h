@@ -70,8 +70,7 @@ namespace play_motion
       MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
       bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
       bool isControllingJoint(const std::string& joint_name);
-      bool isIdle() { return getState().isDone(); } //XXX: actionlib whines when calling this on an
-                                                    //     uninitialized goal. We have to keep the record ;-__-
+      bool isIdle() { return !goal_sent_ || getState().isDone(); }
       void cancel() { client_.cancelAllGoals(); }
       void setCallback(const Callback& cb) { active_cb_ = cb; }
 
@@ -86,6 +85,7 @@ namespace play_motion
       std::string              controller_name_;  ///< Controller name.
       JointNames               joint_names_;      ///< Names of controller joints.
       ActionClient             client_;           ///< Action client used to trigger motions.
+      bool                     goal_sent_;        ///< Prevent actionlib from whining
       Callback                 active_cb_;        ///< Call this when we are called back from the controller
       ros::Timer               configure_timer_;  ///< To periodically check for controller actionlib server
   };

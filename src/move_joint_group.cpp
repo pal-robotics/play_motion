@@ -47,7 +47,8 @@ namespace play_motion
   MoveJointGroup::MoveJointGroup(const std::string& controller_name, const JointNames& joint_names) :
     controller_name_(controller_name),
     joint_names_(joint_names),
-    client_(controller_name_ + "/follow_joint_trajectory", false)
+    client_(controller_name_ + "/follow_joint_trajectory", false),
+    goal_sent_(false)
   { }
 
   void MoveJointGroup::alCallback()
@@ -98,6 +99,8 @@ namespace play_motion
       goal.trajectory.points.push_back(point);
     }
     client_.sendGoal(goal, boost::bind(&MoveJointGroup::alCallback, this));
+    goal_sent_ = true;
+
     return true;
   }
 }
