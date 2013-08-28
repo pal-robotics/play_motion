@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.4.6)
+project(play_motion)
 
 if(USE_ROSBUILD)
   include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
@@ -26,8 +27,6 @@ if(USE_ROSBUILD)
   rosbuild_link_boost(play_motion thread)
 
 else()
-
-  project(play_motion)
 
   find_package(catkin REQUIRED COMPONENTS roscpp genmsg control_msgs actionlib
     controller_manager_msgs)
