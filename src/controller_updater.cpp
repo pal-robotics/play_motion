@@ -59,7 +59,7 @@ ControllerUpdater::ControllerUpdater(ros::NodeHandle nh) : nh_(nh)
 ControllerUpdater::~ControllerUpdater()
 {}
 
-bool isJointTrajectoryController(const std::string& name)
+static bool isJointTrajectoryController(const std::string& name)
 {
   std::string tofind = "JointTrajectoryController"; //XXX: magic value
   size_t pos = name.find(tofind);
@@ -81,7 +81,7 @@ void ControllerUpdater::mainLoop()
 
     controller_manager_msgs::ListControllers srv;
 
-    if (!cm_client_)
+    if (!cm_client_.isValid())
       cm_client_ = initCmClient(nh_);
     if(!cm_client_.call(srv))
     {
