@@ -103,7 +103,7 @@ namespace play_motion
     AlServer::GoalConstPtr goal = gh.getGoal(); //XXX: can this fail? should we check it?
     ROS_INFO_STREAM("sending motion '" << goal->motion_name << "' to controllers");
     int goal_id;
-    if (!pm_->run(goal->motion_name, goal->duration, goal_id))
+    if (!pm_->run(goal->motion_name, goal->reach_time, goal_id))
     {
       ROS_WARN_STREAM("motion '" << goal->motion_name << "' could not be played");
       gh.setRejected();
