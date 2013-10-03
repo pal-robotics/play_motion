@@ -1,0 +1,20 @@
+play_motion:
+  controllers:
+    - rrbot_controller_joint1
+    - rrbot_controller_joint2
+  motions:
+    home:
+      joints:
+        - joint1
+        - joint2
+      points:
+      - positions: [0.0, 0.0]
+        time_from_start: 0.0
+
+    pose1:
+      joints:
+        - joint1
+        - joint2
+      points:
+      - positions: [1.8, 1.8]
+        time_from_start: 0.0

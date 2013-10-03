@@ -1,0 +1,31 @@
+<launch>
+  <!-- Load RRbot model -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find play_motion)/test/rrbot.xacro'" />
+
+  <!-- load robot poses -->
+  <rosparam file="$(find play_motion)/test/rrbot_poses.yaml" command="load" />
+
+  <!-- start play_motion -->
+  <node name="play_motion" pkg="play_motion" type="play_motion" />
+
+  <!-- Start RRbot -->
+  <node name="rrbot" pkg="play_motion" type="rrbot"/>
+
+  <!-- robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+
+  <!-- Load controller config -->
+  <rosparam command="load" file="$(find play_motion)/test/rrbot_controllers.yaml" />
+  <!-- Joint state controller -->
+  <rosparam command="load" file="$(find joint_state_controller)/joint_state_controller.yaml" />
+
+  <!-- Spawn controllers -->
+  <node name="controller_spawner"
+        pkg="controller_manager" type="spawner" output="screen"
+        args="rrbot_controller_joint1
+              rrbot_controller_joint2
+              joint_state_controller" />
+
+  <!-- play_motion test -->
+  <test test-name="play_motion_test" pkg="play_motion" type="play_motion_test" time-limit="10.0"/>
+</launch>

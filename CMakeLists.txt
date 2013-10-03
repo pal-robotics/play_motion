@@ -24,6 +24,11 @@ if(USE_ROSBUILD)
       src/play_motion_main.cpp
       src/controller_updater.cpp)
 
+  rosbuild_add_executable(rrbot test/rrbot.cpp)
+  rosbuild_add_executable(play_motion_test test/play_motion_test.cpp)
+  rosbuild_add_gtest_build_flags(play_motion_test)
+  rosbuild_add_rostest(test/play_motion.test)
+
   rosbuild_link_boost(play_motion thread)
 
 else()
