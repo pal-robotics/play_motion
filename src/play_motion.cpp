@@ -52,8 +52,6 @@
 
 namespace play_motion
 {
-  int PlayMotion::goal_next_id = 37; // or whatever.
-
   PlayMotion::PlayMotion(ros::NodeHandle& nh) :
     nh_(nh),
     joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this)),
@@ -76,13 +74,22 @@ namespace play_motion
     }
   }
 
-  void PlayMotion::controllerCb(bool success, int goal_id)
+  static void generateErrorCode(PlayMotion::GoalHandle goal_hdl, int error_code)
   {
-    Goal& goal = goals_[goal_id];
-    ROS_DEBUG("return from joint group, %d active controllers", goal.active_controllers - 1);
-    goal.success &= success;
-    if (--goal.active_controllers < 1)
-      goal.cb(goal.success);
+    //TODO: implement this function
+  }
+
+  void PlayMotion::controllerCb(int error_code, GoalHandle goal_hdl)
+  {
+    ROS_DEBUG("return from joint group, %d active controllers", goal_hdl->active_controllers - 1);
+    if (error_code != 0)
+    {
+      generateErrorCode(goal_hdl, error_code);
+      goal_hdl->cancel();
+    }
+
+    if (--goal_hdl->active_controllers < 1)
+      goal_hdl->cb(goal_hdl);
   };
 
   void PlayMotion::jointStateCb(const sensor_msgs::JointStatePtr& msg)
@@ -221,30 +228,21 @@ next_joint:;
     return false;
   }
 
-  void PlayMotion::setAlCb(int goal_id, const Callback& cb)
-  {
-    if (goals_.count(goal_id) > 0)
-      goals_[goal_id].cb = cb;
-  }
+#define CHECK_WITH_ERRCODE(check, ghdl, code) do { \
+  if (!check) { ghdl->error_code = code; return false; } \
+} while (0)
 
-  void PlayMotion::cancel(int goal_id)
-  {
-    if (goals_.count(goal_id) < 1)
-      return;
-
-    foreach (MoveJointGroupPtr mjg, goals_[goal_id].controllers)
-      mjg->cancel();
-
-    goals_.erase(goal_id);
-  }
-
-  bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration, int& goal_id)
+  bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
+      GoalHandle& goal_hdl, const Callback& cb)
   {
     std::vector<std::string>                motion_joints;
     Trajectory                              motion_points;
     std::map<MoveJointGroupPtr, Trajectory> joint_group_traj;
 
-    RETHROW(getMotionJoints(motion_name, motion_joints));
+    goal_hdl = GoalHandle(new Goal(cb));
+
+    CHECK_WITH_ERRCODE(getMotionJoints(motion_name, motion_joints), goal_hdl, 1);
+
     RETHROW(checkControllers(motion_joints));
     RETHROW(getMotionPoints(motion_name, motion_points));
 
@@ -254,26 +252,21 @@ next_joint:;
       if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
         continue;
       RETHROW(getGroupTraj(move_joint_group, motion_joints, motion_points, joint_group_traj[move_joint_group]));
-      if (!move_joint_group->isIdle())
-        return false;
+      CHECK_WITH_ERRCODE(move_joint_group->isIdle(), goal_hdl, 3);
     }
     if (joint_group_traj.empty())
       return false;
-
-    goal_id = PlayMotion::goal_next_id++;
-    Goal& goal = goals_[goal_id];
 
     // Send pose commands
     typedef std::pair<MoveJointGroupPtr, Trajectory> traj_pair_t;
     foreach (const traj_pair_t& p, joint_group_traj)
     {
-      goal.addController(p.first);
-      p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_id));
+      goal_hdl->addController(p.first);
+      p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_hdl));
       if (!p.first->sendGoal(p.second, duration))
       {
         ROS_ERROR_STREAM("controller '" << p.first->getName() << "' did not accept trajectory, "
                          "canceling everything");
-        cancel(goal_id);
         return false;
       }
     }

@@ -42,6 +42,7 @@
 #include <vector>
 #include <map>
 #include <ros/ros.h>
+#include <boost/foreach.hpp>
 
 #include "play_motion/move_joint_group.h"
 #include "play_motion/controller_updater.h"
@@ -56,40 +57,49 @@ namespace play_motion
    */
   class PlayMotion
   {
+    public:
+      class Goal;
+      typedef boost::shared_ptr<Goal> GoalHandle;
     private:
-      typedef boost::shared_ptr<MoveJointGroup>     MoveJointGroupPtr;
-      typedef std::vector<std::string>              ControllerList;
-      typedef boost::function<void(bool)>           Callback;
-      typedef std::vector<Callback>                 CallbackList;
-      typedef MoveJointGroup::TrajPoint             TrajPoint;
-      typedef std::vector<TrajPoint>                Trajectory;
+      typedef boost::shared_ptr<MoveJointGroup>        MoveJointGroupPtr;
+      typedef std::vector<std::string>                 ControllerList;
+      typedef boost::function<void(const GoalHandle&)> Callback;
+      typedef MoveJointGroup::TrajPoint                TrajPoint;
+      typedef std::vector<TrajPoint>                   Trajectory;
 
-      struct Goal
+    public:
+      class Goal
       {
-        bool                           success;
+        friend class PlayMotion;
+
+      public:
+        int                            error_code;
+        std::string                    error_string;
         int                            active_controllers;
         Callback                       cb;
         std::vector<MoveJointGroupPtr> controllers;
 
-        Goal() : success(true), active_controllers(0) {}
+        ~Goal() { if (active_controllers) cancel(); }
+        void cancel() { BOOST_FOREACH (MoveJointGroupPtr mjg, controllers) mjg->cancel(); }
         void addController(const MoveJointGroupPtr& ctrl)
         { controllers.push_back(ctrl); active_controllers++; }
+
+      private:
+        Goal(const Callback& cbk) : error_code(0), active_controllers(0), cb(cbk) {}
       };
 
-    public:
       PlayMotion(ros::NodeHandle& nh);
 
       /// \brief Send motion goal request
       /// \param motion_name Name of motion to execute.
       /// \param duration Motion duration.
       /// \param[out] goal_id contains the goal ID if function returns true
-      bool run(const std::string& motion_name, const ros::Duration& duration, int& goal_id);
-      void cancel(int goal_id);
-      void setAlCb(int goal_id, const Callback& cb);
+      bool run(const std::string& motion_name, const ros::Duration& duration,
+          GoalHandle& gh, const Callback& cb);
 
     private:
       void jointStateCb(const sensor_msgs::JointStatePtr& msg);
-      void controllerCb(bool success, int goal_id);
+      void controllerCb(int error_code, GoalHandle goal_hdl);
 
       bool getGroupTraj(MoveJointGroupPtr move_joint_group,
           const std::vector<std::string>& motion_joints,
@@ -100,13 +110,10 @@ namespace play_motion
       void updateControllersCb(const ControllerUpdater::ControllerStates& states,
           const ControllerUpdater::ControllerJoints& joints);
 
-      static int goal_next_id;
-
       ros::NodeHandle                  nh_;
       std::vector<MoveJointGroupPtr>   move_joint_groups_;
       std::map<std::string, double>    joint_states_;
       ros::Subscriber                  joint_states_sub_;
-      std::map<int, Goal>              goals_;
       ControllerUpdater                ctrlr_updater_;
   };
 }

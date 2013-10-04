@@ -3,7 +3,7 @@ duration reach_time
 int32 priority
 ---
 int32 error_code
-int32 SUCCESSFUL            = 0
+int32 SUCCEEDED             = 0
 int32 MOTION_NOT_FOUND      = 1
 int32 INFEASIBLE_REACH_TIME = 2
 # controller error codes

@@ -54,10 +54,12 @@ namespace play_motion
   {
     private:
       typedef actionlib::SimpleActionClient
-        <control_msgs::FollowJointTrajectoryAction>   ActionClient;
-      typedef control_msgs::FollowJointTrajectoryGoal ActionGoal;
-      typedef boost::function<void(bool)>             Callback;
-      typedef std::vector<std::string>                JointNames;
+        <control_msgs::FollowJointTrajectoryAction>     ActionClient;
+      typedef control_msgs::FollowJointTrajectoryGoal   ActionGoal;
+      typedef control_msgs::FollowJointTrajectoryResult ActionResult;
+      typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
+      typedef boost::function<void(bool)>               Callback;
+      typedef std::vector<std::string>                  JointNames;
 
     public:
       struct TrajPoint

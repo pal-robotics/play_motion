@@ -39,6 +39,7 @@
 #include <boost/foreach.hpp>
 
 #include "play_motion/play_motion.h"
+#include "play_motion/PlayMotionResult.h"
 
 #define foreach BOOST_FOREACH
 
@@ -57,41 +58,40 @@ namespace play_motion
   PlayMotionServer::~PlayMotionServer()
   {}
 
-  bool PlayMotionServer::findGoalId(AlServer::GoalHandle gh, int& goal_id)
+  bool PlayMotionServer::findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle goal_hdl)
   {
-    typedef std::pair<int, AlServer::GoalHandle> goal_pair_t;
+    typedef std::pair<PlayMotion::GoalHandle, AlServer::GoalHandle> goal_pair_t;
     foreach (const goal_pair_t& p, al_goals_)
-      if (goal_id = p.first, p.second == gh)
+      if (goal_hdl = p.first, p.second == gh)
         return true;
 
     return false;
   }
 
-  void PlayMotionServer::playMotionCb(bool success, int goal_id)
+  void PlayMotionServer::playMotionCb(const PlayMotion::GoalHandle& goal_hdl)
   {
-    if (al_goals_.find(goal_id) == al_goals_.end())
-    {
-      ROS_ERROR("goal callback called with an invalid goal_id: %d", goal_id);
-      return;
-    }
-    if (success)
+    PlayMotionResult r;
+    r.error_code = goal_hdl->error_code;
+    r.error_string = goal_hdl->error_string;
+
+    if (r.error_code == PlayMotionResult::SUCCEEDED)
     {
       ROS_INFO("motion played sucecssfully");
-      al_goals_[goal_id].setSucceeded();
+      al_goals_[goal_hdl].setSucceeded(r);
     }
     else
     {
       ROS_WARN("motion ended with an error");
-      al_goals_[goal_id].setAborted();
+      al_goals_[goal_hdl].setAborted(r);
     }
-    al_goals_.erase(goal_id);
+    al_goals_.erase(goal_hdl);
   }
 
   void PlayMotionServer::alCancelCb(AlServer::GoalHandle gh)
   {
-    int goal_id;
-    if (findGoalId(gh, goal_id))
-      pm_->cancel(goal_id);
+    PlayMotion::GoalHandle goal_hdl;
+    if (findGoalId(gh, goal_hdl))
+      al_goals_.erase(goal_hdl);
     else
       ROS_ERROR("cancel request could not be fulfilled. Goal not running?");
 
@@ -102,15 +102,18 @@ namespace play_motion
   {
     AlServer::GoalConstPtr goal = gh.getGoal(); //XXX: can this fail? should we check it?
     ROS_INFO_STREAM("sending motion '" << goal->motion_name << "' to controllers");
-    int goal_id;
-    if (!pm_->run(goal->motion_name, goal->reach_time, goal_id))
+    PlayMotion::GoalHandle goal_hdl;
+    if (!pm_->run(goal->motion_name, goal->reach_time, goal_hdl,
+          boost::bind(&PlayMotionServer::playMotionCb, this, _1)))
     {
+      PlayMotionResult r;
+      r.error_code = goal_hdl->error_code;
+      r.error_string = goal_hdl->error_string;
       ROS_WARN_STREAM("motion '" << goal->motion_name << "' could not be played");
-      gh.setRejected();
+      gh.setRejected(r);
       return;
     }
     gh.setAccepted();
-    pm_->setAlCb(goal_id, boost::bind(&PlayMotionServer::playMotionCb, this, _1, goal_id));
-    al_goals_[goal_id] = gh;
+    al_goals_[goal_hdl] = gh;
   }
 }

@@ -54,9 +54,10 @@ namespace play_motion
   void MoveJointGroup::alCallback()
   {
     bool success = getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+    ActionResultPtr r = client_.getResult();
     if (!success)
       ROS_WARN_STREAM("controller " << controller_name_ << " failed with err " << client_.getResult()->error_code);
-    active_cb_(success);
+    active_cb_(r->error_code);
   }
 
   bool MoveJointGroup::isControllingJoint(const std::string& joint_name)
