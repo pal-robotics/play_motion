@@ -58,7 +58,7 @@ namespace play_motion
   PlayMotionServer::~PlayMotionServer()
   {}
 
-  bool PlayMotionServer::findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle goal_hdl)
+  bool PlayMotionServer::findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle& goal_hdl)
   {
     typedef std::pair<PlayMotion::GoalHandle, AlServer::GoalHandle> goal_pair_t;
     foreach (const goal_pair_t& p, al_goals_)
@@ -91,10 +91,11 @@ namespace play_motion
   {
     PlayMotion::GoalHandle goal_hdl;
     if (findGoalId(gh, goal_hdl))
-      al_goals_.erase(goal_hdl);
+      goal_hdl->cancel(); //should not be needed
     else
       ROS_ERROR("cancel request could not be fulfilled. Goal not running?");
 
+    al_goals_.erase(goal_hdl);
     gh.setCanceled();
   }
 

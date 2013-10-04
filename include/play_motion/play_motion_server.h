@@ -64,7 +64,7 @@ namespace play_motion
       void playMotionCb(const PlayMotion::GoalHandle& goal_hdl);
       void alCancelCb(AlServer::GoalHandle gh);
       void alGoalCb(AlServer::GoalHandle gh);
-      bool findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle goal_id);
+      bool findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle& goal_id);
 
       ros::NodeHandle                                        nh_;
       std::vector<std::string>                               clist_;
