@@ -44,16 +44,17 @@
 
 namespace play_motion
 {
-  MoveJointGroup::MoveJointGroup(const std::string& controller_name, const JointNames& joint_names) :
-    controller_name_(controller_name),
-    joint_names_(joint_names),
-    client_(controller_name_ + "/follow_joint_trajectory", false),
-    goal_sent_(false)
+  MoveJointGroup::MoveJointGroup(const std::string& controller_name, const JointNames& joint_names)
+    : busy_(false),
+      controller_name_(controller_name),
+      joint_names_(joint_names),
+      client_(controller_name_ + "/follow_joint_trajectory", false)
   { }
 
   void MoveJointGroup::alCallback()
   {
     bool success = getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+    busy_ = false;
     ActionResultPtr r = client_.getResult();
     if (!success)
       ROS_WARN_STREAM("controller " << controller_name_ << " failed with err " << client_.getResult()->error_code);
@@ -100,7 +101,7 @@ namespace play_motion
       goal.trajectory.points.push_back(point);
     }
     client_.sendGoal(goal, boost::bind(&MoveJointGroup::alCallback, this));
-    goal_sent_ = true;
+    busy_ = true;
 
     return true;
   }
