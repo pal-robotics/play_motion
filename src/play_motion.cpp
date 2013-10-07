@@ -47,11 +47,14 @@
 #include "play_motion/move_joint_group.h"
 #include "play_motion/rethrow.h"
 #include "play_motion/xmlrpc_helpers.h"
+#include "play_motion/PlayMotionResult.h"
 
 #define foreach BOOST_FOREACH
 
 namespace play_motion
 {
+  typedef play_motion::PlayMotionResult PMR;
+
   PlayMotion::PlayMotion(ros::NodeHandle& nh) :
     nh_(nh),
     joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this)),
@@ -76,7 +79,21 @@ namespace play_motion
 
   static void generateErrorCode(PlayMotion::GoalHandle goal_hdl, int error_code)
   {
-    //TODO: implement this function
+    typedef control_msgs::FollowJointTrajectoryResult JTR;
+    switch (error_code)
+    {
+      case JTR::PATH_TOLERANCE_VIOLATED:
+        goal_hdl->error_code = PMR::TRAJECTORY_ERROR;
+        break;
+      case JTR::GOAL_TOLERANCE_VIOLATED:
+        goal_hdl->error_code = PMR::GOAL_NOT_REACHED;
+        break;
+      default:
+        std::ostringstream os;
+        goal_hdl->error_code = PMR::OTHER_ERROR;
+        os << "got error code " << error_code << ", motion aborted";
+        goal_hdl->error_string = os.str();
+    }
   }
 
   void PlayMotion::controllerCb(int error_code, GoalHandle goal_hdl)
@@ -232,6 +249,10 @@ next_joint:;
   if (!check) { ghdl->error_code = code; return false; } \
 } while (0)
 
+#define CHECK_WITH_ERRMSG(check, ghdl, msg) do { \
+  if (!check) { ghdl->error_code = PMR::OTHER_ERROR; ghdl->error_string = msg; return false; } \
+} while (0)
+
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
       GoalHandle& goal_hdl, const Callback& cb)
   {
@@ -241,18 +262,27 @@ next_joint:;
 
     goal_hdl = GoalHandle(new Goal(cb));
 
-    CHECK_WITH_ERRCODE(getMotionJoints(motion_name, motion_joints), goal_hdl, 1);
+    double shortest_time = 1.0e-2;
+    CHECK_WITH_ERRCODE(duration.toSec() > shortest_time,
+        goal_hdl, PMR::INFEASIBLE_REACH_TIME);
+    CHECK_WITH_ERRCODE(getMotionJoints(motion_name, motion_joints),
+        goal_hdl, PMR::MOTION_NOT_FOUND);
 
-    RETHROW(checkControllers(motion_joints));
-    RETHROW(getMotionPoints(motion_name, motion_points));
+    CHECK_WITH_ERRCODE(checkControllers(motion_joints),
+        goal_hdl, PMR::MISSING_CONTROLLER);
+    CHECK_WITH_ERRMSG(getMotionPoints(motion_name, motion_points),
+        goal_hdl, "error while loading trajectory in motion '" + motion_name + "'");
 
     // Seed target pose with current joint state
     foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
     {
       if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
         continue;
-      RETHROW(getGroupTraj(move_joint_group, motion_joints, motion_points, joint_group_traj[move_joint_group]));
-      CHECK_WITH_ERRCODE(move_joint_group->isIdle(), goal_hdl, 3);
+      CHECK_WITH_ERRMSG(getGroupTraj(move_joint_group, motion_joints, motion_points,
+            joint_group_traj[move_joint_group]), goal_hdl,
+          "missing joint state for joint in controller '" + move_joint_group->getName() + "'");
+      CHECK_WITH_ERRCODE(move_joint_group->isIdle(),
+          goal_hdl, PMR::CONTROLLER_BUSY);
     }
     if (joint_group_traj.empty())
       return false;
@@ -263,12 +293,9 @@ next_joint:;
     {
       goal_hdl->addController(p.first);
       p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_hdl));
-      if (!p.first->sendGoal(p.second, duration))
-      {
-        ROS_ERROR_STREAM("controller '" << p.first->getName() << "' did not accept trajectory, "
+      CHECK_WITH_ERRMSG(p.first->sendGoal(p.second, duration),
+          goal_hdl, "controller '" + p.first->getName() + "' did not accept trajectory, "
                          "canceling everything");
-        return false;
-      }
     }
     return true;
   }

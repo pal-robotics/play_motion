@@ -37,6 +37,9 @@
 
 #include "play_motion/PlayMotionAction.h"
 
+typedef actionlib::SimpleClientGoalState GS;
+typedef play_motion::PlayMotionResult PMR;
+
 class PlayMotionTestClient
 {
   typedef actionlib::SimpleActionClient<play_motion::PlayMotionAction> ActionClient;
@@ -76,21 +79,25 @@ public:
     return std::numeric_limits<double>::quiet_NaN();
   }
 
-  int getLastErrorCode()
+  void shouldFinishWith(int code, int gstate)
   {
-    return ret_;
+    EXPECT_EQ(code, ret_);
+    EXPECT_EQ(gstate, gs_->state_);
   }
 
-  ActionGoalState getLastGoalState()
+  void shouldFailWithCode(int code)
   {
-    return *gs_;
+    shouldFinishWith(code, GS::REJECTED);
   }
+
+  void shouldSucceed()
+  {
+    shouldFinishWith(PMR::SUCCEEDED, GS::SUCCEEDED);
+  }
+
 
 protected:
-  void jsCb(const sensor_msgs::JointStatePtr& js)
-  {
-    js_ = *js;
-  }
+  void jsCb(const sensor_msgs::JointStatePtr& js) { js_ = *js; }
 
 private:
   int ret_;
@@ -101,18 +108,12 @@ private:
   ros::Subscriber js_sub_;
 };
 
-typedef actionlib::SimpleClientGoalState GS;
-
-
 TEST(PlayMotionTest, basicReachPose)
 {
   PlayMotionTestClient pmtc;
 
-  int error_code = pmtc.playMotion("pose1", 1.0);
-  EXPECT_EQ(error_code, 0); // successful
-
-  GS goal_state = pmtc.getLastGoalState();
-  EXPECT_EQ(goal_state.state_, GS::SUCCEEDED);
+  pmtc.playMotion("pose1", 1.0);
+  pmtc.shouldSucceed();
 
   double final_pos = pmtc.getJointPos("joint1");
   EXPECT_NEAR(final_pos, 1.8, 0.01);
@@ -126,29 +127,25 @@ TEST(PlayMotionTest, rejectSecondGoal)
   boost::thread t(boost::bind(&PlayMotionTestClient::playMotion, &pmtc1, "home", 1.0));
   ros::Duration(0.3).sleep();
 
-  int error_code = pmtc2.playMotion("home", 1.0);
-  EXPECT_EQ(error_code, 3); // controller busy
-
-  GS goal_state = pmtc2.getLastGoalState();
-  EXPECT_EQ(goal_state.state_, GS::REJECTED);
+  pmtc2.playMotion("home", 1.0);
+  pmtc2.shouldFailWithCode(PMR::CONTROLLER_BUSY);
 
   t.join();
-  error_code = pmtc1.getLastErrorCode();
-  EXPECT_EQ(error_code, 0);
-
-  goal_state = pmtc1.getLastGoalState();
-  EXPECT_EQ(goal_state.state_, GS::SUCCEEDED);
+  pmtc1.shouldSucceed();
 }
 
 TEST(PlayMotionTest, badMotionName)
 {
   PlayMotionTestClient pmtc;
+  pmtc.playMotion("inexistant_motion", 1.0);
+  pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
+}
 
-  int error_code = pmtc.playMotion("inexistant_motion", 1.0);
-  EXPECT_EQ(error_code, 1); // successful
-
-  GS goal_state = pmtc.getLastGoalState();
-  EXPECT_EQ(goal_state.state_, GS::REJECTED);
+TEST(PlayMotionTest, badReachTime)
+{
+  PlayMotionTestClient pmtc;
+  pmtc.playMotion("pose1", 0.0);
+  pmtc.shouldFailWithCode(PMR::INFEASIBLE_REACH_TIME);
 }
 
 int main(int argc, char** argv)

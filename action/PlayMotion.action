@@ -14,6 +14,8 @@ int32 GOAL_NOT_REACHED      = 6
 # planner error codes
 int32 PLANNER_OFFLINE       = 7
 int32 NO_PLAN_FOUND         = 8
+#other
+int32 OTHER_ERROR           = 42
 
 string error_string
 ---
