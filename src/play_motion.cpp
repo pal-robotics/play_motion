@@ -103,9 +103,10 @@ namespace play_motion
     {
       generateErrorCode(goal_hdl, error_code);
       goal_hdl->cancel();
+      goal_hdl->active_controllers = 1;
     }
 
-    if (--goal_hdl->active_controllers < 1)
+    if (--goal_hdl->active_controllers == 0)
       goal_hdl->cb(goal_hdl);
   };
 

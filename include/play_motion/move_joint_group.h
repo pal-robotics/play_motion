@@ -58,7 +58,7 @@ namespace play_motion
       typedef control_msgs::FollowJointTrajectoryGoal   ActionGoal;
       typedef control_msgs::FollowJointTrajectoryResult ActionResult;
       typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
-      typedef boost::function<void(bool)>               Callback;
+      typedef boost::function<void(int)>                Callback;
       typedef std::vector<std::string>                  JointNames;
 
     public:
