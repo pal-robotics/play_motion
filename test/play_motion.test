@@ -9,7 +9,7 @@
   <node name="play_motion" pkg="play_motion" type="play_motion" />
 
   <!-- Start RRbot -->
-  <node name="rrbot" pkg="play_motion" type="rrbot"/>
+  <node name="rrbot" pkg="play_motion" type="pm_rrbot"/>
 
   <!-- robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
