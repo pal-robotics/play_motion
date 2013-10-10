@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.4.6)
+cmake_minimum_required(VERSION 2.8.3)
 project(play_motion)
 
 if(USE_ROSBUILD)
@@ -33,8 +33,8 @@ if(USE_ROSBUILD)
 
 else()
 
-  find_package(catkin REQUIRED COMPONENTS roscpp genmsg control_msgs actionlib
-    controller_manager_msgs)
+  find_package(catkin REQUIRED COMPONENTS roscpp genmsg actionlib controller_manager rostest)
+  find_package(Boost REQUIRED COMPONENTS thread)
 
   add_action_files(DIRECTORY action FILES PlayMotion.action)
   generate_messages(DEPENDENCIES actionlib_msgs)
@@ -50,11 +50,21 @@ else()
     src/move_joint_group.cpp
     src/controller_updater.cpp)
 
-  target_link_libraries(play_motion ${catkin_LIBRARIES})
+  target_link_libraries(play_motion ${catkin_LIBRARIES} ${Boost_LIBRARIES})
   add_dependencies(play_motion ${PROJECT_NAME}_gencpp)
 
   install(TARGETS play_motion
-     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-   )
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
+
+  # tests
+  #######
+  add_executable(rrbot test/rrbot.cpp)
+  target_link_libraries(rrbot ${catkin_LIBRARIES})
+
+  add_dependencies(tests rrbot)
+
+  add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
+  target_link_libraries(play_motion_test ${catkin_LIBRARIES})
 
 endif()
