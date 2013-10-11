@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(play_motion)
 
-find_package(catkin REQUIRED COMPONENTS roscpp genmsg actionlib controller_manager rostest)
+find_package(catkin REQUIRED COMPONENTS roscpp genmsg actionlib)
 find_package(Boost REQUIRED COMPONENTS thread)
 
 add_action_files(DIRECTORY action FILES PlayMotion.action)
@@ -27,10 +27,15 @@ install(TARGETS play_motion
 
 # tests
 #######
-add_executable(pm_rrbot test/rrbot.cpp)
-target_link_libraries(pm_rrbot ${catkin_LIBRARIES})
+if(CATKIN_ENABLE_TESTING)
+  find_package(catkin COMPONENTS rostest actionlib controller_manager joint_trajectory_controller)
 
-add_dependencies(tests pm_rrbot)
+  add_executable(pm_rrbot test/rrbot.cpp)
+  target_link_libraries(pm_rrbot ${catkin_LIBRARIES})
 
-add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
-target_link_libraries(play_motion_test ${catkin_LIBRARIES})
+  add_dependencies(tests pm_rrbot)
+
+  add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
+  add_dependencies(play_motion_test play_motion joint_trajectory_controller)
+  target_link_libraries(play_motion_test ${catkin_LIBRARIES})
+endif()
