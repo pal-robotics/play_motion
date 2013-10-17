@@ -3,19 +3,19 @@ duration reach_time
 int32 priority
 ---
 int32 error_code
-int32 SUCCEEDED             = 0
-int32 MOTION_NOT_FOUND      = 1
-int32 INFEASIBLE_REACH_TIME = 2
+int32 SUCCEEDED             = 1
+int32 MOTION_NOT_FOUND      = -1
+int32 INFEASIBLE_REACH_TIME = -2
 # controller error codes
-int32 CONTROLLER_BUSY       = 3
-int32 MISSING_CONTROLLER    = 4
-int32 TRAJECTORY_ERROR      = 5
-int32 GOAL_NOT_REACHED      = 6
+int32 CONTROLLER_BUSY       = -3
+int32 MISSING_CONTROLLER    = -4
+int32 TRAJECTORY_ERROR      = -5
+int32 GOAL_NOT_REACHED      = -6
 # planner error codes
-int32 PLANNER_OFFLINE       = 7
-int32 NO_PLAN_FOUND         = 8
+int32 PLANNER_OFFLINE       = -7
+int32 NO_PLAN_FOUND         = -8
 #other
-int32 OTHER_ERROR           = 42
+int32 OTHER_ERROR           = -42
 
 string error_string
 ---
