@@ -298,6 +298,7 @@ next_joint:;
           goal_hdl, "controller '" + p.first->getName() + "' did not accept trajectory, "
                          "canceling everything");
     }
+    goal_hdl->error_code = PMR::SUCCEEDED;
     return true;
   }
 }
