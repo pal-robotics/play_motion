@@ -1,0 +1,4 @@
+string motion_name
+float32 tolerance
+---
+bool already_there
