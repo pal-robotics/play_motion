@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp genmsg actionlib)
 find_package(Boost REQUIRED COMPONENTS thread)
 
 add_action_files(DIRECTORY action FILES PlayMotion.action)
+add_service_files(DIRECTORY srv FILES IsAlreadyThere.srv)
 generate_messages(DEPENDENCIES actionlib_msgs)
 
 catkin_package()
@@ -24,6 +25,9 @@ add_dependencies(play_motion ${PROJECT_NAME}_gencpp)
 install(TARGETS play_motion
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
+
+install (PROGRAMS scripts/is_already_there.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # tests
 #######
