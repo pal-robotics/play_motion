@@ -1,4 +1,13 @@
+# Checks if the robot joint state matches the first
+# point of a given motion
+#
+# Robot joint positions will be checked against the
+# values found in the motion's first point, given a
+# tolerance.
+# Joints that are not targetted by the given motion
+# will not be considered.
+
 string motion_name
-float32 tolerance
+float32 tolerance   # in radians
 ---
 bool already_there
