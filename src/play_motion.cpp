@@ -46,7 +46,6 @@
 
 #include "play_motion/move_joint_group.h"
 #include "play_motion/xmlrpc_helpers.h"
-#include "play_motion/PlayMotionResult.h"
 
 #define foreach BOOST_FOREACH
 
