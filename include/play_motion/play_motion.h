@@ -46,7 +46,7 @@
 
 #include "play_motion/move_joint_group.h"
 #include "play_motion/controller_updater.h"
-#include "play_motion/PlayMotionAction.h"
+#include "play_motion/PlayMotionResult.h"
 
 namespace sensor_msgs
 { ROS_DECLARE_MESSAGE(JointState); }
