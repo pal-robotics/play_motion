@@ -34,6 +34,8 @@ install (PROGRAMS scripts/is_already_there.py
 if(CATKIN_ENABLE_TESTING)
   find_package(catkin COMPONENTS rostest actionlib controller_manager joint_trajectory_controller)
 
+  include_directories(include ${catkin_INCLUDE_DIRS})
+
   add_executable(pm_rrbot test/rrbot.cpp)
   target_link_libraries(pm_rrbot ${catkin_LIBRARIES})
 
