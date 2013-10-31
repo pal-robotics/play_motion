@@ -46,12 +46,29 @@
 
 #include "play_motion/move_joint_group.h"
 #include "play_motion/controller_updater.h"
+#include "play_motion/PlayMotionResult.h"
 
 namespace sensor_msgs
 { ROS_DECLARE_MESSAGE(JointState); }
 
 namespace play_motion
 {
+  typedef play_motion::PlayMotionResult PMR;
+
+  class PMException : public ros::Exception
+  {
+  public:
+    PMException(const std::string& what, int error_code = PMR::OTHER_ERROR)
+      : ros::Exception(what)
+    { error_code_ = error_code; }
+
+    const int error_code() const
+    { return error_code_; }
+
+  private:
+    int error_code_;
+  };
+
   /** Move robot joints to a given pose.
    * Poses are specified in the parameter server, and are identified by name.
    */
@@ -104,9 +121,9 @@ namespace play_motion
       bool getGroupTraj(MoveJointGroupPtr move_joint_group,
           const std::vector<std::string>& motion_joints,
           const Trajectory& motion_points, Trajectory& traj_group);
-      bool getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints);
-      bool getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
-      bool checkControllers(const std::vector<std::string>& motion_joints);
+      void getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints);
+      void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
+      void checkControllers(const std::vector<std::string>& motion_joints);
       void updateControllersCb(const ControllerUpdater::ControllerStates& states,
           const ControllerUpdater::ControllerJoints& joints);
 

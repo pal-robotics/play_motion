@@ -45,16 +45,12 @@
 #include <sensor_msgs/JointState.h>
 
 #include "play_motion/move_joint_group.h"
-#include "play_motion/rethrow.h"
 #include "play_motion/xmlrpc_helpers.h"
-#include "play_motion/PlayMotionResult.h"
 
 #define foreach BOOST_FOREACH
 
 namespace play_motion
 {
-  typedef play_motion::PlayMotionResult PMR;
-
   PlayMotion::PlayMotion(ros::NodeHandle& nh) :
     nh_(nh),
     joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this)),
@@ -107,7 +103,11 @@ namespace play_motion
     }
 
     if (--goal_hdl->active_controllers == 0)
+    {
+      if (!goal_hdl->error_code)
+        goal_hdl->error_code = PMR::SUCCEEDED;
       goal_hdl->cb(goal_hdl);
+    }
   };
 
   void PlayMotion::jointStateCb(const sensor_msgs::JointStatePtr& msg)
@@ -170,58 +170,69 @@ namespace play_motion
     return true;
   }
 
-  bool PlayMotion::getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints)
+  void PlayMotion::getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints)
   {
-    using namespace XmlRpc;
     ros::NodeHandle nh("~");
-    XmlRpcValue joint_names;
+    xh::Array joint_names;
 
-    RETHROW(xh::fetchParam(nh, "motions/" + motion_name + "/joints", XmlRpcValue::TypeArray, joint_names));
-
-    motion_joints.clear();
-    motion_joints.resize(joint_names.size());
-    for (int i = 0; i < joint_names.size(); ++i)
-      RETHROW(xh::getArrayItem(joint_names, i, XmlRpcValue::TypeString, motion_joints[i]));
-
-    return true;
-  }
-
-  bool PlayMotion::getMotionPoints(const std::string& motion_name, Trajectory& motion_points)
-  {
-    using namespace XmlRpc;
-    ros::NodeHandle nh("~");
-    XmlRpcValue traj_points;
-
-    RETHROW(xh::fetchParam(nh, "motions/" + motion_name + "/points", XmlRpcValue::TypeArray, traj_points));
-
-    motion_points.clear();
-    motion_points.reserve(traj_points.size());
-    for (int i = 0; i < traj_points.size(); ++i)
+    try
     {
-      XmlRpcValue &name_value = traj_points[i];
-      TrajPoint point;
-      RETHROW(xh::getStructMember(name_value, "time_from_start",
-            XmlRpcValue::TypeDouble, point.time_from_start));
-
-      XmlRpcValue positions;
-      RETHROW(xh::getStructMember(name_value, "positions", XmlRpcValue::TypeArray, positions));
-      point.positions.resize(positions.size());
-      for (int j = 0; j < positions.size(); ++j)
-        RETHROW(xh::getArrayItem(positions, j, XmlRpcValue::TypeDouble, point.positions[j]));
-      if (name_value.hasMember("velocities"))
-      {
-        XmlRpcValue velocities;
-        RETHROW(xh::getStructMember(name_value, "velocities", XmlRpcValue::TypeArray, velocities));
-        point.velocities.resize(velocities.size());
-        for (int j = 0; j < velocities.size(); ++j)
-          RETHROW(xh::getArrayItem(velocities, j, XmlRpcValue::TypeDouble, point.velocities[j]));
-      }
-      motion_points.push_back(point);
+      xh::fetchParam(nh, "motions/" + motion_name + "/joints", joint_names);
+      motion_joints.clear();
+      motion_joints.resize(joint_names.size());
+      for (int i = 0; i < joint_names.size(); ++i)
+        xh::getArrayItem(joint_names, i, motion_joints[i]);
     }
-    return true;
+    catch (const xh::XmlrpcHelperException& e)
+    {
+      std::ostringstream error_msg;
+      error_msg << "could not parse motion '" << motion_name << "': " << e.what();
+      throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
+    }
   }
 
-  bool PlayMotion::checkControllers(const std::vector<std::string>& motion_joints)
+  void PlayMotion::getMotionPoints(const std::string& motion_name, Trajectory& motion_points)
+  {
+    ros::NodeHandle nh("~");
+    xh::Array traj_points;
+
+    try
+    {
+      xh::fetchParam(nh, "motions/" + motion_name + "/points", traj_points);
+      motion_points.clear();
+      motion_points.reserve(traj_points.size());
+      for (int i = 0; i < traj_points.size(); ++i)
+      {
+        xh::Struct &name_value = traj_points[i];
+        TrajPoint point;
+        xh::getStructMember(name_value, "time_from_start", point.time_from_start);
+
+        xh::Array positions;
+        xh::getStructMember(name_value, "positions", positions);
+        point.positions.resize(positions.size());
+        for (int j = 0; j < positions.size(); ++j)
+          xh::getArrayItem(positions, j, point.positions[j]);
+
+        if (name_value.hasMember("velocities"))
+        {
+          xh::Array velocities;
+          xh::getStructMember(name_value, "velocities", velocities);
+          point.velocities.resize(velocities.size());
+          for (int j = 0; j < velocities.size(); ++j)
+            xh::getArrayItem(velocities, j, point.velocities[j]);
+        }
+        motion_points.push_back(point);
+      }
+    }
+    catch (const xh::XmlrpcHelperException& e)
+    {
+      std::ostringstream error_msg;
+      error_msg << "could not parse motion '" << motion_name << "': " << e.what();
+      throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
+    }
+  }
+
+  void PlayMotion::checkControllers(const std::vector<std::string>& motion_joints)
   {
     foreach (const std::string& jn, motion_joints)
     {
@@ -229,15 +240,13 @@ namespace play_motion
         if (ctrlr->isControllingJoint(jn))
           goto next_joint;
 
-      ROS_ERROR_STREAM("no controller was found for joint '" << jn << "'");
-      return false;
+      throw PMException("no controller was found for joint '" + jn + "'", PMR::MISSING_CONTROLLER);
 next_joint:;
     }
-    return true;
   }
 
   template <class T>
-  bool hasNonNullIntersection(const std::vector<T>& v1, const std::vector<T>& v2)
+  static bool hasNonNullIntersection(const std::vector<T>& v1, const std::vector<T>& v2)
   {
     foreach (const T& e1, v1)
       foreach (const T& e2, v2)
@@ -245,14 +254,6 @@ next_joint:;
           return true;
     return false;
   }
-
-#define CHECK_WITH_ERRCODE(check, ghdl, code) do { \
-  if (!check) { ghdl->error_code = code; return false; } \
-} while (0)
-
-#define CHECK_WITH_ERRMSG(check, ghdl, msg) do { \
-  if (!check) { ghdl->error_code = PMR::OTHER_ERROR; ghdl->error_string = msg; return false; } \
-} while (0)
 
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
       GoalHandle& goal_hdl, const Callback& cb)
@@ -263,42 +264,48 @@ next_joint:;
 
     goal_hdl = GoalHandle(new Goal(cb));
 
-    double shortest_time = 1.0e-2;
-    CHECK_WITH_ERRCODE(duration.toSec() > shortest_time,
-        goal_hdl, PMR::INFEASIBLE_REACH_TIME);
-    CHECK_WITH_ERRCODE(getMotionJoints(motion_name, motion_joints),
-        goal_hdl, PMR::MOTION_NOT_FOUND);
-
-    CHECK_WITH_ERRCODE(checkControllers(motion_joints),
-        goal_hdl, PMR::MISSING_CONTROLLER);
-    CHECK_WITH_ERRMSG(getMotionPoints(motion_name, motion_points),
-        goal_hdl, "error while loading trajectory in motion '" + motion_name + "'");
-
-    // Seed target pose with current joint state
-    foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
+    try
     {
-      if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
-        continue;
-      CHECK_WITH_ERRMSG(getGroupTraj(move_joint_group, motion_joints, motion_points,
-            joint_group_traj[move_joint_group]), goal_hdl,
-          "missing joint state for joint in controller '" + move_joint_group->getName() + "'");
-      CHECK_WITH_ERRCODE(move_joint_group->isIdle(),
-          goal_hdl, PMR::CONTROLLER_BUSY);
+      double shortest_time = 1.0e-2;
+      if (duration.toSec() < shortest_time)
+        throw PMException("reach time too small", PMR::INFEASIBLE_REACH_TIME);
+      getMotionJoints(motion_name, motion_joints);
+      checkControllers(motion_joints);
+      getMotionPoints(motion_name, motion_points);
+
+      // Seed target pose with current joint state
+      foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
+      {
+        if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
+          continue;
+        if(!getGroupTraj(move_joint_group, motion_joints, motion_points,
+              joint_group_traj[move_joint_group]))
+          throw PMException("missing joint state for joint in controller '"
+              + move_joint_group->getName() + "'");
+        if(!move_joint_group->isIdle())
+          throw PMException("controller '" + move_joint_group->getName()
+              + "' is busy", PMR::CONTROLLER_BUSY);
+      }
+      if (joint_group_traj.empty())
+        throw PMException("nothing to send to controllers");
+
+      // Send pose commands
+      typedef std::pair<MoveJointGroupPtr, Trajectory> traj_pair_t;
+      foreach (const traj_pair_t& p, joint_group_traj)
+      {
+        goal_hdl->addController(p.first);
+        p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_hdl));
+        if (!p.first->sendGoal(p.second, duration))
+          throw PMException("controller '" + p.first->getName() + "' did not accept trajectory, "
+              "canceling everything");
+      }
     }
-    if (joint_group_traj.empty())
+    catch (const PMException& e)
+    {
+      goal_hdl->error_string = e.what();
+      goal_hdl->error_code = e.error_code();
       return false;
-
-    // Send pose commands
-    typedef std::pair<MoveJointGroupPtr, Trajectory> traj_pair_t;
-    foreach (const traj_pair_t& p, joint_group_traj)
-    {
-      goal_hdl->addController(p.first);
-      p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_hdl));
-      CHECK_WITH_ERRMSG(p.first->sendGoal(p.second, duration),
-          goal_hdl, "controller '" + p.first->getName() + "' did not accept trajectory, "
-                         "canceling everything");
     }
-    goal_hdl->error_code = PMR::SUCCEEDED;
     return true;
   }
 }
