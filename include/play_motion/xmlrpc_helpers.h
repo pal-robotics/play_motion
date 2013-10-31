@@ -37,72 +37,75 @@
 #ifndef XMLRPCHELPERS_H
 #define XMLRPCHELPERS_H
 
-#include <string>
+#include <sstream>
 #include <ros/ros.h>
-
-#include "play_motion/rethrow.h"
 
 namespace xh
 {
-  bool checkParamType(const XmlRpc::XmlRpcValue& val, const XmlRpc::XmlRpcValue::Type& expected_type,
-      const std::string& param_name = "")
+
+class XmlrpcHelperException : public ros::Exception
+{
+public:
+  XmlrpcHelperException(const std::string& what)
+    : ros::Exception(what) {}
+};
+
+typedef XmlRpc::XmlRpcValue Struct;
+typedef XmlRpc::XmlRpcValue Array;
+
+template <class T>
+void fetchParam(ros::NodeHandle nh, const std::string& param_name, T& output)
+{
+  XmlRpc::XmlRpcValue val;
+  if (!nh.getParamCached(param_name, val))
   {
-    if (val.getType() != expected_type)
-    {
-      if (param_name.empty())
-        ROS_ERROR("wrong parameter type");
-      else
-        ROS_ERROR("wrong parameter type for param '%s'", param_name.c_str());
-      return false;
-    }
-    return true;
+    std::ostringstream err_msg;
+    err_msg << "could not load parameter '" << param_name << "'. (namespace: "
+      << nh.getNamespace() << ")";
+    throw XmlrpcHelperException(err_msg.str());
   }
 
-  template <class T>
-    bool fetchParam(ros::NodeHandle nh, const std::string& param_name,
-        const XmlRpc::XmlRpcValue::Type& expected_type, T& output)
-    {
-      XmlRpc::XmlRpcValue val;
-      if (!nh.getParamCached(param_name, val))
-      {
-        ROS_ERROR("could not load parameter '%s'. (namespace: %s)",
-            param_name.c_str(), nh.getNamespace().c_str());
-        return false;
-      }
-      RETHROW(checkParamType(val, expected_type, param_name));
-      output = static_cast<T>(val);
-      return true;
-    }
+  output = static_cast<T>(val);
+}
 
-  bool checkSubItem(const XmlRpc::XmlRpcValue& col, int index)
+void checkArrayItem(const Array& col, int index)
+{
+  if (col.getType() != XmlRpc::XmlRpcValue::TypeArray)
+    throw XmlrpcHelperException("not an array");
+  if(index >= col.size())
   {
-    RETHROW(checkParamType(col, XmlRpc::XmlRpcValue::TypeArray));
-    if(index < col.size())
-      return true;
-    ROS_ERROR("index '%d' is over array capacity", index);
-    return false;
+    std::ostringstream err_msg;
+    err_msg << "index '" << index << "' is over array capacity";
+    throw XmlrpcHelperException(err_msg.str());
   }
-  bool checkSubItem(const XmlRpc::XmlRpcValue& col, const std::string& member)
+}
+
+void checkStructMember(const Struct& col, const std::string& member)
+{
+  if (col.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+    throw XmlrpcHelperException("not a struct");
+  if (!col.hasMember(member))
   {
-    RETHROW(checkParamType(col, XmlRpc::XmlRpcValue::TypeStruct));
-    if (col.hasMember(member))
-      return true;
-    ROS_ERROR("could not find member '%s'", member.c_str());
-    return false;
+    std::ostringstream err_msg;
+    err_msg << "could not find member '" << member << "'";
+    throw XmlrpcHelperException(err_msg.str());
   }
+}
 
-  template <class T, class U>
-    bool getSubItem(XmlRpc::XmlRpcValue& col, U member,
-        const XmlRpc::XmlRpcValue::Type& expected_type, T& output)
-    {
-      RETHROW(checkSubItem(col, member));
-      RETHROW(checkParamType(col[member], expected_type));
-      output = static_cast<T>(col[member]);
-      return true;
-    }
+template <class T>
+void getArrayItem(Array& col, int index, T& output) // XXX: XmlRpcValue::operator[] is not const
+{
+  checkArrayItem(col, index);
+  output = static_cast<T>(col[index]);
+}
 
-#define getArrayItem getSubItem
-#define getStructMember getSubItem
+template <class T>
+void getStructMember(Struct& col, const std::string& member, T& output)
+{
+  checkStructMember(col, member);
+  output = static_cast<T>(col[member]);
+}
+
 }
 
 #endif
