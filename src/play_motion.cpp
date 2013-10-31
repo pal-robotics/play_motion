@@ -45,7 +45,6 @@
 #include <sensor_msgs/JointState.h>
 
 #include "play_motion/move_joint_group.h"
-#include "play_motion/rethrow.h"
 #include "play_motion/xmlrpc_helpers.h"
 #include "play_motion/PlayMotionResult.h"
 
