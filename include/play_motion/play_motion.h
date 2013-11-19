@@ -123,6 +123,7 @@ namespace play_motion
           const Trajectory& motion_points, Trajectory& traj_group);
       void getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints);
       void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
+      void populateVelocities(const std::vector<std::string>& motion_joints, Trajectory& motion_points);
       void checkControllers(const std::vector<std::string>& motion_joints);
       void updateControllersCb(const ControllerUpdater::ControllerStates& states,
           const ControllerUpdater::ControllerJoints& joints);

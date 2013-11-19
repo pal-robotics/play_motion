@@ -36,6 +36,8 @@
 
 #include "play_motion/play_motion.h"
 
+#include <cassert>
+
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -245,6 +247,56 @@ next_joint:;
     }
   }
 
+  void PlayMotion::populateVelocities(const std::vector<std::string>& motion_joints, Trajectory& motion_points)
+  {
+    if (motion_joints.empty()) {return;}
+
+    const int num_waypoints = motion_points.size();
+    const int num_joints    = motion_points.front().positions.size();
+
+    // Initialize with zero velocity all waypoints not containing a velocity specification
+    // These values will be overwritten below
+    foreach (TrajPoint& point, motion_points)
+    {
+      if (point.velocities.size() != point.positions.size()) {point.velocities.resize(num_joints, 0.0);}
+    }
+
+    // Iterate over all waypoints except the first and last
+    for (int i = 1; i < num_waypoints - 1; ++i)
+    {
+      TrajPoint& point_curr = motion_points[i];
+      const TrajPoint& point_prev = motion_points[i - 1];
+      const TrajPoint& point_next = motion_points[i + 1];
+
+      // Iterate over all joints in a waypoint
+      for (int j = 0; j < num_joints; ++j)
+      {
+        const double pos_curr = point_curr.positions[j];
+        const double pos_prev = point_prev.positions[j];
+        const double pos_next = point_next.positions[j];
+
+        if ( (pos_curr == pos_prev)                        ||
+             (pos_curr < pos_prev && pos_curr <= pos_next) ||
+             (pos_curr > pos_prev && pos_curr >= pos_next) )
+        {
+          // Special case where zero velocity is enforced
+          point_curr.velocities[j] = 0.0;
+        }
+        else
+        {
+          // General case using numeric differentiation
+          const double t_prev = point_curr.time_from_start.toSec() - point_prev.time_from_start.toSec();
+          const double t_next = point_next.time_from_start.toSec() - point_curr.time_from_start.toSec();
+
+          const double v_prev = (pos_curr - pos_prev)/t_prev;
+          const double v_next = (pos_next - pos_curr)/t_next;
+
+          point_curr.velocities[j] = 0.5*(v_prev + v_next);
+        }
+      }
+    }
+  }
+
   template <class T>
   static bool hasNonNullIntersection(const std::vector<T>& v1, const std::vector<T>& v2)
   {
@@ -272,6 +324,7 @@ next_joint:;
       getMotionJoints(motion_name, motion_joints);
       checkControllers(motion_joints);
       getMotionPoints(motion_name, motion_points);
+      populateVelocities(motion_joints, motion_points);
 
       // Seed target pose with current joint state
       foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
