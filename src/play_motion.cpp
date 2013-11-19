@@ -36,11 +36,16 @@
 
 #include "play_motion/play_motion.h"
 
+#include <cassert>
+
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
+#include <spline_smoother/fritsch_butland_spline_smoother.h>
+#include <spline_smoother/spline_smoother_utils.h> // Needed because the above is buggy and fails to include its deps
+#include <arm_navigation_msgs/FilterJointTrajectory.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <sensor_msgs/JointState.h>
 
@@ -245,6 +250,55 @@ next_joint:;
     }
   }
 
+  void PlayMotion::populateVelocities(const std::vector<std::string>& motion_joints, Trajectory& motion_points)
+  {
+    // We don't populate velocities if they are already specified for _all_ waypoints
+    bool has_velocities = true;
+    foreach (const TrajPoint& p, motion_points)
+    {
+      if (p.velocities.empty())
+      {
+        has_velocities = false;
+        break;
+      }
+    }
+    if (has_velocities)
+    {
+      ROS_DEBUG("Trajectory already specifies velocity information. No need to generate it.");
+      return;
+    }
+
+    // Copy motion to container compatible with filter interface (copies data, booo!)
+    arm_navigation_msgs::FilterJointTrajectory filter_req;
+    filter_req.request.trajectory.joint_names = motion_joints;
+    foreach (const TrajPoint& p, motion_points)
+    {
+      trajectory_msgs::JointTrajectoryPoint p_msg;
+      p_msg.time_from_start = p.time_from_start;
+      p_msg.positions       = p.positions;
+      p_msg.velocities      = p.velocities;
+      filter_req.request.trajectory.points.push_back(p_msg);
+    }
+
+    // Call filter that adds velocity information to trajectory
+    arm_navigation_msgs::FilterJointTrajectory filter_resp; // Filtered trajectory is written to a request object, wtf
+    spline_smoother::FritschButlandSplineSmoother<arm_navigation_msgs::FilterJointTrajectory> filter;
+    const bool filter_ok = filter.smooth(filter_req, filter_resp);
+    if (!filter_ok)
+    {
+      ROS_ERROR_STREAM("Failed to populate velocities to motion.");
+      return;
+    }
+
+    // Copy computed velocities to original motion
+    assert(motion_points.size() == filter_resp.request.trajectory.points.size());
+    for (unsigned int i = 0; i < motion_points.size(); ++i)
+    {
+      motion_points[i].velocities = filter_resp.request.trajectory.points[i].velocities;
+      assert(motion_points[i].positions.size() == motion_points[i].velocities.size());
+    }
+  }
+
   template <class T>
   static bool hasNonNullIntersection(const std::vector<T>& v1, const std::vector<T>& v2)
   {
@@ -272,6 +326,7 @@ next_joint:;
       getMotionJoints(motion_name, motion_joints);
       checkControllers(motion_joints);
       getMotionPoints(motion_name, motion_points);
+      populateVelocities(motion_joints, motion_points);
 
       // Seed target pose with current joint state
       foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
