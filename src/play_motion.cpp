@@ -43,9 +43,6 @@
 
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include <spline_smoother/fritsch_butland_spline_smoother.h>
-#include <spline_smoother/spline_smoother_utils.h> // Needed because the above is buggy and fails to include its deps
-#include <arm_navigation_msgs/FilterJointTrajectory.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <sensor_msgs/JointState.h>
 
@@ -252,50 +249,51 @@ next_joint:;
 
   void PlayMotion::populateVelocities(const std::vector<std::string>& motion_joints, Trajectory& motion_points)
   {
-    // We don't populate velocities if they are already specified for _all_ waypoints
-    bool has_velocities = true;
-    foreach (const TrajPoint& p, motion_points)
+    if (motion_joints.empty()) {return;}
+
+    const int num_waypoints = motion_points.size();
+    const int num_joints    = motion_points.front().positions.size();
+
+    // Initialize with zero velocity all waypoints not containing a velocity specification
+    // These values will be overwritten below
+    foreach (TrajPoint& point, motion_points)
     {
-      if (p.velocities.empty())
+      if (point.velocities.size() != point.positions.size()) {point.velocities.resize(num_joints, 0.0);}
+    }
+
+    // Iterate over all waypoints except the first and last
+    for (int i = 1; i < num_waypoints - 1; ++i)
+    {
+      TrajPoint& point_curr = motion_points[i];
+      const TrajPoint& point_prev = motion_points[i - 1];
+      const TrajPoint& point_next = motion_points[i + 1];
+
+      // Iterate over all joints in a waypoint
+      for (int j = 0; j < num_joints; ++j)
       {
-        has_velocities = false;
-        break;
+        const double pos_curr = point_curr.positions[j];
+        const double pos_prev = point_prev.positions[j];
+        const double pos_next = point_next.positions[j];
+
+        if ( (pos_curr == pos_prev)                        ||
+             (pos_curr < pos_prev && pos_curr <= pos_next) ||
+             (pos_curr > pos_prev && pos_curr >= pos_next) )
+        {
+          // Special case where zero velocity is enforced
+          point_curr.velocities[j] = 0.0;
+        }
+        else
+        {
+          // General case using numeric differentiation
+          const double t_prev = point_curr.time_from_start.toSec() - point_prev.time_from_start.toSec();
+          const double t_next = point_next.time_from_start.toSec() - point_curr.time_from_start.toSec();
+
+          const double v_prev = (pos_curr - pos_prev)/t_prev;
+          const double v_next = (pos_next - pos_curr)/t_next;
+
+          point_curr.velocities[j] = 0.5*(v_prev + v_next);
+        }
       }
-    }
-    if (has_velocities)
-    {
-      ROS_DEBUG("Trajectory already specifies velocity information. No need to generate it.");
-      return;
-    }
-
-    // Copy motion to container compatible with filter interface (copies data, booo!)
-    arm_navigation_msgs::FilterJointTrajectory filter_req;
-    filter_req.request.trajectory.joint_names = motion_joints;
-    foreach (const TrajPoint& p, motion_points)
-    {
-      trajectory_msgs::JointTrajectoryPoint p_msg;
-      p_msg.time_from_start = p.time_from_start;
-      p_msg.positions       = p.positions;
-      p_msg.velocities      = p.velocities;
-      filter_req.request.trajectory.points.push_back(p_msg);
-    }
-
-    // Call filter that adds velocity information to trajectory
-    arm_navigation_msgs::FilterJointTrajectory filter_resp; // Filtered trajectory is written to a request object, wtf
-    spline_smoother::FritschButlandSplineSmoother<arm_navigation_msgs::FilterJointTrajectory> filter;
-    const bool filter_ok = filter.smooth(filter_req, filter_resp);
-    if (!filter_ok)
-    {
-      ROS_ERROR_STREAM("Failed to populate velocities to motion.");
-      return;
-    }
-
-    // Copy computed velocities to original motion
-    assert(motion_points.size() == filter_resp.request.trajectory.points.size());
-    for (unsigned int i = 0; i < motion_points.size(); ++i)
-    {
-      motion_points[i].velocities = filter_resp.request.trajectory.points[i].velocities;
-      assert(motion_points[i].positions.size() == motion_points[i].velocities.size());
     }
   }
 
