@@ -247,26 +247,31 @@ next_joint:;
     }
   }
 
-  void PlayMotion::populateVelocities(const std::vector<std::string>& motion_joints, Trajectory& motion_points)
+  void PlayMotion::populateVelocities(const Trajectory& traj_in, Trajectory& traj_out)
   {
-    if (motion_joints.empty()) {return;}
+    if (traj_in.empty()) {return;}
 
-    const int num_waypoints = motion_points.size();
-    const int num_joints    = motion_points.front().positions.size();
+    const int num_waypoints = traj_in.size();
+    const int num_joints    = traj_in.front().positions.size();
 
-    // Initialize with zero velocity all waypoints not containing a velocity specification
-    // These values will be overwritten below
-    foreach (TrajPoint& point, motion_points)
-    {
-      if (point.velocities.size() != point.positions.size()) {point.velocities.resize(num_joints, 0.0);}
-    }
+    // Initialize first and last points with zero velocity, if unspecified or not properly sized:
+    TrajPoint& point_first = traj_out.front();
+    TrajPoint& point_last  = traj_out.back();
+
+    if (int(point_first.velocities.size()) != num_joints) {point_first.velocities.resize(num_joints, 0.0);}
+    if (int(point_last.velocities.size())  != num_joints) {point_last.velocities.resize(num_joints, 0.0);}
 
     // Iterate over all waypoints except the first and last
     for (int i = 1; i < num_waypoints - 1; ++i)
     {
-      TrajPoint& point_curr = motion_points[i];
-      const TrajPoint& point_prev = motion_points[i - 1];
-      const TrajPoint& point_next = motion_points[i + 1];
+      std::vector<double>& vel_out = traj_out[i].velocities;
+      const TrajPoint& point_curr = traj_in[i];
+      const TrajPoint& point_prev = traj_in[i - 1];
+      const TrajPoint& point_next = traj_in[i + 1];
+
+      // Do nothing if waypoint contains a velocity specification, otherwise initialize to zero and continue
+      if (int(point_curr.velocities.size()) != num_joints) {vel_out.resize(num_joints, 0.0);}
+      else {return;} // Waypoint already specifies a velocity vector of the appropriate size
 
       // Iterate over all joints in a waypoint
       for (int j = 0; j < num_joints; ++j)
@@ -280,7 +285,7 @@ next_joint:;
              (pos_curr > pos_prev && pos_curr >= pos_next) )
         {
           // Special case where zero velocity is enforced
-          point_curr.velocities[j] = 0.0;
+          vel_out[j] = 0.0;
         }
         else
         {
@@ -291,7 +296,7 @@ next_joint:;
           const double v_prev = (pos_curr - pos_prev)/t_prev;
           const double v_next = (pos_next - pos_curr)/t_next;
 
-          point_curr.velocities[j] = 0.5*(v_prev + v_next);
+          vel_out[j] = 0.5*(v_prev + v_next);
         }
       }
     }
@@ -324,7 +329,7 @@ next_joint:;
       getMotionJoints(motion_name, motion_joints);
       checkControllers(motion_joints);
       getMotionPoints(motion_name, motion_points);
-      populateVelocities(motion_joints, motion_points);
+      populateVelocities(motion_points, motion_points);
 
       // Seed target pose with current joint state
       foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
