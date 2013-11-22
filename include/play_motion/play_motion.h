@@ -123,10 +123,16 @@ namespace play_motion
           const Trajectory& motion_points, Trajectory& traj_group);
       void getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints);
       void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
-      void populateVelocities(const std::vector<std::string>& motion_joints, Trajectory& motion_points);
       void checkControllers(const std::vector<std::string>& motion_joints);
       void updateControllersCb(const ControllerUpdater::ControllerStates& states,
           const ControllerUpdater::ControllerJoints& joints);
+
+      /// \brief Populate velocities to trajectory waypoints not specifying them.
+      /// \param traj_in Input trajectory
+      /// \param traj_out Output trajectory. Has complete velocity specification.
+      /// \note It's allowed to alias \p traj_in and \traj_out; that is, to provide the same trajectory instance
+      /// as input and output parameters for in-place, work.
+      void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 
       ros::NodeHandle                  nh_;
       std::vector<MoveJointGroupPtr>   move_joint_groups_;
