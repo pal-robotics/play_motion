@@ -1,0 +1,49 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package play_motion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* Add include dirs to unit tests
+* Document IsAlreadyThere service
+* Add service IsAlreadyThere
+* Changed error codes to follow ROS standard
+  SUCCEEDED should be 1 (so we don't have 0 as a real error code as it's a default value).
+  Recompiling the package works.
+* Return SUCCEEDED when everything went fine
+* use CATKIN_ENABLE_TESTING in CMakeLists.txt
+* catkin-only version now
+
+0.2.0
+-----
+* rrbot target name already used in other packages
+* update catkin version with tests
+* fix bug with busy controller
+* fix (??) issue with motions ending with an error
+* updated sample motion/pose files
+* implement error codes
+  * SUCCEEDED
+  * MOTION_NOT_FOUND
+  * CONTROLLER_BUSY
+  * INFEASIBLE_REACH_TIME
+  * MISSING_CONTROLLER (no unit test yet)
+  * TRAJECTORY_ERROR (no unit test yet)
+  * GOAL_NOT_REACHED (no unit test yet)
+  * OTHER_ERROR (newly added, no unit test yet)
+* add tests
+* fix bug with invalid service client
+
+0.1.99
+------
+* now keeps track of available joint controllers
+* added controller updater
+* fix bugs
+
+0.1.80
+------
+* goal canceling
+* (not tested) simultaneous non-overlapping goals
+
+0.1.0
+-----
+* play_motion: a simple tool to play pre-recorded motions on a robot
