@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2013-11-28)
+------------------
 * Add include dirs to unit tests
 * Document IsAlreadyThere service
 * Add service IsAlreadyThere
