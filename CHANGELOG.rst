@@ -2,14 +2,19 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Populate velocity data
+
+  * Velocities are populated only for motions that don't specify velocities for at least one waypoint.
+  * Good compromise: Smoother than Fritsch-Butland, while still allowing to hold position in equal consecutive waypoints (one of the heuristics we wanted).
+
 0.3.0 (2013-11-28)
 ------------------
 * Add include dirs to unit tests
 * Document IsAlreadyThere service
 * Add service IsAlreadyThere
-* Changed error codes to follow ROS standard
-  SUCCEEDED should be 1 (so we don't have 0 as a real error code as it's a default value).
-  Recompiling the package works.
+* Changed error codes to follow ROS standard. SUCCEEDED should be 1 (so we don't have 0 as a real error code as it's a default value).
 * Return SUCCEEDED when everything went fine
 * use CATKIN_ENABLE_TESTING in CMakeLists.txt
 * catkin-only version now
@@ -22,6 +27,7 @@ Changelog for package play_motion
 * fix (??) issue with motions ending with an error
 * updated sample motion/pose files
 * implement error codes
+
   * SUCCEEDED
   * MOTION_NOT_FOUND
   * CONTROLLER_BUSY
@@ -30,6 +36,7 @@ Changelog for package play_motion
   * TRAJECTORY_ERROR (no unit test yet)
   * GOAL_NOT_REACHED (no unit test yet)
   * OTHER_ERROR (newly added, no unit test yet)
+
 * add tests
 * fix bug with invalid service client
 
