@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2013-12-04)
+------------------
 * Populate velocity data
 
   * Velocities are populated only for motions that don't specify velocities for at least one waypoint.
