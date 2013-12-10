@@ -96,15 +96,21 @@ namespace play_motion
 
   void PlayMotion::controllerCb(int error_code, GoalHandle goal_hdl)
   {
-    ROS_DEBUG("return from joint group, %d active controllers", goal_hdl->active_controllers - 1);
+    if (goal_hdl->active_controllers < 1)
+      return;
+
+    ROS_DEBUG("return from joint group, %d active controllers, error: %d",
+        goal_hdl->active_controllers - 1, error_code);
+
     if (error_code != 0)
     {
       generateErrorCode(goal_hdl, error_code);
       goal_hdl->cancel();
-      goal_hdl->active_controllers = 1;
+      goal_hdl->active_controllers = 1; // terminate goal immediately
     }
 
-    if (--goal_hdl->active_controllers == 0)
+    goal_hdl->active_controllers--;
+    if (goal_hdl->active_controllers == 0)
     {
       if (!goal_hdl->error_code)
         goal_hdl->error_code = PMR::SUCCEEDED;

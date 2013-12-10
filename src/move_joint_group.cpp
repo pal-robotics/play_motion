@@ -59,6 +59,7 @@ namespace play_motion
     if (!success)
       ROS_WARN_STREAM("controller " << controller_name_ << " failed with err " << client_.getResult()->error_code);
     active_cb_(r->error_code);
+    active_cb_.clear();
   }
 
   bool MoveJointGroup::isControllingJoint(const std::string& joint_name)
