@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import roslib; roslib.load_manifest("play_motion")
 import rospy
 import sensor_msgs.msg
 import play_motion.srv
