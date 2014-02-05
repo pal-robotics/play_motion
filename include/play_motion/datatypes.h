@@ -32,59 +32,28 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \author Paul Mathieu. */
+/** \author Paul Mathieu.                     */
 
-#ifndef CONSTROLLERUPDATER_H
-#define CONSTROLLERUPDATER_H
+#ifndef PM_DATATYPES_H
+#define PM_DATATYPES_H
 
-#include <string>
-#include <map>
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
-#include <ros/ros.h>
-#include <ros/timer.h>
-
-#include "play_motion/datatypes.h"
+#include <vector>
+#include <ros/duration.h>
 
 namespace play_motion
 {
 
-/** Keeps track of controller statuses by polling the controller manager.
- * The service call happens in a separate thread to not disrupt the main code.
- */
-class ControllerUpdater
+struct TrajPoint
 {
-public:
-  enum ControllerState
-  {
-    RUNNING,
-    STOPPED
-  };
-
-  typedef std::map<std::string, ControllerState> ControllerStates;
-  typedef std::map<std::string, JointNames>      ControllerJoints;
-
-private:
-  typedef boost::function<void(const ControllerStates& states,
-      const ControllerJoints& joints)> Callback;
-
-public:
-  ControllerUpdater(ros::NodeHandle nh);
-  virtual ~ControllerUpdater();
-
-  void registerUpdateCb(const Callback& cb) { update_cb_ = cb; }
-
-private:
-  void mainLoop();
-
-  ros::NodeHandle    nh_;
-  ros::Timer         update_timer_;
-  boost::thread      main_thread_;
-  Callback           update_cb_;
-  ros::ServiceClient cm_client_;
-  ControllerStates   last_cstates_;
+  std::vector<double> positions;
+  std::vector<double> velocities;
+  ros::Duration       time_from_start;
 };
 
+typedef std::vector<std::string> JointNames;
+typedef std::vector<TrajPoint>   Trajectory;
+
 }
+
 
 #endif
