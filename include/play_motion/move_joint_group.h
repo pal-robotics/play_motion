@@ -45,6 +45,8 @@
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 
+#include "play_motion/datatypes.h"
+
 namespace play_motion
 {
   /** Move a joint group to a given pose.
@@ -59,16 +61,8 @@ namespace play_motion
       typedef control_msgs::FollowJointTrajectoryResult ActionResult;
       typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
       typedef boost::function<void(int)>                Callback;
-      typedef std::vector<std::string>                  JointNames;
 
     public:
-      struct TrajPoint
-      {
-        std::vector<double> positions;
-        std::vector<double> velocities;
-        ros::Duration       time_from_start;
-      };
-
       MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
       bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
       bool isControllingJoint(const std::string& joint_name);
@@ -76,7 +70,7 @@ namespace play_motion
       void cancel() { busy_ = false; client_.cancelAllGoals(); }
       void setCallback(const Callback& cb) { active_cb_ = cb; }
 
-      const std::vector<std::string>& getJointNames() const {return joint_names_;}
+      const JointNames& getJointNames() const {return joint_names_;}
       actionlib::SimpleClientGoalState getState() {return client_.getState();}
       const std::string& getName() { return controller_name_; }
 
