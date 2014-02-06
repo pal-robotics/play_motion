@@ -38,6 +38,7 @@
 #include <cassert>
 
 #include <ros/ros.h>
+#include <boost/foreach.hpp>
 #include "play_motion/xmlrpc_helpers.h"
 #define foreach BOOST_FOREACH
 
