@@ -2,6 +2,12 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.2 (2014-02-05)
+------------------
+* Refactor and add a datatypes.h
+* Remove unneeded import
+* Fix bug: calling the motion callback more than once
+
 0.3.1 (2013-12-04)
 ------------------
 * Populate velocity data
