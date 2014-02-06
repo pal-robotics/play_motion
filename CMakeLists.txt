@@ -12,6 +12,8 @@ catkin_package()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
+add_library(play_motion_helper src/play_motion_helpers.cpp)
+
 add_executable(play_motion
   src/play_motion_main.cpp
   src/play_motion_server.cpp
@@ -19,7 +21,7 @@ add_executable(play_motion
   src/move_joint_group.cpp
   src/controller_updater.cpp)
 
-target_link_libraries(play_motion ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(play_motion play_motion_helper ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(play_motion ${PROJECT_NAME}_gencpp)
 
 install(TARGETS play_motion
