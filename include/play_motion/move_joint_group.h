@@ -54,36 +54,36 @@ namespace play_motion
    */
   class MoveJointGroup
   {
-    private:
-      typedef actionlib::SimpleActionClient
-        <control_msgs::FollowJointTrajectoryAction>     ActionClient;
-      typedef control_msgs::FollowJointTrajectoryGoal   ActionGoal;
-      typedef control_msgs::FollowJointTrajectoryResult ActionResult;
-      typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
-      typedef boost::function<void(int)>                Callback;
+  private:
+    typedef actionlib::SimpleActionClient
+    <control_msgs::FollowJointTrajectoryAction>     ActionClient;
+    typedef control_msgs::FollowJointTrajectoryGoal   ActionGoal;
+    typedef control_msgs::FollowJointTrajectoryResult ActionResult;
+    typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
+    typedef boost::function<void(int)>                Callback;
 
-    public:
-      MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
-      bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
-      bool isControllingJoint(const std::string& joint_name);
-      bool isIdle() { return !busy_; }
-      void cancel() { busy_ = false; client_.cancelAllGoals(); }
-      void setCallback(const Callback& cb) { active_cb_ = cb; }
+  public:
+    MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
+    bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
+    bool isControllingJoint(const std::string& joint_name);
+    bool isIdle() { return !busy_; }
+    void cancel() { busy_ = false; client_.cancelAllGoals(); }
+    void setCallback(const Callback& cb) { active_cb_ = cb; }
 
-      const JointNames& getJointNames() const {return joint_names_;}
-      actionlib::SimpleClientGoalState getState() {return client_.getState();}
-      const std::string& getName() { return controller_name_; }
+    const JointNames& getJointNames() const {return joint_names_;}
+    actionlib::SimpleClientGoalState getState() {return client_.getState();}
+    const std::string& getName() { return controller_name_; }
 
-    private:
-      void alCallback();
+  private:
+    void alCallback();
 
-      bool                     busy_;
-      ros::NodeHandle          nh_;               ///< Default node handle.
-      std::string              controller_name_;  ///< Controller name.
-      JointNames               joint_names_;      ///< Names of controller joints.
-      ActionClient             client_;           ///< Action client used to trigger motions.
-      Callback                 active_cb_;        ///< Call this when we are called back from the controller
-      ros::Timer               configure_timer_;  ///< To periodically check for controller actionlib server
+    bool                     busy_;
+    ros::NodeHandle          nh_;               ///< Default node handle.
+    std::string              controller_name_;  ///< Controller name.
+    JointNames               joint_names_;      ///< Names of controller joints.
+    ActionClient             client_;           ///< Action client used to trigger motions.
+    Callback                 active_cb_;        ///< Call this when we are called back from the controller
+    ros::Timer               configure_timer_;  ///< To periodically check for controller actionlib server
   };
 }
 

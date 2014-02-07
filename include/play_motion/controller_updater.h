@@ -49,41 +49,41 @@
 namespace play_motion
 {
 
-/** Keeps track of controller statuses by polling the controller manager.
+  /** Keeps track of controller statuses by polling the controller manager.
  * The service call happens in a separate thread to not disrupt the main code.
  */
-class ControllerUpdater
-{
-public:
-  enum ControllerState
+  class ControllerUpdater
   {
-    RUNNING,
-    STOPPED
+  public:
+    enum ControllerState
+    {
+      RUNNING,
+      STOPPED
+    };
+
+    typedef std::map<std::string, ControllerState> ControllerStates;
+    typedef std::map<std::string, JointNames>      ControllerJoints;
+
+  private:
+    typedef boost::function<void(const ControllerStates& states,
+                                 const ControllerJoints& joints)> Callback;
+
+  public:
+    ControllerUpdater(ros::NodeHandle nh);
+    virtual ~ControllerUpdater();
+
+    void registerUpdateCb(const Callback& cb) { update_cb_ = cb; }
+
+  private:
+    void mainLoop();
+
+    ros::NodeHandle    nh_;
+    ros::Timer         update_timer_;
+    boost::thread      main_thread_;
+    Callback           update_cb_;
+    ros::ServiceClient cm_client_;
+    ControllerStates   last_cstates_;
   };
-
-  typedef std::map<std::string, ControllerState> ControllerStates;
-  typedef std::map<std::string, JointNames>      ControllerJoints;
-
-private:
-  typedef boost::function<void(const ControllerStates& states,
-      const ControllerJoints& joints)> Callback;
-
-public:
-  ControllerUpdater(ros::NodeHandle nh);
-  virtual ~ControllerUpdater();
-
-  void registerUpdateCb(const Callback& cb) { update_cb_ = cb; }
-
-private:
-  void mainLoop();
-
-  ros::NodeHandle    nh_;
-  ros::Timer         update_timer_;
-  boost::thread      main_thread_;
-  Callback           update_cb_;
-  ros::ServiceClient cm_client_;
-  ControllerStates   last_cstates_;
-};
 
 }
 

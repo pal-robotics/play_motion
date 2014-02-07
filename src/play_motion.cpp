@@ -80,7 +80,7 @@ namespace play_motion
   }
 
   void PlayMotion::updateControllersCb(const ControllerUpdater::ControllerStates& states,
-      const ControllerUpdater::ControllerJoints& joints)
+                                       const ControllerUpdater::ControllerJoints& joints)
   {
     typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
     move_joint_groups_.clear();
@@ -118,7 +118,7 @@ namespace play_motion
       return;
 
     ROS_DEBUG("return from joint group, %d active controllers, error: %d",
-        goal_hdl->active_controllers - 1, error_code);
+              goal_hdl->active_controllers - 1, error_code);
 
     if (error_code != 0)
     {
@@ -144,8 +144,8 @@ namespace play_motion
   }
 
   bool PlayMotion::getGroupTraj(MoveJointGroupPtr move_joint_group,
-      const JointNames& motion_joints,
-      const Trajectory& motion_points, Trajectory& traj_group)
+                                const JointNames& motion_joints,
+                                const Trajectory& motion_points, Trajectory& traj_group)
   {
     JointNames                 group_joint_names = move_joint_group->getJointNames();
     std::vector<double>        joint_states;
@@ -240,7 +240,7 @@ next_joint:;
   void PlayMotion::populateVelocities(const Trajectory& traj_in, Trajectory& traj_out)
   {
     ::play_motion::populateVelocities (traj_in, traj_out);
-        }
+  }
 
 
   template <class T>
@@ -254,7 +254,7 @@ next_joint:;
   }
 
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
-      GoalHandle& goal_hdl, const Callback& cb)
+                       GoalHandle& goal_hdl, const Callback& cb)
   {
     JointNames                              motion_joints;
     Trajectory                              motion_points;
@@ -278,12 +278,12 @@ next_joint:;
         if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
           continue;
         if(!getGroupTraj(move_joint_group, motion_joints, motion_points,
-              joint_group_traj[move_joint_group]))
+                         joint_group_traj[move_joint_group]))
           throw PMException("missing joint state for joint in controller '"
-              + move_joint_group->getName() + "'");
+                            + move_joint_group->getName() + "'");
         if(!move_joint_group->isIdle())
           throw PMException("controller '" + move_joint_group->getName()
-              + "' is busy", PMR::CONTROLLER_BUSY);
+                            + "' is busy", PMR::CONTROLLER_BUSY);
       }
       if (joint_group_traj.empty())
         throw PMException("nothing to send to controllers");
@@ -296,7 +296,7 @@ next_joint:;
         p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_hdl));
         if (!p.first->sendGoal(p.second, duration))
           throw PMException("controller '" + p.first->getName() + "' did not accept trajectory, "
-              "canceling everything");
+                            "canceling everything");
       }
     }
     catch (const PMException& e)

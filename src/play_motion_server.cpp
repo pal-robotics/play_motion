@@ -105,7 +105,7 @@ namespace play_motion
     ROS_INFO_STREAM("sending motion '" << goal->motion_name << "' to controllers");
     PlayMotion::GoalHandle goal_hdl;
     if (!pm_->run(goal->motion_name, goal->reach_time, goal_hdl,
-          boost::bind(&PlayMotionServer::playMotionCb, this, _1)))
+                  boost::bind(&PlayMotionServer::playMotionCb, this, _1)))
     {
       PlayMotionResult r;
       r.error_code = goal_hdl->error_code;
