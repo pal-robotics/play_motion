@@ -61,6 +61,24 @@ namespace play_motion
     ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
   }
 
+  void PlayMotion::Goal::cancel()
+  {
+    foreach (MoveJointGroupPtr mjg, controllers)
+      mjg->cancel();
+  }
+
+  void PlayMotion::Goal::addController(const MoveJointGroupPtr& ctrl)
+  {
+    controllers.push_back(ctrl);
+    active_controllers++;
+  }
+
+  PlayMotion::Goal::~Goal()
+  {
+    if (active_controllers)
+      cancel();
+  }
+
   void PlayMotion::updateControllersCb(const ControllerUpdater::ControllerStates& states,
       const ControllerUpdater::ControllerJoints& joints)
   {
@@ -96,15 +114,21 @@ namespace play_motion
 
   void PlayMotion::controllerCb(int error_code, GoalHandle goal_hdl)
   {
-    ROS_DEBUG("return from joint group, %d active controllers", goal_hdl->active_controllers - 1);
+    if (goal_hdl->active_controllers < 1)
+      return;
+
+    ROS_DEBUG("return from joint group, %d active controllers, error: %d",
+        goal_hdl->active_controllers - 1, error_code);
+
     if (error_code != 0)
     {
       generateErrorCode(goal_hdl, error_code);
       goal_hdl->cancel();
-      goal_hdl->active_controllers = 1;
+      goal_hdl->active_controllers = 1; // terminate goal immediately
     }
 
-    if (--goal_hdl->active_controllers == 0)
+    goal_hdl->active_controllers--;
+    if (goal_hdl->active_controllers == 0)
     {
       if (!goal_hdl->error_code)
         goal_hdl->error_code = PMR::SUCCEEDED;
@@ -120,10 +144,10 @@ namespace play_motion
   }
 
   bool PlayMotion::getGroupTraj(MoveJointGroupPtr move_joint_group,
-      const std::vector<std::string>& motion_joints,
+      const JointNames& motion_joints,
       const Trajectory& motion_points, Trajectory& traj_group)
   {
-    std::vector<std::string>   group_joint_names = move_joint_group->getJointNames();
+    JointNames                 group_joint_names = move_joint_group->getJointNames();
     std::vector<double>        joint_states;
     std::map<std::string, int> joint_index;
 
@@ -172,7 +196,7 @@ namespace play_motion
     return true;
   }
 
-  void PlayMotion::getMotionJoints(const std::string& motion_name, std::vector<std::string>& motion_joints)
+  void PlayMotion::getMotionJoints(const std::string& motion_name, JointNames& motion_joints)
   {
     ros::NodeHandle nh("~");
     xh::Array joint_names;
@@ -234,7 +258,7 @@ namespace play_motion
     }
   }
 
-  void PlayMotion::checkControllers(const std::vector<std::string>& motion_joints)
+  void PlayMotion::checkControllers(const JointNames& motion_joints)
   {
     foreach (const std::string& jn, motion_joints)
     {
@@ -315,7 +339,7 @@ next_joint:;
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
       GoalHandle& goal_hdl, const Callback& cb)
   {
-    std::vector<std::string>                motion_joints;
+    JointNames                              motion_joints;
     Trajectory                              motion_points;
     std::map<MoveJointGroupPtr, Trajectory> joint_group_traj;
 
