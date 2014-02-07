@@ -1,7 +1,4 @@
 play_motion:
-  controllers:
-    - rrbot_controller_joint1
-    - rrbot_controller_joint2
   motions:
     home:
       joints:

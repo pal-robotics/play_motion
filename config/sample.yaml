@@ -1,5 +1,4 @@
 play_motion:
-  controllers: [fake_controller]
   motions:
     say_hi:
       joints: [fake_joint_2, fake_joint_1]
