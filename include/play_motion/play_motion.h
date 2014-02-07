@@ -76,68 +76,68 @@ namespace play_motion
    */
   class PlayMotion
   {
-    public:
-      class Goal;
-      typedef boost::shared_ptr<Goal> GoalHandle;
-    private:
-      typedef boost::shared_ptr<MoveJointGroup>        MoveJointGroupPtr;
-      typedef std::vector<MoveJointGroupPtr>           ControllerList;
-      typedef boost::function<void(const GoalHandle&)> Callback;
+  public:
+    class Goal;
+    typedef boost::shared_ptr<Goal> GoalHandle;
+  private:
+    typedef boost::shared_ptr<MoveJointGroup>        MoveJointGroupPtr;
+    typedef std::vector<MoveJointGroupPtr>           ControllerList;
+    typedef boost::function<void(const GoalHandle&)> Callback;
+
+  public:
+    class Goal
+    {
+      friend class PlayMotion;
 
     public:
-      class Goal
-      {
-        friend class PlayMotion;
+      int            error_code;
+      std::string    error_string;
+      int            active_controllers;
+      Callback       cb;
+      ControllerList controllers;
 
-      public:
-        int            error_code;
-        std::string    error_string;
-        int            active_controllers;
-        Callback       cb;
-        ControllerList controllers;
-
-        ~Goal();
-        void cancel();
-        void addController(const MoveJointGroupPtr& ctrl);
-
-      private:
-        Goal(const Callback& cbk) : error_code(0), active_controllers(0), cb(cbk) {}
-      };
-
-      PlayMotion(ros::NodeHandle& nh);
-
-      /// \brief Send motion goal request
-      /// \param motion_name Name of motion to execute.
-      /// \param duration Motion duration.
-      /// \param[out] goal_id contains the goal ID if function returns true
-      bool run(const std::string& motion_name, const ros::Duration& duration,
-          GoalHandle& gh, const Callback& cb);
+      ~Goal();
+      void cancel();
+      void addController(const MoveJointGroupPtr& ctrl);
 
     private:
-      void jointStateCb(const sensor_msgs::JointStatePtr& msg);
-      void controllerCb(int error_code, GoalHandle goal_hdl);
+      Goal(const Callback& cbk) : error_code(0), active_controllers(0), cb(cbk) {}
+    };
 
-      bool getGroupTraj(MoveJointGroupPtr move_joint_group,
-          const JointNames& motion_joints,
-          const Trajectory& motion_points, Trajectory& traj_group);
-      void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
-      void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
-      void checkControllers(const JointNames& motion_joints);
-      void updateControllersCb(const ControllerUpdater::ControllerStates& states,
-          const ControllerUpdater::ControllerJoints& joints);
+    PlayMotion(ros::NodeHandle& nh);
 
-      /// \brief Populate velocities to trajectory waypoints not specifying them.
-      /// \param traj_in Input trajectory
-      /// \param traj_out Output trajectory. Has complete velocity specification.
-      /// \note It's allowed to alias \p traj_in and \traj_out; that is, to provide the same trajectory instance
-      /// as input and output parameters for in-place, work.
-      void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
+    /// \brief Send motion goal request
+    /// \param motion_name Name of motion to execute.
+    /// \param duration Motion duration.
+    /// \param[out] goal_id contains the goal ID if function returns true
+    bool run(const std::string& motion_name, const ros::Duration& duration,
+             GoalHandle& gh, const Callback& cb);
 
-      ros::NodeHandle                  nh_;
-      ControllerList                   move_joint_groups_;
-      std::map<std::string, double>    joint_states_;
-      ros::Subscriber                  joint_states_sub_;
-      ControllerUpdater                ctrlr_updater_;
+  private:
+    void jointStateCb(const sensor_msgs::JointStatePtr& msg);
+    void controllerCb(int error_code, GoalHandle goal_hdl);
+
+    bool getGroupTraj(MoveJointGroupPtr move_joint_group,
+                      const JointNames& motion_joints,
+                      const Trajectory& motion_points, Trajectory& traj_group);
+    void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
+    void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
+    void checkControllers(const JointNames& motion_joints);
+    void updateControllersCb(const ControllerUpdater::ControllerStates& states,
+                             const ControllerUpdater::ControllerJoints& joints);
+
+    /// \brief Populate velocities to trajectory waypoints not specifying them.
+    /// \param traj_in Input trajectory
+    /// \param traj_out Output trajectory. Has complete velocity specification.
+    /// \note It's allowed to alias \p traj_in and \traj_out; that is, to provide the same trajectory instance
+    /// as input and output parameters for in-place, work.
+    void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
+
+    ros::NodeHandle                  nh_;
+    ControllerList                   move_joint_groups_;
+    std::map<std::string, double>    joint_states_;
+    ros::Subscriber                  joint_states_sub_;
+    ControllerUpdater                ctrlr_updater_;
   };
 }
 

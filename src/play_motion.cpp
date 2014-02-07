@@ -98,17 +98,17 @@ namespace play_motion
     typedef control_msgs::FollowJointTrajectoryResult JTR;
     switch (error_code)
     {
-    case JTR::PATH_TOLERANCE_VIOLATED:
-      goal_hdl->error_code = PMR::TRAJECTORY_ERROR;
-      break;
-    case JTR::GOAL_TOLERANCE_VIOLATED:
-      goal_hdl->error_code = PMR::GOAL_NOT_REACHED;
-      break;
-    default:
-      std::ostringstream os;
-      goal_hdl->error_code = PMR::OTHER_ERROR;
-      os << "got error code " << error_code << ", motion aborted";
-      goal_hdl->error_string = os.str();
+      case JTR::PATH_TOLERANCE_VIOLATED:
+        goal_hdl->error_code = PMR::TRAJECTORY_ERROR;
+        break;
+      case JTR::GOAL_TOLERANCE_VIOLATED:
+        goal_hdl->error_code = PMR::GOAL_NOT_REACHED;
+        break;
+      default:
+        std::ostringstream os;
+        goal_hdl->error_code = PMR::OTHER_ERROR;
+        os << "got error code " << error_code << ", motion aborted";
+        goal_hdl->error_string = os.str();
     }
   }
 

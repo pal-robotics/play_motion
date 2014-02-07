@@ -43,15 +43,15 @@
 namespace play_motion
 {
 
-struct TrajPoint
-{
-  std::vector<double> positions;
-  std::vector<double> velocities;
-  ros::Duration       time_from_start;
-};
+  struct TrajPoint
+  {
+    std::vector<double> positions;
+    std::vector<double> velocities;
+    ros::Duration       time_from_start;
+  };
 
-typedef std::vector<std::string> JointNames;
-typedef std::vector<TrajPoint>   Trajectory;
+  typedef std::vector<std::string> JointNames;
+  typedef std::vector<TrajPoint>   Trajectory;
 
 }
 
