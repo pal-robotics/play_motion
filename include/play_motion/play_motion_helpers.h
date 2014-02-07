@@ -42,19 +42,32 @@
 #include <string>
 #include "play_motion/datatypes.h"
 
+namespace ros
+{
+  class NodeHandle;
+}
+
 namespace play_motion
 {
   /**
+   * @param nh Nodehandle with the namespace containing the motions (ie ros::NodeHandle( nh"play_motion"))
    * @throws xh::XmlrpcHelperException if motion_name cannot be found
    */
-  void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
+  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_name, JointNames& motion_joints);
 
 
   /**
+   * @param nh Nodehandle with the namespace containing the motions (ie ros::NodeHandle( nh"play_motion"))
    * @throws xh::XmlrpcHelperException if motion_name cannot be found
    */
-  void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
+  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_name, Trajectory& motion_points);
 
+  /**
+   * @brief getMotions obtain all motion names
+   * @param nh Nodehandle with the namespace containing the motions (ie ros::NodeHandle( nh"play_motion"))
+   * @throws xh::XmlrpcHelperException if no motions available
+   */
+  void getMotions(const ros::NodeHandle &nh, MotionNames& motion_names);
 
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 }
