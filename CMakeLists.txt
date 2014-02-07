@@ -17,12 +17,16 @@ rosbuild_gensrv()
 
 rosbuild_add_boost_directories()
 
+rosbuild_add_library(play_motion_helper src/play_motion_helpers.cpp)
+
 rosbuild_add_executable(play_motion
   src/move_joint_group.cpp
   src/play_motion.cpp
   src/play_motion_server.cpp
   src/play_motion_main.cpp
   src/controller_updater.cpp)
+
+target_link_libraries(play_motion play_motion_helper)
 
 rosbuild_add_executable(rrbot test/rrbot.cpp)
 rosbuild_add_executable(play_motion_test test/play_motion_test.cpp)
