@@ -44,9 +44,8 @@
 
 namespace play_motion
 {
-  void getMotionJoints(const std::string& motion_name, JointNames& motion_joints)
+  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_name, JointNames& motion_joints)
   {
-    ros::NodeHandle nh("~");
     xh::Array joint_names;
 
     xh::fetchParam(nh, "motions/" + motion_name + "/joints", joint_names);
@@ -56,9 +55,8 @@ namespace play_motion
       xh::getArrayItem(joint_names, i, motion_joints[i]);
   }
 
-  void getMotionPoints(const std::string& motion_name, Trajectory& motion_points)
+  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_name, Trajectory& motion_points)
   {
-    ros::NodeHandle nh("~");
     xh::Array traj_points;
     xh::fetchParam(nh, "motions/" + motion_name + "/points", traj_points);
     motion_points.clear();
@@ -84,6 +82,17 @@ namespace play_motion
           xh::getArrayItem(velocities, j, point.velocities[j]);
       }
       motion_points.push_back(point);
+    }
+  }
+
+  void getMotions(const ros::NodeHandle &nh, MotionNames& motion_names)
+  {
+    xh::Struct motions;
+
+    xh::fetchParam(nh, "motions/", motions);
+    for (xh::Struct::iterator it = motions.begin(); it != motions.end(); ++it)
+    {
+      motion_names.push_back(it->first);
     }
   }
 

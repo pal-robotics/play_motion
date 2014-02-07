@@ -200,7 +200,7 @@ namespace play_motion
   {
     try
     {
-      ::play_motion::getMotionJoints(motion_name, motion_joints);
+      ::play_motion::getMotionJoints(ros::NodeHandle("~"), motion_name, motion_joints);
     }
     catch (const xh::XmlrpcHelperException& e)
     {
@@ -214,7 +214,7 @@ namespace play_motion
   {
     try
     {
-      ::play_motion::getMotionPoints(motion_name, motion_points);
+      ::play_motion::getMotionPoints(ros::NodeHandle("~"), motion_name, motion_points);
     }
     catch (const xh::XmlrpcHelperException& e)
     {
