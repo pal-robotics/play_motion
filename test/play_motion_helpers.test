@@ -1,0 +1,7 @@
+<launch>
+  <!-- load test motions -->
+  <rosparam file="$(find play_motion)/test/play_motion_helpers_poses.yaml" command="load" />
+
+  <!-- play_motion_helpers test -->
+  <test test-name="play_motion_helpers_test" pkg="play_motion" type="play_motion_helpers_test" time-limit="10.0"/>
+</launch>
