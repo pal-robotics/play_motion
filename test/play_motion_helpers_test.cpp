@@ -68,6 +68,14 @@ TEST(PlayMotionHelpersTest, getMotionPoints)
   EXPECT_EQ(3, traj.size());
 }
 
+TEST(PlayMotionHelpersTest, getMotionDuration)
+{
+  ros::NodeHandle nh("play_motion");
+  ros::Duration d = play_motion::getMotionDuration(nh, "arms_t");
+  EXPECT_NEAR(0.0, d.toSec(), 0.01);
+  d = play_motion::getMotionDuration(nh, "bow");
+  EXPECT_NEAR(6.5, d.toSec(), 0.01);
+}
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);

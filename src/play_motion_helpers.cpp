@@ -150,4 +150,14 @@ namespace play_motion
       }
     }
   }
+
+  ros::Duration getMotionDuration(const ros::NodeHandle &nh, const std::string &motion_name)
+  {
+    Trajectory traj;
+    getMotionPoints(nh, motion_name, traj);
+
+    return traj.back().time_from_start;
+  }
+
+
 }
