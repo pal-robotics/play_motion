@@ -87,7 +87,7 @@ namespace play_motion
       if (p.positions.size() != joint_names_.size())
       {
         ROS_ERROR_STREAM("Pose size mismatch. Expected: " << joint_names_.size()
-            << ", got: " << p.positions.size() << ".");
+                         << ", got: " << p.positions.size() << ".");
         return false;
       }
       trajectory_msgs::JointTrajectoryPoint point;

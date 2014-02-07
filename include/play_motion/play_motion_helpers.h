@@ -32,59 +32,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \author Paul Mathieu. */
+/** \author Adolfo Rodriguez Tsouroukdissian. */
+/** \author Paul Mathieu.                     */
+/** \author Victor Lopez.                     */
 
-#ifndef CONSTROLLERUPDATER_H
-#define CONSTROLLERUPDATER_H
+#ifndef PLAYMOTIONHELPERS_H
+#define PLAYMOTIONHELPERS_H
 
 #include <string>
-#include <map>
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
-#include <ros/ros.h>
-#include <ros/timer.h>
-
 #include "play_motion/datatypes.h"
 
 namespace play_motion
 {
+  /**
+   * @throws xh::XmlrpcHelperException if motion_name cannot be found
+   */
+  void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
 
-  /** Keeps track of controller statuses by polling the controller manager.
- * The service call happens in a separate thread to not disrupt the main code.
- */
-  class ControllerUpdater
-  {
-  public:
-    enum ControllerState
-    {
-      RUNNING,
-      STOPPED
-    };
 
-    typedef std::map<std::string, ControllerState> ControllerStates;
-    typedef std::map<std::string, JointNames>      ControllerJoints;
+  /**
+   * @throws xh::XmlrpcHelperException if motion_name cannot be found
+   */
+  void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
 
-  private:
-    typedef boost::function<void(const ControllerStates& states,
-                                 const ControllerJoints& joints)> Callback;
 
-  public:
-    ControllerUpdater(ros::NodeHandle nh);
-    virtual ~ControllerUpdater();
-
-    void registerUpdateCb(const Callback& cb) { update_cb_ = cb; }
-
-  private:
-    void mainLoop();
-
-    ros::NodeHandle    nh_;
-    ros::Timer         update_timer_;
-    boost::thread      main_thread_;
-    Callback           update_cb_;
-    ros::ServiceClient cm_client_;
-    ControllerStates   last_cstates_;
-  };
-
+  void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 }
 
 #endif
