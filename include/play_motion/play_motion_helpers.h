@@ -62,12 +62,17 @@ namespace play_motion
    */
   void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_name, Trajectory& motion_points);
 
+
+  ros::Duration getMotionDuration(const ros::NodeHandle &nh, const std::string &motion_name);
+
   /**
    * @brief getMotions obtain all motion names
    * @param nh Nodehandle with the namespace containing the motions (ie ros::NodeHandle( nh"play_motion"))
    * @throws xh::XmlrpcHelperException if no motions available
    */
   void getMotions(const ros::NodeHandle &nh, MotionNames& motion_names);
+
+
 
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 }
