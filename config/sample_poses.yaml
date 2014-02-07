@@ -1,6 +1,4 @@
 play_motion:
-  controllers: [right_arm_torso_controller, left_arm_controller, right_hand_controller,
-    head_traj_controller]
   motions:
     hands_up:
       joints: [torso_2_joint, arm_right_6_joint, arm_right_5_joint, arm_left_5_joint,
