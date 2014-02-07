@@ -12,9 +12,9 @@ catkin_package()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(play_motion_helper src/play_motion_helpers.cpp)
+add_library(play_motion_helpers src/play_motion_helpers.cpp)
 
-target_link_libraries(play_motion_helper ${catkin_LIBRARIES})
+target_link_libraries(play_motion_helpers ${catkin_LIBRARIES})
 add_executable(play_motion
   src/play_motion_main.cpp
   src/play_motion_server.cpp
@@ -22,7 +22,7 @@ add_executable(play_motion
   src/move_joint_group.cpp
   src/controller_updater.cpp)
 
-target_link_libraries(play_motion play_motion_helper ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(play_motion play_motion_helpers ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(play_motion ${PROJECT_NAME}_gencpp)
 
 install(TARGETS play_motion
@@ -47,4 +47,7 @@ if(CATKIN_ENABLE_TESTING)
   add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
   add_dependencies(play_motion_test play_motion joint_trajectory_controller)
   target_link_libraries(play_motion_test ${catkin_LIBRARIES})
+
+  add_rostest_gtest(play_motion_helpers_test test/play_motion_helpers.test test/play_motion_helpers_test.cpp)
+  target_link_libraries(play_motion_helpers_test play_motion_helpers ${catkin_LIBRARIES})
 endif()
