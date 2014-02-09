@@ -68,7 +68,7 @@ namespace xh
     output = static_cast<T>(val);
   }
 
-  void checkArrayItem(const Array& col, int index)
+  inline void checkArrayItem(const Array& col, int index)
   {
     if (col.getType() != XmlRpc::XmlRpcValue::TypeArray)
       throw XmlrpcHelperException("not an array");
@@ -80,7 +80,7 @@ namespace xh
     }
   }
 
-  void checkStructMember(const Struct& col, const std::string& member)
+  inline void checkStructMember(const Struct& col, const std::string& member)
   {
     if (col.getType() != XmlRpc::XmlRpcValue::TypeStruct)
       throw XmlrpcHelperException("not a struct");
