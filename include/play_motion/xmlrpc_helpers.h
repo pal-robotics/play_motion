@@ -57,7 +57,14 @@ namespace xh
   void fetchParam(ros::NodeHandle nh, const std::string& param_name, T& output)
   {
     XmlRpc::XmlRpcValue val;
-    if (!nh.getParamCached(param_name, val))
+    bool ok = false;
+    try
+    {
+        ok = nh.getParamCached(param_name, val);
+    }
+    catch(const ros::InvalidNameException& e) {}
+
+    if (!ok)
     {
       std::ostringstream err_msg;
       err_msg << "could not load parameter '" << param_name << "'. (namespace: "
