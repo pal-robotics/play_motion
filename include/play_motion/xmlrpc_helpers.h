@@ -57,7 +57,14 @@ namespace xh
   void fetchParam(ros::NodeHandle nh, const std::string& param_name, T& output)
   {
     XmlRpc::XmlRpcValue val;
-    if (!nh.getParamCached(param_name, val))
+    bool ok = false;
+    try
+    {
+        ok = nh.getParamCached(param_name, val);
+    }
+    catch(const ros::InvalidNameException& e) {}
+
+    if (!ok)
     {
       std::ostringstream err_msg;
       err_msg << "could not load parameter '" << param_name << "'. (namespace: "
@@ -68,7 +75,7 @@ namespace xh
     output = static_cast<T>(val);
   }
 
-  void checkArrayItem(const Array& col, int index)
+  inline void checkArrayItem(const Array& col, int index)
   {
     if (col.getType() != XmlRpc::XmlRpcValue::TypeArray)
       throw XmlrpcHelperException("not an array");
@@ -80,7 +87,7 @@ namespace xh
     }
   }
 
-  void checkStructMember(const Struct& col, const std::string& member)
+  inline void checkStructMember(const Struct& col, const std::string& member)
   {
     if (col.getType() != XmlRpc::XmlRpcValue::TypeStruct)
       throw XmlrpcHelperException("not a struct");
