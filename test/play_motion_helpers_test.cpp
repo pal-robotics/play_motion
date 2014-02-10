@@ -81,30 +81,30 @@ TEST(PlayMotionHelpersTest, isAlreadyThere)
 {
   ros::NodeHandle nh("play_motion");
 
-  play_motion::JointNames sourceNames;
+  play_motion::JointNames sourceJoints;
   play_motion::Trajectory sourceTraj;
-  play_motion::getMotionJoints(nh, "bow", sourceNames);
+  play_motion::getMotionJoints(nh, "bow", sourceJoints);
   play_motion::getMotionPoints(nh, "bow", sourceTraj);
 
 
   /// Same position
-  EXPECT_TRUE(play_motion::isAlreadyThere(sourceNames, sourceTraj[0], sourceNames, sourceTraj[0]));
+  EXPECT_TRUE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0], sourceJoints, sourceTraj[0]));
 
   /// Different position
-  EXPECT_FALSE(play_motion::isAlreadyThere(sourceNames, sourceTraj[0], sourceNames, sourceTraj[1]));
+  EXPECT_FALSE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0], sourceJoints, sourceTraj[1]));
 
   /// Different position but with  360º tolerance
-  EXPECT_TRUE(play_motion::isAlreadyThere(sourceNames, sourceTraj[0], sourceNames, sourceTraj[1], M_2_PI));
+  EXPECT_TRUE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0], sourceJoints, sourceTraj[1], M_2_PI));
 
-  play_motion::JointNames differentNames;
-  play_motion::getMotionJoints(nh, "bow", differentNames);
-  differentNames[0] = "made_up_joint";
+  play_motion::JointNames differentJoints;
+  play_motion::getMotionJoints(nh, "bow", differentJoints);
+  differentJoints[0] = "made_up_joint";
   /// Same position but different joint names
-  EXPECT_FALSE(play_motion::isAlreadyThere(differentNames, sourceTraj[0], sourceNames, sourceTraj[0]));
+  EXPECT_FALSE(play_motion::isAlreadyThere(differentJoints, sourceTraj[0], sourceJoints, sourceTraj[0]));
 
 
-  differentNames.clear();
-  EXPECT_THROW(play_motion::isAlreadyThere(differentNames, sourceTraj[0], sourceNames, sourceTraj[0]), ros::Exception);
+  differentJoints.clear();
+  EXPECT_THROW(play_motion::isAlreadyThere(differentJoints, sourceTraj[0], sourceJoints, sourceTraj[0]), ros::Exception);
 
 }
 
