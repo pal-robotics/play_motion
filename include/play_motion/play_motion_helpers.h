@@ -76,6 +76,17 @@ namespace play_motion
    */
   void getMotions(const ros::NodeHandle &nh, MotionNames& motion_names);
 
+  bool motionExists(const ros::NodeHandle &nh, const std::string &motion_name);
+
+  /**
+   * @brief isAlreadyThere checks if the source trajPoint matches the target trajPoint with a certain tolerance
+   *         only the joints in targetJoint will be checked
+   * @param tolerance tolerance per joint in radians
+   */
+  bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
+                      const JointNames &sourceJoints, const TrajPoint &sourcePoint,
+                      double tolerance = 0.15);
+
 
 
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);

@@ -44,11 +44,17 @@
 
 namespace play_motion
 {
+
+  std::string getParamName(const std::string &motion_name)
+  {
+    return  "motions/" + motion_name;
+  }
+
   void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_name, JointNames& motion_joints)
   {
     xh::Array joint_names;
 
-    xh::fetchParam(nh, "motions/" + motion_name + "/joints", joint_names);
+    xh::fetchParam(nh, getParamName(motion_name) + "/joints", joint_names);
     motion_joints.clear();
     motion_joints.resize(joint_names.size());
     for (int i = 0; i < joint_names.size(); ++i)
@@ -58,7 +64,7 @@ namespace play_motion
   void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_name, Trajectory& motion_points)
   {
     xh::Array traj_points;
-    xh::fetchParam(nh, "motions/" + motion_name + "/points", traj_points);
+    xh::fetchParam(nh, getParamName(motion_name) + "/points", traj_points);
     motion_points.clear();
     motion_points.reserve(traj_points.size());
     for (int i = 0; i < traj_points.size(); ++i)
@@ -157,6 +163,34 @@ namespace play_motion
     getMotionPoints(nh, motion_name, traj);
 
     return traj.back().time_from_start;
+  }
+
+  bool motionExists(const ros::NodeHandle &nh, const std::string &motion_name)
+  {
+    return nh.hasParam(getParamName(motion_name));
+  }
+
+  bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
+                      const JointNames &sourceJoints, const TrajPoint &sourcePoint, double tolerance)
+  {
+    if (targetJoints.size() != targetPoint.positions.size())
+      throw ros::Exception("targetJoint and targetPoint positions sizes do not match");
+
+    if (sourceJoints.size() != sourcePoint.positions.size())
+      throw ros::Exception("sourceJoint and sourcePoint positions sizes do not match");
+
+    for (int tIndex = 0; tIndex < targetJoints.size(); ++tIndex)
+    {
+      JointNames::const_iterator it = std::find(sourceJoints.begin(), sourceJoints.end(), targetJoints[tIndex]);
+       /// If a joint used in the target is not used in the available in the source can't guarantee that the points are equivalent
+      if (it == sourceJoints.end())
+        return false;
+
+      int sIndex = it - sourceJoints.begin();
+      if (std::fabs(targetPoint.positions[tIndex] - sourcePoint.positions[sIndex]) > tolerance)
+        return false;
+    }
+    return true;
   }
 
 
