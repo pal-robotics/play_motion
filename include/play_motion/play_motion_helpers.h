@@ -63,6 +63,10 @@ namespace play_motion
   void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_name, Trajectory& motion_points);
 
 
+  /**
+   * @brief getMotionDuration gets the total duration of a motion
+   * @throws xh::XmlrpcHelperException if motion_name cannot be found
+   */
   ros::Duration getMotionDuration(const ros::NodeHandle &nh, const std::string &motion_name);
 
   /**
