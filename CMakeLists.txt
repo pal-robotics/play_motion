@@ -8,7 +8,8 @@ add_action_files(DIRECTORY action FILES PlayMotion.action)
 add_service_files(DIRECTORY srv FILES IsAlreadyThere.srv)
 generate_messages(DEPENDENCIES actionlib_msgs)
 
-catkin_package()
+catkin_package(INCLUDE_DIRS include
+               LIBRARIES play_motion_helpers)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
