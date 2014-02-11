@@ -87,14 +87,16 @@ namespace play_motion
       xh::getArrayItem(joint_names, i, motion_joints[i]);
   }
 
-  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id, JointNames& motion_joints)
+  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id,
+                       JointNames& motion_joints)
   {
     MotionInfo info;
     getMotion(nh, motion_id, info);
     motion_joints = info.joints;
   }
 
-  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id, Trajectory& motion_points)
+  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id,
+                       Trajectory& motion_points)
   {
     MotionInfo info;
     getMotion(nh, motion_id, info);
@@ -123,8 +125,14 @@ namespace play_motion
     TrajPoint& point_first = traj_out.front();
     TrajPoint& point_last  = traj_out.back();
 
-    if (int(point_first.velocities.size()) != num_joints) {point_first.velocities.resize(num_joints, 0.0);}
-    if (int(point_last.velocities.size())  != num_joints) {point_last.velocities.resize(num_joints, 0.0);}
+    if (int(point_first.velocities.size()) != num_joints)
+    {
+      point_first.velocities.resize(num_joints, 0.0);
+    }
+    if (int(point_last.velocities.size())  != num_joints)
+    {
+      point_last.velocities.resize(num_joints, 0.0);
+    }
 
     // Iterate over all waypoints except the first and last
     for (int i = 1; i < num_waypoints - 1; ++i)
@@ -135,8 +143,14 @@ namespace play_motion
       const TrajPoint& point_next = traj_in[i + 1];
 
       // Do nothing if waypoint contains a velocity specification, otherwise initialize to zero and continue
-      if (int(point_curr.velocities.size()) != num_joints) {vel_out.resize(num_joints, 0.0);}
-      else {return;} // Waypoint already specifies a velocity vector of the appropriate size
+      if (int(point_curr.velocities.size()) != num_joints)
+      {
+        vel_out.resize(num_joints, 0.0);
+      }
+      else // Waypoint already specifies a velocity vector of the appropriate size
+      {
+        return;
+      }
 
       // Iterate over all joints in a waypoint
       for (int j = 0; j < num_joints; ++j)
@@ -181,7 +195,8 @@ namespace play_motion
   }
 
   bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
-                      const JointNames &sourceJoints, const TrajPoint &sourcePoint, double tolerance)
+                      const JointNames &sourceJoints, const TrajPoint &sourcePoint,
+                      double tolerance)
   {
     if (targetJoints.size() != targetPoint.positions.size())
       throw ros::Exception("targetJoint and targetPoint positions sizes do not match");
@@ -191,8 +206,10 @@ namespace play_motion
 
     for (int tIndex = 0; tIndex < targetJoints.size(); ++tIndex)
     {
-      JointNames::const_iterator it = std::find(sourceJoints.begin(), sourceJoints.end(), targetJoints[tIndex]);
-      /// If a joint used in the target is not used in the available in the source can't guarantee that the points are equivalent
+      JointNames::const_iterator it = std::find(sourceJoints.begin(), sourceJoints.end(),
+                                                targetJoints[tIndex]);
+      /// If a joint used in the target is not used in the available in the
+      /// source can't guarantee that the points are equivalent
       if (it == sourceJoints.end())
         return false;
 
@@ -203,7 +220,8 @@ namespace play_motion
     return true;
   }
 
-  void getMotion(const ros::NodeHandle &nh, const std::string &motion_id, MotionInfo &motionInfo)
+  void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
+                 MotionInfo &motionInfo)
   {
     motionInfo.id = motion_id;
     xh::Struct param;
