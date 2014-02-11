@@ -45,26 +45,14 @@
 namespace play_motion
 {
 
-  std::string getParamName(const std::string &motion_name)
+  std::string getParamName(const std::string &motion_id)
   {
-    return  "motions/" + motion_name;
+    return  "motions/" + motion_id;
   }
 
-  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_name, JointNames& motion_joints)
+  void extractTrajectory(xh::Array &traj_points, Trajectory& motion_points)
   {
-    xh::Array joint_names;
 
-    xh::fetchParam(nh, getParamName(motion_name) + "/joints", joint_names);
-    motion_joints.clear();
-    motion_joints.resize(joint_names.size());
-    for (int i = 0; i < joint_names.size(); ++i)
-      xh::getArrayItem(joint_names, i, motion_joints[i]);
-  }
-
-  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_name, Trajectory& motion_points)
-  {
-    xh::Array traj_points;
-    xh::fetchParam(nh, getParamName(motion_name) + "/points", traj_points);
     motion_points.clear();
     motion_points.reserve(traj_points.size());
     for (int i = 0; i < traj_points.size(); ++i)
@@ -91,14 +79,36 @@ namespace play_motion
     }
   }
 
-  void getMotions(const ros::NodeHandle &nh, MotionNames& motion_names)
+  void extractJoints(xh::Array &joint_names, JointNames &motion_joints)
+  {
+    motion_joints.clear();
+    motion_joints.resize(joint_names.size());
+    for (int i = 0; i < joint_names.size(); ++i)
+      xh::getArrayItem(joint_names, i, motion_joints[i]);
+  }
+
+  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id, JointNames& motion_joints)
+  {
+    MotionInfo info;
+    getMotion(nh, motion_id, info);
+    motion_joints = info.joints;
+  }
+
+  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id, Trajectory& motion_points)
+  {
+    MotionInfo info;
+    getMotion(nh, motion_id, info);
+    motion_points = info.traj;
+  }
+
+  void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids)
   {
     xh::Struct motions;
 
     xh::fetchParam(nh, "motions/", motions);
     for (xh::Struct::iterator it = motions.begin(); it != motions.end(); ++it)
     {
-      motion_names.push_back(it->first);
+      motion_ids.push_back(it->first);
     }
   }
 
@@ -157,17 +167,17 @@ namespace play_motion
     }
   }
 
-  ros::Duration getMotionDuration(const ros::NodeHandle &nh, const std::string &motion_name)
+  ros::Duration getMotionDuration(const ros::NodeHandle &nh, const std::string &motion_id)
   {
     Trajectory traj;
-    getMotionPoints(nh, motion_name, traj);
+    getMotionPoints(nh, motion_id, traj);
 
     return traj.back().time_from_start;
   }
 
-  bool motionExists(const ros::NodeHandle &nh, const std::string &motion_name)
+  bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id)
   {
-    return nh.hasParam(getParamName(motion_name));
+    return nh.hasParam(getParamName(motion_id));
   }
 
   bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
@@ -182,7 +192,7 @@ namespace play_motion
     for (int tIndex = 0; tIndex < targetJoints.size(); ++tIndex)
     {
       JointNames::const_iterator it = std::find(sourceJoints.begin(), sourceJoints.end(), targetJoints[tIndex]);
-       /// If a joint used in the target is not used in the available in the source can't guarantee that the points are equivalent
+      /// If a joint used in the target is not used in the available in the source can't guarantee that the points are equivalent
       if (it == sourceJoints.end())
         return false;
 
@@ -191,6 +201,28 @@ namespace play_motion
         return false;
     }
     return true;
+  }
+
+  void getMotion(const ros::NodeHandle &nh, const std::string &motion_id, MotionInfo &motionInfo)
+  {
+    motionInfo.id = motion_id;
+    xh::Struct param;
+    xh::fetchParam(nh, getParamName(motion_id), param);
+
+    extractTrajectory(param["points"], motionInfo.traj);
+    extractJoints(param["joints"], motionInfo.joints);
+    if (param.hasMember("meta"))
+    {
+      xh::getStructMember(param["meta"], "description", motionInfo.description);
+      xh::getStructMember(param["meta"], "name", motionInfo.name);
+      xh::getStructMember(param["meta"], "usage", motionInfo.usage);
+    }
+    else
+    {
+      motionInfo.description = "";
+      motionInfo.name = "";
+      motionInfo.usage = "";
+    }
   }
 
 

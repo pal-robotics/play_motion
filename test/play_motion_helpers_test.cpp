@@ -38,7 +38,7 @@ TEST(PlayMotionHelpersTest, getMotions)
 {
   play_motion::MotionNames motion_names;
   ros::NodeHandle nh("play_motion");
-  play_motion::getMotions(nh, motion_names);
+  play_motion::getMotionIds(nh, motion_names);
   EXPECT_EQ(4, motion_names.size());
   EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "arms_t"));
   EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "bow"));
@@ -105,8 +105,21 @@ TEST(PlayMotionHelpersTest, isAlreadyThere)
 
   differentJoints.clear();
   EXPECT_THROW(play_motion::isAlreadyThere(differentJoints, sourceTraj[0], sourceJoints, sourceTraj[0]), ros::Exception);
-
 }
+
+
+TEST(PlayMotionHelpersTest, getMotion)
+{
+  ros::NodeHandle nh("play_motion");
+  play_motion::MotionInfo info;
+  play_motion::getMotion(nh, "arms_t", info);
+  EXPECT_EQ("arms_t", info.id);
+  EXPECT_EQ("Arms T", info.name);
+  EXPECT_EQ("posture", info.usage);
+  EXPECT_EQ("Both arms set straight pointing sideways at 45 degrees.", info.description);
+}
+
+
 
 
 int main(int argc, char** argv)
