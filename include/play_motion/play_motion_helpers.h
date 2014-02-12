@@ -42,21 +42,76 @@
 #include <string>
 #include "play_motion/datatypes.h"
 
+namespace ros
+{
+  class NodeHandle;
+}
+
 namespace play_motion
 {
+
+  struct MotionInfo
+  {
+    std::string id;
+    std::string name;
+    std::string usage;
+    std::string description;
+    JointNames joints;
+    Trajectory traj;
+  };
+
   /**
-   * @throws xh::XmlrpcHelperException if motion_name cannot be found
+   * @param nh Nodehandle with the namespace containing the motions
+   *           (ie ros::NodeHandle( nh"play_motion"))
+   * @throws xh::XmlrpcHelperException if motion_id cannot be found
    */
-  void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
+  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id,
+                       JointNames& motion_joints);
 
 
   /**
-   * @throws xh::XmlrpcHelperException if motion_name cannot be found
+   * @param nh Nodehandle with the namespace containing the motions
+   *           (ie ros::NodeHandle( nh"play_motion"))
+   * @throws xh::XmlrpcHelperException if motion_id cannot be found
    */
-  void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
+  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id,
+                       Trajectory& motion_points);
+
+
+  /**
+   * @brief getMotionDuration gets the total duration of a motion
+   * @throws xh::XmlrpcHelperException if motion_id cannot be found
+   */
+  ros::Duration getMotionDuration(const ros::NodeHandle &nh,
+                                  const std::string &motion_id);
+
+  /**
+   * @brief getMotions obtain all motion names
+   * @param nh Nodehandle with the namespace containing the motions
+   *           (ie ros::NodeHandle( nh"play_motion"))
+   * @throws xh::XmlrpcHelperException if no motions available
+   */
+  void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids);
+
+
+  bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id);
+
+  /**
+   * @brief isAlreadyThere checks if the source trajPoint matches the target
+   *        trajPoint with a certain tolerance
+   *        only the joints in targetJoint will be checked
+   * @param tolerance tolerance per joint in radians
+   */
+  bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
+                      const JointNames &sourceJoints, const TrajPoint &sourcePoint,
+                      double tolerance = 0.15);
+
 
 
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
+
+  void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
+                 MotionInfo &motionInfo);
 }
 
 #endif

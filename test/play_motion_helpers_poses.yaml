@@ -1,0 +1,61 @@
+play_motion:
+  motions:
+    arms_t:
+      joints: [torso_1_joint, torso_2_joint, head_1_joint, head_2_joint, arm_left_1_joint,
+        arm_left_2_joint, arm_left_3_joint, arm_left_4_joint, arm_left_5_joint, arm_left_6_joint,
+        arm_left_7_joint, arm_right_1_joint, arm_right_2_joint, arm_right_3_joint,
+        arm_right_4_joint, arm_right_5_joint, arm_right_6_joint, arm_right_7_joint]
+      points:
+      - positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0,
+          0.707, 0.0, 0.1, 0.0, 0.0, 0.0]
+        time_from_start: 0.0
+      meta:
+        name: Arms T
+        usage: posture
+        description: Both arms set straight pointing sideways at 45 degrees.
+    bow:
+      joints: [torso_1_joint, torso_2_joint, head_1_joint, head_2_joint, arm_left_1_joint,
+        arm_left_2_joint, arm_left_3_joint, arm_left_4_joint, arm_left_5_joint, arm_left_6_joint,
+        arm_left_7_joint, arm_right_1_joint, arm_right_2_joint, arm_right_3_joint,
+        arm_right_4_joint, arm_right_5_joint, arm_right_6_joint, arm_right_7_joint]
+      points:
+      - positions: [0.0, 0.0, 0.0, 0.0, 0.35, 0.17, -0.9, 0.8, 0.1, -0.4, 0.0, 0.35,
+          0.17, -0.9, 0.8, 0.1, -0.4, 0.0]
+        time_from_start: 0.0
+      - positions: [0.0, 0.0, 0.0, 0.0, 0.0, 0.35, -0.5, 0.6109, 0.0, 0.0, 0.0, 0.0,
+          0.17, -0.9, 0.8, 0.1, -0.4, 0.0]
+        time_from_start: 6.5
+      meta:
+        name: Bow
+        usage: greet
+        description: Makes a short reverence with both arms back.
+    five_joint_motion:
+      joints: [arm_right_3_joint,
+        arm_right_4_joint, arm_right_5_joint, arm_right_6_joint, arm_right_7_joint]
+      points:
+      - positions: [0.0, 0.0, 0.0, 0.0, 0.35, 0.2, -0.45, 1.25, 0.1, 0.15, 0.2, 0.35,
+          0.2, -0.45, 1.2, 0.1, 0.15, 0.2]
+        time_from_start: 2.0
+      meta:
+        name: Hold Brochure Tray
+        usage: posture
+        description: Sets hands in holding brochure tray position.
+    three_point_motion:
+      joints: [torso_1_joint, torso_2_joint, head_1_joint, head_2_joint, arm_left_1_joint,
+        arm_left_2_joint, arm_left_3_joint, arm_left_4_joint, arm_left_5_joint, arm_left_6_joint,
+        arm_left_7_joint, arm_right_1_joint, arm_right_2_joint, arm_right_3_joint,
+        arm_right_4_joint, arm_right_5_joint, arm_right_6_joint, arm_right_7_joint]
+      points:
+      - positions: [0.0, -0.2, -0.2, 0.3, 1.05, -0.1, -0.4, 0.6, -0.3, -0.5, 0.0,
+          1.05, -0.1, -0.4, 0.6, -0.3, -0.5, 0.0]
+        time_from_start: 10.5
+      - positions: [0.0, -0.2, 0.0, 0.25, 1.05, -0.1, -0.4, 0.6, -0.3, -0.5, 0.0,
+          1.05, -0.1, -0.4, 0.6, -0.3, -0.5, 0.0]
+        time_from_start: 11.7
+      - positions: [0.0, -0.2, -0.12, 0.25, 1.1, -0.1, -0.65, 0.8, -0.8, -0.5, 0.5,
+          0.85, -0.1, -0.2, 0.65, -0.1, -0.4, 0.0]
+        time_from_start: 12.799999999999999
+      meta:
+        name: Car Drive Ferrari
+        usage: specific
+        description: Turns steering wheel, then changes gear and finally turns steering wheel again.

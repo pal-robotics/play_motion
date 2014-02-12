@@ -50,6 +50,7 @@ namespace play_motion
     ros::Duration       time_from_start;
   };
 
+  typedef std::vector<std::string> MotionNames;
   typedef std::vector<std::string> JointNames;
   typedef std::vector<TrajPoint>   Trajectory;
 
