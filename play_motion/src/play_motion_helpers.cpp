@@ -114,6 +114,47 @@ namespace play_motion
     }
   }
 
+  void populateVelocities(const TrajPoint& point_prev,
+                          const TrajPoint& point_next,
+                                TrajPoint& point_curr)
+  {
+    const int num_joints = point_curr.positions.size();
+    assert(num_joints == point_prev.positions.size() && num_joints == point_next.positions.size());
+
+    // Do nothing if waypoint contains a valid velocity specification
+    if (int(point_curr.velocities.size()) == num_joints) {return;}
+
+    // Initialize joint velocities to zero
+    std::vector<double>& vel_out = point_curr.velocities;
+    vel_out.resize(num_joints, 0.0);
+
+    // Set individual joint velocities
+    for (int i = 0; i < num_joints; ++i)
+    {
+      const double pos_curr = point_curr.positions[i];
+      const double pos_prev = point_prev.positions[i];
+      const double pos_next = point_next.positions[i];
+
+      if ( (pos_curr == pos_prev)                        ||
+           (pos_curr < pos_prev && pos_curr <= pos_next) ||
+           (pos_curr > pos_prev && pos_curr >= pos_next) )
+      {
+        vel_out[i] = 0.0; // Special cases where zero velocity is enforced
+      }
+      else
+      {
+        // General case using numeric differentiation
+        const double t_prev = point_curr.time_from_start.toSec() - point_prev.time_from_start.toSec();
+        const double t_next = point_next.time_from_start.toSec() - point_curr.time_from_start.toSec();
+
+        const double v_prev = (pos_curr - pos_prev)/t_prev;
+        const double v_next = (pos_next - pos_curr)/t_next;
+
+        vel_out[i] = 0.5 * (v_prev + v_next);
+      }
+    }
+  }
+
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out)
   {
     if (traj_in.empty()) {return;}
@@ -121,64 +162,15 @@ namespace play_motion
     const int num_waypoints = traj_in.size();
     const int num_joints    = traj_in.front().positions.size();
 
-    // Initialize first and last points with zero velocity, if unspecified or not properly sized:
+    // Initialize first and last points with zero velocity, if unspecified or not properly sized
     TrajPoint& point_first = traj_out.front();
     TrajPoint& point_last  = traj_out.back();
 
-    if (int(point_first.velocities.size()) != num_joints)
-    {
-      point_first.velocities.resize(num_joints, 0.0);
-    }
-    if (int(point_last.velocities.size())  != num_joints)
-    {
-      point_last.velocities.resize(num_joints, 0.0);
-    }
+    if (int(point_first.velocities.size()) != num_joints) {point_first.velocities.resize(num_joints, 0.0);}
+    if (int(point_last.velocities.size())  != num_joints) {point_last.velocities.resize(num_joints, 0.0);}
 
-    // Iterate over all waypoints except the first and last
-    for (int i = 1; i < num_waypoints - 1; ++i)
-    {
-      std::vector<double>& vel_out = traj_out[i].velocities;
-      const TrajPoint& point_curr = traj_in[i];
-      const TrajPoint& point_prev = traj_in[i - 1];
-      const TrajPoint& point_next = traj_in[i + 1];
-
-      // Do nothing if waypoint contains a velocity specification, otherwise initialize to zero and continue
-      if (int(point_curr.velocities.size()) != num_joints)
-      {
-        vel_out.resize(num_joints, 0.0);
-      }
-      else // Waypoint already specifies a velocity vector of the appropriate size
-      {
-        return;
-      }
-
-      // Iterate over all joints in a waypoint
-      for (int j = 0; j < num_joints; ++j)
-      {
-        const double pos_curr = point_curr.positions[j];
-        const double pos_prev = point_prev.positions[j];
-        const double pos_next = point_next.positions[j];
-
-        if ( (pos_curr == pos_prev)                        ||
-             (pos_curr < pos_prev && pos_curr <= pos_next) ||
-             (pos_curr > pos_prev && pos_curr >= pos_next) )
-        {
-          // Special case where zero velocity is enforced
-          vel_out[j] = 0.0;
-        }
-        else
-        {
-          // General case using numeric differentiation
-          const double t_prev = point_curr.time_from_start.toSec() - point_prev.time_from_start.toSec();
-          const double t_next = point_next.time_from_start.toSec() - point_curr.time_from_start.toSec();
-
-          const double v_prev = (pos_curr - pos_prev)/t_prev;
-          const double v_next = (pos_next - pos_curr)/t_next;
-
-          vel_out[j] = 0.5*(v_prev + v_next);
-        }
-      }
-    }
+    // Populate velocities for remaining points (all but first and last)
+    for (int i = 1; i < num_waypoints - 1; ++i) {populateVelocities(traj_in[i - 1], traj_in[i + 1], traj_out[i]);}
   }
 
   ros::Duration getMotionDuration(const ros::NodeHandle &nh, const std::string &motion_id)

@@ -106,8 +106,46 @@ namespace play_motion
                       const JointNames &sourceJoints, const TrajPoint &sourcePoint,
                       double tolerance = 0.15);
 
+  /**
+   * @brief Populate joint velocity information of a trajectory waypoint.
+   *
+   * Joint velocities are computed by numeric differentiation of position information, except in the following cases,
+   * where it is set to zero:
+   *
+   * - \f$p_i = p_{i-1}\f$
+   * - \f$p_i < p_{i-1}\f$ and \f$p_i \leq p_{i+1}\f$
+   * - \f$p_i > p_{i-1}\f$ and \f$p_i \geq p_{i+1}\f$
+   *
+   * where \f$p_{i-1}\f$, \f$p_i\f$ and \f$p_{i+1}\f$ are the positions of a joint at the previous, current and next
+   * waypoint. This heuristic is well suited for direction reversals and position holding without overshoot, and
+   * produces better results than pure numeric differentiation.
+   *
+   * If the input waypoint already contains a valid velocity specification, it will \e not be overwritten, that is, this
+   * method will be a no-op.
+   *
+   * @param[in]  point_prev Previous trajectory waypoint.
+   * @param[in]  point_next Next trajectory waypoint.
+   * @param[out] point_curr Trajectory waypoint to which velocity information will be added.
+   *
+   * \sa populateVelocities(const Trajectory&, Trajectory&)
+   */
+  void populateVelocities(const TrajPoint& point_prev,
+                          const TrajPoint& point_next,
+                                TrajPoint& point_curr);
 
-
+  /**
+   * @brief Populate joint velocity information of a trajectory.
+   *
+   * Joint velocities will be computed for all waypoints not containing a valid velocity specification. Waypoints with
+   * an existing velocity specification will not be modified. If the trajectory endpoints don't specify velocites, they
+   * will be set to zero.
+   *
+   * @param[in] traj_in Input trajectory. Some waypoints may have a velocity specification (or not at all).
+   * @param[out] traj_out Output trajectory. All waypoints have a velocity specification. Can be the same instance as
+   * \c traj_in.
+   *
+   * \sa populateVelocities(const TrajPoint&, const TrajPoint&, TrajPoint&)
+   */
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 
   void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
