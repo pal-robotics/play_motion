@@ -39,7 +39,6 @@
 #include <boost/foreach.hpp>
 
 #include "play_motion/play_motion.h"
-#include "play_motion/PlayMotionResult.h"
 
 #define foreach BOOST_FOREACH
 
@@ -70,11 +69,11 @@ namespace play_motion
 
   void PlayMotionServer::playMotionCb(const PlayMotion::GoalHandle& goal_hdl)
   {
-    PlayMotionResult r;
+    PMR r;
     r.error_code = goal_hdl->error_code;
     r.error_string = goal_hdl->error_string;
 
-    if (r.error_code == PlayMotionResult::SUCCEEDED)
+    if (r.error_code == PMR::SUCCEEDED)
     {
       ROS_INFO("motion played sucecssfully");
       al_goals_[goal_hdl].setSucceeded(r);
@@ -107,7 +106,7 @@ namespace play_motion
     if (!pm_->run(goal->motion_name, goal->reach_time, goal_hdl,
                   boost::bind(&PlayMotionServer::playMotionCb, this, _1)))
     {
-      PlayMotionResult r;
+      PMR r;
       r.error_code = goal_hdl->error_code;
       r.error_string = goal_hdl->error_string;
       ROS_WARN_STREAM("motion '" << goal->motion_name << "' could not be played");

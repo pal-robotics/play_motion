@@ -35,16 +35,16 @@
 #include <actionlib/client/simple_action_client.h>
 #include <sensor_msgs/JointState.h>
 
-#include "play_motion/PlayMotionAction.h"
+#include "play_motion_msgs/PlayMotionAction.h"
 
 typedef actionlib::SimpleClientGoalState GS;
-typedef play_motion::PlayMotionResult PMR;
+typedef play_motion_msgs::PlayMotionResult PMR;
 
 class PlayMotionTestClient
 {
-  typedef actionlib::SimpleActionClient<play_motion::PlayMotionAction> ActionClient;
+  typedef actionlib::SimpleActionClient<play_motion_msgs::PlayMotionAction> ActionClient;
   typedef boost::shared_ptr<ActionClient> ActionClientPtr;
-  typedef play_motion::PlayMotionGoal ActionGoal;
+  typedef play_motion_msgs::PlayMotionGoal ActionGoal;
   typedef actionlib::SimpleClientGoalState ActionGoalState;
   typedef boost::shared_ptr<ActionGoalState> ActionGoalStatePtr;
 
