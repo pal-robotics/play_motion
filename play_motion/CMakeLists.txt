@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(play_motion)
 
-find_package(catkin REQUIRED COMPONENTS roscpp genmsg actionlib)
+find_package(catkin REQUIRED COMPONENTS roscpp play_motion_msgs actionlib)
 find_package(Boost REQUIRED COMPONENTS thread)
-
-add_action_files(DIRECTORY action FILES PlayMotion.action)
-add_service_files(DIRECTORY srv FILES IsAlreadyThere.srv)
-generate_messages(DEPENDENCIES actionlib_msgs)
 
 catkin_package(INCLUDE_DIRS include
                LIBRARIES play_motion_helpers)
@@ -24,7 +20,7 @@ add_executable(play_motion
   src/controller_updater.cpp)
 
 target_link_libraries(play_motion play_motion_helpers ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(play_motion ${PROJECT_NAME}_gencpp)
+add_dependencies(play_motion play_motion_msgs_generate_messages_cpp)
 
 install(TARGETS play_motion
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

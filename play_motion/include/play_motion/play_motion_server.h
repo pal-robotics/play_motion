@@ -46,14 +46,14 @@
 #include <actionlib/server/action_server.h>
 
 #include "play_motion/play_motion.h"
-#include "play_motion/PlayMotionAction.h"
+#include "play_motion_msgs/PlayMotionAction.h"
 
 namespace play_motion
 {
   class PlayMotionServer
   {
   private:
-    typedef actionlib::ActionServer<play_motion::PlayMotionAction> AlServer;
+    typedef actionlib::ActionServer<play_motion_msgs::PlayMotionAction> AlServer;
     typedef boost::shared_ptr<PlayMotion> PlayMotionPtr;
 
   public:

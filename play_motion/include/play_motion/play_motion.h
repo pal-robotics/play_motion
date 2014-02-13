@@ -46,14 +46,14 @@
 
 #include "play_motion/datatypes.h"
 #include "play_motion/controller_updater.h"
-#include "play_motion/PlayMotionResult.h"
+#include "play_motion_msgs/PlayMotionResult.h"
 
 namespace sensor_msgs
 { ROS_DECLARE_MESSAGE(JointState); }
 
 namespace play_motion
 {
-  typedef play_motion::PlayMotionResult PMR;
+  typedef play_motion_msgs::PlayMotionResult PMR;
 
   class MoveJointGroup;
 
