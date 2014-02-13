@@ -2,12 +2,12 @@
 
 import rospy
 import sensor_msgs.msg
-import play_motion.srv
+import play_motion_msgs.srv as PMS
 
 class IsAlreadyThere:
     def __init__(self):
         self.srv = rospy.Service("play_motion/is_already_there",
-                                 play_motion.srv.IsAlreadyThere,
+                                 PMS.IsAlreadyThere,
                                  self.is_already_there)
         self.joint_sub = rospy.Subscriber("joint_states",
                                           sensor_msgs.msg.JointState,
