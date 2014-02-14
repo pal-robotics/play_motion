@@ -26,6 +26,9 @@ install(TARGETS play_motion
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
+install(TARGETS play_motion_helpers
+    DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
 install (PROGRAMS scripts/is_already_there.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
