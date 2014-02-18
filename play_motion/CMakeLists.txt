@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(play_motion)
 
-find_package(catkin REQUIRED COMPONENTS roscpp play_motion_msgs actionlib sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp play_motion_msgs actionlib moveit_ros_planning_interface sensor_msgs)
 find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(INCLUDE_DIRS include
@@ -17,7 +17,8 @@ add_executable(play_motion
   src/play_motion_server.cpp
   src/play_motion.cpp
   src/move_joint_group.cpp
-  src/controller_updater.cpp)
+  src/controller_updater.cpp
+  src/approach_planner.cpp)
 
 target_link_libraries(play_motion play_motion_helpers ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(play_motion play_motion_msgs_generate_messages_cpp)

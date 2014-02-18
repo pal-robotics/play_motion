@@ -56,6 +56,7 @@ namespace play_motion
   typedef play_motion_msgs::PlayMotionResult PMR;
 
   class MoveJointGroup;
+  class ApproachPlanner;
 
   class PMException : public ros::Exception
   {
@@ -83,6 +84,7 @@ namespace play_motion
     typedef boost::shared_ptr<MoveJointGroup>        MoveJointGroupPtr;
     typedef std::list<MoveJointGroupPtr>             ControllerList;
     typedef boost::function<void(const GoalHandle&)> Callback;
+    typedef boost::shared_ptr<ApproachPlanner>       ApproachPlannerPtr;
 
   public:
     class Goal
@@ -139,6 +141,7 @@ namespace play_motion
     std::map<std::string, double>    joint_states_;
     ros::Subscriber                  joint_states_sub_;
     ControllerUpdater                ctrlr_updater_;
+    ApproachPlannerPtr               approach_planner_;
   };
 }
 

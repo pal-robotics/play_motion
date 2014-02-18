@@ -46,6 +46,7 @@
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <sensor_msgs/JointState.h>
 
+#include "play_motion/approach_planner.h"
 #include "play_motion/move_joint_group.h"
 #include "play_motion/xmlrpc_helpers.h"
 
@@ -135,6 +136,9 @@ namespace play_motion
     ctrlr_updater_(nh_)
   {
     ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
+
+    ros::NodeHandle private_nh("~");
+    approach_planner_.reset(new ApproachPlanner(private_nh));
   }
 
   PlayMotion::Goal::Goal(const Callback& cbk)
@@ -323,12 +327,24 @@ next_joint:;
       getMotionJoints(motion_name, motion_joints);
       ControllerList groups = getMotionControllers(motion_joints); // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
-      populateVelocities(motion_points, motion_points);
+      // TODO: Ignore reach time when motion planning is used.
+      // TODO: Make planning optional
+      Trajectory motion_points_safe;
+
+      std::vector<double> curr_pos; // Current position of motion joints
+      foreach(const std::string& motion_joint, motion_joints) {curr_pos.push_back(joint_states_[motion_joint]);} // TODO: What if motion joint does not exist?
+
+      if (!approach_planner_->prependApproach(motion_joints, curr_pos, motion_points, motion_points_safe))
+      {
+        return false;
+      }
+      // TODO: Resample and validate output trajectory
+      populateVelocities(motion_points_safe, motion_points_safe);
 
       // Seed target pose with current joint state
       foreach (MoveJointGroupPtr move_joint_group, groups)
       {
-        if(!getGroupTraj(move_joint_group, motion_joints, motion_points,
+        if(!getGroupTraj(move_joint_group, motion_joints, motion_points_safe,
                          joint_group_traj[move_joint_group]))
           throw PMException("missing joint state for joint in controller '"
                             + move_joint_group->getName() + "'");
