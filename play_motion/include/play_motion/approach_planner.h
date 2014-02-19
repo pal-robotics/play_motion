@@ -67,7 +67,7 @@ namespace moveit
 
 namespace play_motion
 {
-
+  /// TODO
   class ApproachPlanner
   {
   public:
@@ -83,22 +83,44 @@ namespace play_motion
     typedef moveit::planning_interface::MoveGroup MoveGroup;
     typedef boost::shared_ptr<MoveGroup> MoveGroupPtr;
     typedef boost::shared_ptr<ros::AsyncSpinner> AsyncSpinnerPtr;
+    typedef std::vector<std::string> JointNames;
     typedef std::map<std::string, double> JointGoal;
 
-    std::vector<MoveGroupPtr> move_groups_;
+    struct PlanningData
+    {
+      PlanningData(MoveGroupPtr move_group_ptr);
+      MoveGroupPtr move_group;
+      JointNames   sorted_joint_names;
+    };
+
+    std::vector<PlanningData> planning_data_;
     std::vector<std::string> no_plan_joints_;
     double joint_tol_;
     AsyncSpinnerPtr spinner_;
 
     /// TODO
-    std::vector<MoveGroupPtr> getValidMoveGroups(const JointGoal& joint_goal);
-
-    /// TODO
-    bool computeApproach(const JointGoal&                  joint_goal,
-                         MoveGroupPtr                      move_group,
+    bool computeApproach(const JointNames&                 joint_names,
+                         const std::vector<double>&        current_pos,
+                         const std::vector<double>&        goal_pos,
                          trajectory_msgs::JointTrajectory& traj);
 
+    /// TODO
+    bool planApproach(const JointNames&                 joint_names,
+                      const std::vector<double>&        joint_values,
+                      MoveGroupPtr                      move_group,
+                      trajectory_msgs::JointTrajectory& traj);
+    /// TODO
+    void combineTrajectories(const JointNames&                  joint_names,
+                             const std::vector<double>&         current_pos,
+                             const std::vector<TrajPoint>&      traj_in,
+                             trajectory_msgs::JointTrajectory&  approach,
+                             std::vector<TrajPoint>&            traj_out);
 
+    /// TODO
+    std::vector<MoveGroupPtr> getValidMoveGroups(const JointNames& min_group,
+                                                 const JointNames& max_group);
+
+    /// TODO
     bool isPlanningJoint(const std::string& joint_name) const;
   };
 

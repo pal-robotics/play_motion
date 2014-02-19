@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <sstream>
 #include <string>
 
 #include <boost/foreach.hpp>
@@ -54,24 +55,25 @@ using std::vector;
 namespace
 {
 
-typedef moveit::planning_interface::MoveGroup MoveGroup;
-typedef boost::shared_ptr<MoveGroup> MoveGroupPtr;
-
-/// \return Comma-separated list of planning groups.
-string planningGroupsStr(const std::vector<MoveGroupPtr>& move_groups)
+/// \return Comma-separated list of container elements.
+template <class T>
+string enumerateElementsStr(const T& val)
 {
-  string ret;
-  foreach(MoveGroupPtr group, move_groups) {ret += group->getName() + ", ";}
+  std::stringstream ss;
+  std::copy(val.begin(), val.end(), std::ostream_iterator<typename T::value_type>(ss, ", "));
+  string ret = ss.str();
   if (!ret.empty()) {ret.erase(ret.size() - 2);} // Remove last ", "
   return ret;
 }
 
-/// \return Comma-separated list of joints
-string keysStr(const std::map<string, double>& in)
+typedef moveit::planning_interface::MoveGroup MoveGroup;
+typedef boost::shared_ptr<MoveGroup> MoveGroupPtr;
+
+/// \return Comma-separated list of planning groups.
+string enumeratePlanningGroups(const std::vector<MoveGroupPtr>& move_groups)
 {
   string ret;
-  typedef std::map<string, double> MapType;
-  foreach(MapType::value_type val, in) {ret += val.first + ", ";}
+  foreach(MoveGroupPtr group, move_groups) {ret += group->getName() + ", ";}
   if (!ret.empty()) {ret.erase(ret.size() - 2);} // Remove last ", "
   return ret;
 }
@@ -80,6 +82,13 @@ string keysStr(const std::map<string, double>& in)
 
 namespace play_motion
 {
+
+ApproachPlanner::PlanningData::PlanningData(MoveGroupPtr move_group_ptr)
+  : move_group(move_group_ptr),
+    sorted_joint_names(move_group_ptr->getActiveJoints())
+{
+  std::sort(sorted_joint_names.begin(), sorted_joint_names.end());
+}
 
 ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   : joint_tol_(1e-3)
@@ -134,23 +143,16 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   }
   catch(const xh::XmlrpcHelperException& ex) {throw ros::Exception(ex.what());}
 
-  spinner_.reset(new ros::AsyncSpinner(1)); // Async spinner is required by the move_group_interface
+  // Move group instances require an additional spinner thread
+  spinner_.reset(new ros::AsyncSpinner(1));
   spinner_->start();
 
-  // Create move_group clients for each planning group
-  for (int i = 0; i < planning_groups.size(); ++i)
+  // Populate planning data
+  foreach (const string& planning_group, planning_groups)
   {
-    MoveGroupPtr ptr(new MoveGroup(planning_groups[i])); // TODO: Timeout and retry, log feedback
-    move_groups_.push_back(ptr);
+    MoveGroupPtr move_group(new MoveGroup(planning_group)); // TODO: Timeout and retry, log feedback. Throw on failure
+    planning_data_.push_back(PlanningData(move_group));
   }
-
-  for (int i = 0; i < planning_groups.size(); ++i)
-  {
-    ROS_ERROR_STREAM(planning_groups[i]);
-  }
-  ROS_ERROR(" ");
-  for (int i = 0; i < no_plan_joints_.size(); ++i) {ROS_ERROR_STREAM(no_plan_joints_[i]);}
-
 }
 
 // TODO: Work directly with JointStates and JointTrajector messages?
@@ -181,42 +183,140 @@ bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
     return false;
   }
 
-  // Set planning goal state. Ignore joints excluded from planning and joints already at the goal position
-  JointGoal joint_goal;
-  for (int i = 0; i < joint_dim; ++i)
-  {
-    if (isPlanningJoint(joint_names[i]) && std::abs(current_pos[i] - traj_in.front().positions[i]) > joint_tol_)
-    {
-      joint_goal[joint_names[i]] = traj_in.front().positions[i];
-    }
-  }
+  // Compute approach trajectory
+  trajectory_msgs::JointTrajectory approach;
+  const bool approach_ok = computeApproach(joint_names,
+                                           current_pos,
+                                           traj_in.front().positions,
+                                           approach);
 
-  // Optimization: no planning is required
-  if (joint_goal.empty())
+  // No approach is required
+  if (approach_ok && approach.points.empty())
   {
-    ROS_DEBUG("Approach motion not needed.");
     traj_out = traj_in;
+    ROS_INFO("Approach motion not needed.");
     return true;
   }
 
-  // Compute approach trajectory
-  vector<MoveGroupPtr> valid_move_groups = getValidMoveGroups(joint_goal);
-  trajectory_msgs::JointTrajectory approach;
+  // Combine approach and input motion trajectories
+  combineTrajectories(joint_names,
+                      current_pos,
+                      traj_in,
+                      approach,
+                      traj_out);
+
+  return true;
+}
+
+bool ApproachPlanner::computeApproach(const vector<string>&             joint_names,
+                                      const vector<double>&             current_pos,
+                                      const vector<double>&             goal_pos,
+                                      trajectory_msgs::JointTrajectory& traj)
+{
+  traj.joint_names.clear();
+  traj.points.clear();
+
+  // Maximum set of joints that a planning group can have. Corresponds to the original motion joints minus the joints
+  // excluded from planning. Planning groups eligible to compute the approach can't contain joints outside this set.
+  JointNames max_planning_group;
+
+  // Joint positions associated to the maximum set
+  vector<double> max_planning_values;
+
+  // Minimum set of joints that a planning group can have. Corresponds to the maximum set minus the joints that are
+  // already at their goal configuration. If this set is empty, no approach is required, i.e. all motion joints are
+  // either excluded from planning or already at the goal.
+  JointNames min_planning_group;
+
+  for (int i = 0; i < joint_names.size(); ++i)
+  {
+    if (isPlanningJoint(joint_names[i]))
+    {
+      max_planning_group.push_back(joint_names[i]);
+      max_planning_values.push_back(goal_pos[i]);
+      if (std::abs(current_pos[i] - goal_pos[i]) > joint_tol_) {min_planning_group.push_back(joint_names[i]);}
+    }
+  }
+
+  // No planning is required, return empty trajectory
+  if (min_planning_group.empty()) {return true;}
+
+  // Find planning groups that are eligible for computing this particular approach trajectory
+  vector<MoveGroupPtr> valid_move_groups = getValidMoveGroups(min_planning_group, max_planning_group);
+  if (valid_move_groups.empty())
+  {
+    ROS_ERROR_STREAM("Can't compute approach trajectory. There are no planning groups that span at least these joints:"
+                     << "\n[" << enumerateElementsStr(min_planning_group) << "]\n" << "and at most these joints:"
+                     << "\n[" << enumerateElementsStr(max_planning_group) << "].");
+    return false;
+  }
+  else
+  {
+    ROS_INFO_STREAM("Approach trajectory can be computed by the following groups: "
+                     << enumeratePlanningGroups(valid_move_groups) << ".");
+  }
+
+  // Call motion planners
   bool approach_ok = false;
   foreach(MoveGroupPtr move_group, valid_move_groups)
   {
-    approach_ok = computeApproach(joint_goal, move_group, approach);
+    approach_ok = planApproach(max_planning_group, max_planning_values, move_group, traj);
     if (approach_ok) {break;}
   }
 
   if (!approach_ok)
   {
     ROS_ERROR_STREAM("Failed to compute approach trajectory with planning groups: [" <<
-                     planningGroupsStr(valid_move_groups) << "].");
+                     enumeratePlanningGroups(valid_move_groups) << "].");
     return false;
   }
 
-  // Initialize output trajectory with approach
+  return true;
+}
+
+bool ApproachPlanner::planApproach(const JointNames&                 joint_names,
+                                   const std::vector<double>&        joint_values,
+                                   MoveGroupPtr                      move_group,
+                                   trajectory_msgs::JointTrajectory& traj)
+{
+  move_group->setStartStateToCurrentState();
+  for (int i = 0; i < joint_names.size(); ++i)
+  {
+    const bool set_goal_ok = move_group->setJointValueTarget(joint_names[i], joint_values[i]);
+    if (!set_goal_ok)
+    {
+      ROS_ERROR_STREAM("Failed attempt to set planning goal for joint '" << joint_names[i] << "' on group '" <<
+                       move_group->getName() << "'.");
+      return false;
+    }
+  }
+  move_group_interface::MoveGroup::Plan plan;
+  const bool planning_ok = move_group->plan(plan);
+  if (!planning_ok)
+  {
+    ROS_DEBUG_STREAM("Could not compute approach trajectory with planning group '" << move_group->getName() << "'.");
+    return false;
+  }
+  if (plan.trajectory_.joint_trajectory.points.empty())
+  {
+    ROS_ERROR_STREAM("Unexpected error: Approach trajectory computed by group '" << move_group->getName() <<
+                     "' is empty.");
+    return false;
+  }
+
+  traj = plan.trajectory_.joint_trajectory;
+  ROS_INFO_STREAM("Successfully computed approach with planning group '" << move_group->getName() << "'.");
+  return true;
+}
+
+void ApproachPlanner::combineTrajectories(const JointNames&                  joint_names,
+                                          const std::vector<double>&         current_pos,
+                                          const std::vector<TrajPoint>&      traj_in,
+                                          trajectory_msgs::JointTrajectory&  approach,
+                                          std::vector<TrajPoint>&            traj_out)
+{
+  const int joint_dim = traj_in.front().positions.size();
+
   foreach(const TrajPoint& point_appr, approach.points)
   {
     TrajPoint point;
@@ -227,8 +327,8 @@ bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
 
     for (unsigned int i = 0; i < joint_dim; ++i)
     {
-      const vector<string>& plan_joints = approach.joint_names;
-      vector<string>::const_iterator approach_joints_it = find(plan_joints.begin(), plan_joints.end(), joint_names[i]);
+      const JointNames& plan_joints = approach.joint_names;
+      JointNames::const_iterator approach_joints_it = find(plan_joints.begin(), plan_joints.end(), joint_names[i]);
       if (approach_joints_it != plan_joints.end())
       {
         // Joint is part of the planned approach
@@ -254,15 +354,13 @@ bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
         if (!point_appr.velocities.empty())    {point.velocities[i]    = vel;}
         if (!point_appr.accelerations.empty()) {point.accelerations[i] = 0.0;}
       }
-
-      // TODO: What happens to joints in the motion plan but _not_ in the input motion?!
     }
 
     traj_out.push_back(point);
   }
 
   // If input trajectory is a single point, the approach trajectory is all there is to execute...
-  if (1 == traj_in.size()) {return true;}
+  if (1 == traj_in.size()) {return;}
 
   // ...otherwise, append input_trajectory after approach:
 
@@ -278,75 +376,31 @@ bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
     traj_out.push_back(point);
     traj_out.back().time_from_start += offset;
   }
-
-  return true;
 }
 
-vector<ApproachPlanner::MoveGroupPtr> ApproachPlanner::getValidMoveGroups(const JointGoal& joint_goal)
+vector<ApproachPlanner::MoveGroupPtr> ApproachPlanner::getValidMoveGroups(const JointNames& min_group,
+                                                                          const JointNames& max_group)
 {
   vector<MoveGroupPtr> valid_groups;
 
-  foreach(MoveGroupPtr group, move_groups_)
-  {
-    const vector<string>& group_joints = group->getJoints();
-    bool valid_group = true;
+  // Create sorted ranges of min/max planning groups
+  JointNames min_group_s = min_group;
+  JointNames max_group_s = max_group;
+  std::sort(min_group_s.begin(), min_group_s.end());
+  std::sort(max_group_s.begin(), max_group_s.end());
 
-    foreach(const JointGoal::value_type& data, joint_goal)
+  foreach(const PlanningData& data, planning_data_)
+  {
+    const JointNames& group_s = data.sorted_joint_names;
+
+    // A valid planning group is one that has the minimum group as a subset, and is a subset of the maximum group
+    if (std::includes(group_s.begin(), group_s.end(), min_group_s.begin(), min_group_s.end()) &&
+        std::includes(max_group_s.begin(), max_group_s.end(), group_s.begin(), group_s.end()))
     {
-      if (std::find(group_joints.begin(), group_joints.end(), data.first) == group_joints.end())
-      {
-        valid_group = false;
-        break;
-      }
-    }
-    if (valid_group)
-    {
-      valid_groups.push_back(group);
+      valid_groups.push_back(data.move_group);
     }
   }
-
-  if (valid_groups.empty())
-  {
-    ROS_ERROR_STREAM("Can't compute approach trajectory. There are no planning groups that span the requested joints: ["
-                     << keysStr(joint_goal) << "].");
-  }
-  else
-  {
-    ROS_ERROR_STREAM("Approach trajectory can be computed by the following groups: "
-                     << planningGroupsStr(valid_groups) << "."); // TODO: Make debug
-  }
-
   return valid_groups;
-}
-
-bool ApproachPlanner::computeApproach(const JointGoal&                 joint_goal,
-                                     MoveGroupPtr                      move_group,
-                                     trajectory_msgs::JointTrajectory& traj)
-{
-  move_group->setStartStateToCurrentState();
-  const bool set_goal_ok = move_group->setJointValueTarget(joint_goal);
-  if (!set_goal_ok)
-  {
-    ROS_ERROR_STREAM("Failed to set motion planning problem goal for group '" << move_group->getName() << "'.");
-    return false;
-  }
-  move_group_interface::MoveGroup::Plan plan;
-  const bool planning_ok = move_group->plan(plan);
-  if (!planning_ok)
-  {
-    ROS_DEBUG_STREAM("Could not compute approach trajectory with planning group '" << move_group->getName() << "'.");
-    return false;
-  }
-  if (plan.trajectory_.joint_trajectory.points.empty())
-  {
-    ROS_ERROR_STREAM("Unexpected error: Approach trajectory computed by group '" << move_group->getName() <<
-                     "' is empty.");
-    return false;
-  }
-
-  traj = plan.trajectory_.joint_trajectory;
-  ROS_ERROR_STREAM("Successfully computed approach with planning group '" << move_group->getName() << "'."); // TODO: Make DEBUG
-  return true;
 }
 
 bool ApproachPlanner::isPlanningJoint(const string& joint_name) const
