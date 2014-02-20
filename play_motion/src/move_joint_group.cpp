@@ -104,7 +104,7 @@ namespace play_motion
 
   bool MoveJointGroup::sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration)
   {
-    ROS_DEBUG_STREAM("sending trajectory goal to " << controller_name_);
+    ROS_DEBUG_STREAM("Sending trajectory goal to " << controller_name_ << ".");
 
     ActionGoal goal;
     goal.trajectory.joint_names = joint_names_;

@@ -75,12 +75,12 @@ namespace play_motion
 
     if (r.error_code == PMR::SUCCEEDED)
     {
-      ROS_INFO("motion played sucecssfully");
+      ROS_INFO("Motion played successfully.");
       al_goals_[goal_hdl].setSucceeded(r);
     }
     else
     {
-      ROS_WARN("motion ended with an error");
+      ROS_WARN("Motion ended with an error.");
       al_goals_[goal_hdl].setAborted(r);
     }
     al_goals_.erase(goal_hdl);
@@ -92,7 +92,7 @@ namespace play_motion
     if (findGoalId(gh, goal_hdl))
       goal_hdl->cancel(); //should not be needed
     else
-      ROS_ERROR("cancel request could not be fulfilled. Goal not running?");
+      ROS_ERROR("Cancel request could not be fulfilled. Goal not running?.");
 
     al_goals_.erase(goal_hdl);
     gh.setCanceled();
@@ -101,7 +101,7 @@ namespace play_motion
   void PlayMotionServer::alGoalCb(AlServer::GoalHandle gh)
   {
     AlServer::GoalConstPtr goal = gh.getGoal(); //XXX: can this fail? should we check it?
-    ROS_INFO_STREAM("sending motion '" << goal->motion_name << "' to controllers");
+    ROS_INFO_STREAM("Received request to play motion '" << goal->motion_name << "'.");
     PlayMotion::GoalHandle goal_hdl;
     if (!pm_->run(goal->motion_name, goal->reach_time, goal_hdl,
                   boost::bind(&PlayMotionServer::playMotionCb, this, _1)))
@@ -109,7 +109,9 @@ namespace play_motion
       PMR r;
       r.error_code = goal_hdl->error_code;
       r.error_string = goal_hdl->error_string;
-      ROS_WARN_STREAM("motion '" << goal->motion_name << "' could not be played");
+      if (!r.error_string.empty())
+        ROS_ERROR_STREAM(r.error_string);
+      ROS_ERROR_STREAM("Motion '" << goal->motion_name << "' could not be played.");
       gh.setRejected(r);
       return;
     }

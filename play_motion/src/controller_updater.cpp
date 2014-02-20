@@ -85,7 +85,7 @@ namespace play_motion
         cm_client_ = initCmClient(nh_);
       if(!cm_client_.call(srv))
       {
-        ROS_WARN_THROTTLE(5.0, "could not get list of controllers from controller manager");
+        ROS_WARN_THROTTLE(5.0, "Could not get list of controllers from controller manager.");
         continue;
       }
 
@@ -103,7 +103,7 @@ namespace play_motion
       if (states == last_cstates_)
         continue;
 
-      ROS_INFO("detected a change in joint controllers, reloading them");
+      ROS_INFO("The set of running joint trajectory controllers has changed, updating it.");
       update_timer_ = nh_.createTimer(ros::Duration(0), boost::bind(update_cb_, states, joints), true);
       last_cstates_ = states;
     }

@@ -253,7 +253,7 @@ bool ApproachPlanner::computeApproach(const vector<string>&             joint_na
   }
   else
   {
-    ROS_INFO_STREAM("Approach trajectory can be computed by the following groups: "
+    ROS_INFO_STREAM("Approach motion can be computed by the following groups: "
                      << enumeratePlanningGroups(valid_move_groups) << ".");
   }
 
