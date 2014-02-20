@@ -189,9 +189,10 @@ bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
                                            current_pos,
                                            traj_in.front().positions,
                                            approach);
+  if (!approach_ok) {return false;}
 
   // No approach is required
-  if (approach_ok && approach.points.empty())
+  if (approach.points.empty())
   {
     traj_out = traj_in;
     ROS_INFO("Approach motion not needed.");
