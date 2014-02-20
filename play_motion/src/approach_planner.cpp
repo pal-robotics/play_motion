@@ -319,10 +319,12 @@ void ApproachPlanner::combineTrajectories(const JointNames&                  joi
 
   foreach(const TrajPoint& point_appr, approach.points)
   {
+    const bool has_velocities    = !point_appr.velocities.empty();
+    const bool has_accelerations = !point_appr.accelerations.empty();
     TrajPoint point;
     point.positions.resize(joint_dim, 0.0);
-    if (!point_appr.velocities.empty())    {point.velocities.resize(joint_dim, 0.0);}
-    if (!point_appr.accelerations.empty()) {point.accelerations.resize(joint_dim, 0.0);}
+    if (has_velocities)    {point.velocities.resize(joint_dim, 0.0);}
+    if (has_accelerations) {point.accelerations.resize(joint_dim, 0.0);}
     point.time_from_start = point_appr.time_from_start;
 
     for (unsigned int i = 0; i < joint_dim; ++i)
@@ -334,8 +336,8 @@ void ApproachPlanner::combineTrajectories(const JointNames&                  joi
         // Joint is part of the planned approach
         const unsigned int approach_id = std::distance(plan_joints.begin(), approach_joints_it);
         point.positions[i] = point_appr.positions[approach_id];
-        if (!point_appr.velocities.empty())    {point.velocities[i]    = point_appr.velocities[approach_id];}
-        if (!point_appr.accelerations.empty()) {point.accelerations[i] = point_appr.accelerations[approach_id];}
+        if (has_velocities)    {point.velocities[i]    = point_appr.velocities[approach_id];}
+        if (has_accelerations) {point.accelerations[i] = point_appr.accelerations[approach_id];}
       }
       else
       {
@@ -351,8 +353,8 @@ void ApproachPlanner::combineTrajectories(const JointNames&                  joi
         const double vel = (p_max - p_min) / (t_max - t_min);
 
         point.positions[i] = p_min + vel * t;
-        if (!point_appr.velocities.empty())    {point.velocities[i]    = vel;}
-        if (!point_appr.accelerations.empty()) {point.accelerations[i] = 0.0;}
+        if (has_velocities)    {point.velocities[i]    = vel;}
+        if (has_accelerations) {point.accelerations[i] = 0.0;}
       }
     }
 

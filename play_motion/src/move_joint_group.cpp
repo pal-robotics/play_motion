@@ -120,12 +120,11 @@ namespace play_motion
       }
       trajectory_msgs::JointTrajectoryPoint point;
 
-      point.positions = p.positions;                            // Reach these joint positions...
-      if (p.velocities.size() != joint_names_.size())
-        point.velocities.resize(joint_names_.size(), 0.0); // ...with zero-velocity
-      else
-        point.velocities = p.velocities;
-      point.time_from_start = p.time_from_start + duration;                  // ...in this time
+      point.positions = p.positions;                        // Reach these joint positions...
+      point.velocities = p.velocities;                      // ...with a given velocity (may be unset)
+      point.accelerations = p.accelerations;                // ...and acceleration      (may be unset)
+
+      point.time_from_start = p.time_from_start + duration; // ...in this time
 
       goal.trajectory.points.push_back(point);
     }

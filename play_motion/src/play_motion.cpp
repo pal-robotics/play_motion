@@ -214,11 +214,14 @@ namespace play_motion
 
     foreach (const TrajPoint& p, motion_points)
     {
-      bool has_velocities = !p.velocities.empty();
+      bool has_velocities    = !p.velocities.empty();
+      bool has_accelerations = !p.accelerations.empty();
       TrajPoint point;
       point.positions.resize(group_joint_names.size());
       if (has_velocities)
         point.velocities.resize(group_joint_names.size(), 0);
+      if (has_accelerations)
+        point.accelerations.resize(group_joint_names.size(), 0);
       point.time_from_start = p.time_from_start;
 
       for (std::size_t i = 0; i < group_joint_names.size(); ++i)
@@ -232,6 +235,8 @@ namespace play_motion
           point.positions[i] = p.positions[index];
           if (has_velocities)
             point.velocities[i] = p.velocities[index];
+          if (has_accelerations)
+            point.accelerations[i] = p.accelerations[index];
         }
       }
       traj_group.push_back(point);
