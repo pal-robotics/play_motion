@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(play_motion)
 
-find_package(catkin REQUIRED COMPONENTS roscpp play_motion_msgs actionlib)
+find_package(catkin REQUIRED COMPONENTS roscpp play_motion_msgs actionlib sensor_msgs)
 find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(INCLUDE_DIRS include
