@@ -2,6 +2,12 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix dependencies (add sensor_msgs)
+* Add install target for play_motion_helpers lib
+* take messages out into new package play_motion_msgs
+
 0.3.2 (2014-02-05)
 ------------------
 * Refactor and add a datatypes.h
