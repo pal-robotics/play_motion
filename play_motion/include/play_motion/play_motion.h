@@ -111,10 +111,12 @@ namespace play_motion
 
     /// \brief Send motion goal request
     /// \param motion_name Name of motion to execute.
-    /// \param duration Motion duration.
+    /// \param skip_planning Skip motion planning for computing the approach trajectory.
     /// \param[out] goal_id contains the goal ID if function returns true
-    bool run(const std::string& motion_name, const ros::Duration& duration,
-             GoalHandle& gh, const Callback& cb);
+    bool run(const std::string& motion_name,
+             bool               skip_planning,
+             GoalHandle&        gh,
+             const Callback&    cb);
 
   private:
     void jointStateCb(const sensor_msgs::JointStatePtr& msg);

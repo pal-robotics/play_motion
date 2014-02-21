@@ -315,8 +315,10 @@ next_joint:;
     return ctrlr_list;
   }
 
-  bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
-                       GoalHandle& goal_hdl, const Callback& cb)
+  bool PlayMotion::run(const std::string& motion_name,
+                       bool               skip_planning,
+                       GoalHandle&        goal_hdl,
+                       const Callback&    cb)
   {
     JointNames                              motion_joints;
     Trajectory                              motion_points;
@@ -326,23 +328,21 @@ next_joint:;
 
     try
     {
-      double shortest_time = 1.0e-2;
-      if (duration.toSec() < shortest_time)
-        throw PMException("Reach time too small", PMR::INFEASIBLE_REACH_TIME);
       getMotionJoints(motion_name, motion_joints);
       ControllerList groups = getMotionControllers(motion_joints); // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
-      // TODO: Ignore reach time when motion planning is used.
-      // TODO: Make planning optional
-      Trajectory motion_points_safe;
 
       std::vector<double> curr_pos; // Current position of motion joints
-      foreach(const std::string& motion_joint, motion_joints) {curr_pos.push_back(joint_states_[motion_joint]);} // TODO: What if motion joint does not exist?
+      foreach(const std::string& motion_joint, motion_joints)
+        curr_pos.push_back(joint_states_[motion_joint]); // TODO: What if motion joint does not exist?
 
-      if (!approach_planner_->prependApproach(motion_joints, curr_pos, motion_points, motion_points_safe))
-      {
-        return false;
-      }
+      // Approach trajectory
+      Trajectory motion_points_safe;
+      if (!approach_planner_->prependApproach(motion_joints, curr_pos,
+                                              skip_planning,
+                                              motion_points, motion_points_safe))
+        throw PMException("Approach motion planning failed", PMR::NO_PLAN_FOUND);// TODO: Expose descriptive error string from approach_planner
+
       // TODO: Resample and validate output trajectory
       populateVelocities(motion_points_safe, motion_points_safe);
 
@@ -363,7 +363,7 @@ next_joint:;
       {
         goal_hdl->addController(p.first);
         p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl, p.first));
-        if (!p.first->sendGoal(p.second, duration))
+        if (!p.first->sendGoal(p.second))
           throw PMException("Controller '" + p.first->getName() + "' did not accept trajectory, "
                             "canceling everything");
       }

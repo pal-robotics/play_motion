@@ -103,7 +103,9 @@ namespace play_motion
     AlServer::GoalConstPtr goal = gh.getGoal(); //XXX: can this fail? should we check it?
     ROS_INFO_STREAM("Received request to play motion '" << goal->motion_name << "'.");
     PlayMotion::GoalHandle goal_hdl;
-    if (!pm_->run(goal->motion_name, goal->reach_time, goal_hdl,
+    if (!pm_->run(goal->motion_name,
+                  goal->skip_planning,
+                  goal_hdl,
                   boost::bind(&PlayMotionServer::playMotionCb, this, _1)))
     {
       PMR r;

@@ -1,11 +1,10 @@
 string motion_name
-duration reach_time
+bool skip_planning
 int32 priority
 ---
 int32 error_code
 int32 SUCCEEDED             = 1
 int32 MOTION_NOT_FOUND      = -1
-int32 INFEASIBLE_REACH_TIME = -2
 # controller error codes
 int32 CONTROLLER_BUSY       = -3
 int32 MISSING_CONTROLLER    = -4

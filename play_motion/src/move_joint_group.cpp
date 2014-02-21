@@ -102,7 +102,7 @@ namespace play_motion
     return false;
   }
 
-  bool MoveJointGroup::sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration)
+  bool MoveJointGroup::sendGoal(const std::vector<TrajPoint>& traj)
   {
     ROS_DEBUG_STREAM("Sending trajectory goal to " << controller_name_ << ".");
 
@@ -120,11 +120,11 @@ namespace play_motion
       }
       trajectory_msgs::JointTrajectoryPoint point;
 
-      point.positions = p.positions;                        // Reach these joint positions...
-      point.velocities = p.velocities;                      // ...with a given velocity (may be unset)
-      point.accelerations = p.accelerations;                // ...and acceleration      (may be unset)
+      point.positions     = p.positions;         // Reach these joint positions...
+      point.velocities    = p.velocities;        // ...with a given velocity (may be unset)
+      point.accelerations = p.accelerations;     // ...and acceleration      (may be unset)
 
-      point.time_from_start = p.time_from_start + duration; // ...in this time
+      point.time_from_start = p.time_from_start; // ...in this time
 
       goal.trajectory.points.push_back(point);
     }

@@ -35,6 +35,7 @@
 /** \author Adolfo Rodriguez Tsouroukdissian. */
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -91,18 +92,27 @@ ApproachPlanner::PlanningData::PlanningData(MoveGroupPtr move_group_ptr)
 }
 
 ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
-  : joint_tol_(1e-3)
+  : joint_tol_(1e-3),
+    skip_planning_vel_(0.5)
 {
   ros::NodeHandle ap_nh(nh, "approach_planner");
 
   const string JOINT_TOL_STR          = "joint_tolerance";
   const string PLANNING_GROUPS_STR    = "planning_groups";
   const string NO_PLANNING_JOINTS_STR = "exclude_from_planning_joints";
+  const string SKIP_PLANNING_VEL      = "skip_planning_approach_vel";
 
   // Joint tolerance
   const bool joint_tol_ok = ap_nh.getParam(JOINT_TOL_STR, joint_tol_);
   if (joint_tol_ok) {ROS_DEBUG_STREAM("Using joint tolerance of " << joint_tol_);}
   else              {ROS_DEBUG_STREAM("Joint tolerance not specified. Using default value of " << joint_tol_);}
+
+  // Velocity used in non-planned approaches
+  const bool skip_planning_vel_ok = ap_nh.getParam(SKIP_PLANNING_VEL, skip_planning_vel_);
+  if (skip_planning_vel_ok) {ROS_DEBUG_STREAM("Using a max velocity of " << skip_planning_vel_ <<
+                                              " for unplanned approaches.");}
+  else                      {ROS_DEBUG_STREAM("Max velocity for unplanned approaches not specified. " <<
+                                              "Using default value of " << skip_planning_vel_);}
 
   // Joints excluded from motion planning
   using namespace XmlRpc;
@@ -156,8 +166,9 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
 }
 
 // TODO: Work directly with JointStates and JointTrajector messages?
-bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
+bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
                                       const vector<double>&    current_pos,
+                                      bool                     skip_planning,
                                       const vector<TrajPoint>& traj_in,
                                             vector<TrajPoint>& traj_out)
 {
@@ -183,30 +194,61 @@ bool ApproachPlanner::prependApproach(const vector<string>&    joint_names,
     return false;
   }
 
-  // Compute approach trajectory
-  trajectory_msgs::JointTrajectory approach;
-  const bool approach_ok = computeApproach(joint_names,
-                                           current_pos,
-                                           traj_in.front().positions,
-                                           approach);
-  if (!approach_ok) {return false;}
-
-  // No approach is required
-  if (approach.points.empty())
+  if (skip_planning)
   {
+    // Skip motion planning altogether. Reach first trajectory point without exceeding specified max avg velocity
     traj_out = traj_in;
-    ROS_INFO("Approach motion not needed.");
-    return true;
+    const double reach_time = noPlanningReachTime(current_pos, traj_out.front().positions);
+    foreach(TrajPoint& point, traj_out) {point.time_from_start += ros::Duration(reach_time);}
+  }
+  else
+  {
+    // Compute approach trajectory using motion planning
+    trajectory_msgs::JointTrajectory approach;
+    const bool approach_ok = computeApproach(joint_names,
+                                             current_pos,
+                                             traj_in.front().positions,
+                                             approach);
+    if (!approach_ok) {return false;}
+
+    // No approach is required
+    if (approach.points.empty())
+    {
+      traj_out = traj_in;
+      ROS_INFO("Approach motion not needed.");
+    }
+    else
+    {
+      // Combine approach and input motion trajectories
+      combineTrajectories(joint_names,
+                          current_pos,
+                          traj_in,
+                          approach,
+                          traj_out);
+    }
   }
 
-  // Combine approach and input motion trajectories
-  combineTrajectories(joint_names,
-                      current_pos,
-                      traj_in,
-                      approach,
-                      traj_out);
+  // Check that if resulting motion is a single waypoint at the current position (i.e., a no-op), the waypoint
+  // does not have zero duration, otherwise trajectory execution will fail
+  if (1 == traj_out.size() &&
+      traj_out.front().time_from_start.isZero() &&
+      !needsApproach(current_pos, traj_out.front().positions))
+  {
+    traj_out.front().time_from_start = ros::Duration(1e-3);
+  }
 
   return true;
+}
+
+bool ApproachPlanner::needsApproach(const std::vector<double>& current_pos,
+                                    const std::vector<double>& goal_pos)
+{
+  assert(current_pos.size() == goal_pos.size());
+  for (int i = 0; i < current_pos.size(); ++i)
+  {
+    if (std::abs(current_pos[i] - goal_pos[i]) > joint_tol_) return true;
+  }
+  return false;
 }
 
 bool ApproachPlanner::computeApproach(const vector<string>&             joint_names,
@@ -409,6 +451,19 @@ vector<ApproachPlanner::MoveGroupPtr> ApproachPlanner::getValidMoveGroups(const 
 bool ApproachPlanner::isPlanningJoint(const string& joint_name) const
 {
   return std::find(no_plan_joints_.begin(), no_plan_joints_.end(), joint_name) == no_plan_joints_.end();
+}
+
+double ApproachPlanner::noPlanningReachTime(const std::vector<double>& curr_pos,
+                                            const std::vector<double>& goal_pos)
+{
+  double dmax = 0.0; // Maximum joint displacement
+  for (int i = 0; i < curr_pos.size(); ++i)
+  {
+    const double d = std::abs(goal_pos[i] - curr_pos[i]);
+    if (d > dmax)
+      dmax = d;
+  }
+  return dmax / skip_planning_vel_;
 }
 
 } // namesapce

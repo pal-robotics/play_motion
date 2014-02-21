@@ -74,10 +74,16 @@ namespace play_motion
 
     ApproachPlanner(const ros::NodeHandle& nh);
 
+    /// TODO
     bool prependApproach(const std::vector<std::string>& joint_names,
                          const std::vector<double>&      current_pos,
+                         bool                            skip_planning,
                          const std::vector<TrajPoint>&   traj_in,
                                std::vector<TrajPoint>&   traj_out);
+
+    /// TODO
+    bool needsApproach(const std::vector<double>& current_pos,
+                       const std::vector<double>& goal_pos);
 
   private:
     typedef moveit::planning_interface::MoveGroup MoveGroup;
@@ -95,7 +101,8 @@ namespace play_motion
 
     std::vector<PlanningData> planning_data_;
     std::vector<std::string> no_plan_joints_;
-    double joint_tol_;
+    double joint_tol_; ///< Absolute tolerance used to determine if two joint positions are approximately equal.
+    double skip_planning_vel_; ///< Maximum average velocity that any joint can have in a non-planned approach.
     AsyncSpinnerPtr spinner_;
 
     /// TODO
@@ -122,6 +129,11 @@ namespace play_motion
 
     /// TODO
     bool isPlanningJoint(const std::string& joint_name) const;
+
+
+    /// TODO
+    double noPlanningReachTime(const std::vector<double>& curr_pos,
+                               const std::vector<double>& goal_pos);
   };
 
 } // namespace
