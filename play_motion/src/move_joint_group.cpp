@@ -62,6 +62,37 @@ namespace play_motion
     active_cb_.clear();
   }
 
+  bool MoveJointGroup::isIdle() const
+  {
+    return !busy_;
+  }
+
+  void MoveJointGroup::cancel()
+  {
+    busy_ = false;
+    client_.cancelAllGoals();
+  }
+
+  void MoveJointGroup::setCallback(const Callback& cb)
+  {
+    active_cb_ = cb;
+  }
+
+  const JointNames& MoveJointGroup::getJointNames() const
+  {
+    return joint_names_;
+  }
+
+  actionlib::SimpleClientGoalState MoveJointGroup::getState()
+  {
+    return client_.getState();
+  }
+
+  const std::string& MoveJointGroup::getName() const
+  {
+    return controller_name_;
+  }
+
   bool MoveJointGroup::isControllingJoint(const std::string& joint_name)
   {
     if (!client_.isServerConnected())
