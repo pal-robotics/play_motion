@@ -39,20 +39,15 @@
 
 #include <vector>
 #include <ros/duration.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
 
 namespace play_motion
 {
 
-  struct TrajPoint
-  {
-    std::vector<double> positions;
-    std::vector<double> velocities;
-    ros::Duration       time_from_start;
-  };
-
-  typedef std::vector<std::string> MotionNames;
-  typedef std::vector<std::string> JointNames;
-  typedef std::vector<TrajPoint>   Trajectory;
+  typedef std::vector<std::string>              MotionNames;
+  typedef std::vector<std::string>              JointNames;
+  typedef trajectory_msgs::JointTrajectoryPoint TrajPoint;
+  typedef std::vector<TrajPoint>                Trajectory;
 
 }
 
