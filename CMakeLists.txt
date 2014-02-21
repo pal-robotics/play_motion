@@ -17,7 +17,7 @@ rosbuild_gensrv()
 
 rosbuild_add_boost_directories()
 
-rosbuild_add_library(play_motion_helper src/play_motion_helpers.cpp)
+rosbuild_add_library(play_motion_helpers src/play_motion_helpers.cpp)
 
 rosbuild_add_executable(play_motion
   src/move_joint_group.cpp
@@ -26,11 +26,14 @@ rosbuild_add_executable(play_motion
   src/play_motion_main.cpp
   src/controller_updater.cpp)
 
-target_link_libraries(play_motion play_motion_helper)
+target_link_libraries(play_motion play_motion_helpers)
+rosbuild_link_boost(play_motion thread)
 
 rosbuild_add_executable(rrbot test/rrbot.cpp)
 rosbuild_add_executable(play_motion_test test/play_motion_test.cpp)
 rosbuild_add_gtest_build_flags(play_motion_test)
 rosbuild_add_rostest(test/play_motion.test)
-
-rosbuild_link_boost(play_motion thread)
+rosbuild_add_executable(play_motion_helpers_test test/play_motion_helpers_test.cpp)
+rosbuild_add_gtest_build_flags(play_motion_test)
+target_link_libraries(play_motion_helpers_test play_motion_helpers)
+rosbuild_add_rostest(test/play_motion.test test/play_motion_helpers.test)
