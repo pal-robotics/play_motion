@@ -65,7 +65,7 @@ namespace play_motion
       : ros::Exception(what)
     { error_code_ = error_code; }
 
-    const int error_code() const
+    int error_code() const
     { return error_code_; }
 
   private:
