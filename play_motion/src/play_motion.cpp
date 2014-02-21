@@ -57,8 +57,9 @@ namespace
   typedef boost::shared_ptr<play_motion::MoveJointGroup> MoveJointGroupPtr;
   typedef std::list<MoveJointGroupPtr>                   ControllerList;
   typedef play_motion::PMR                               PMR;
+  typedef actionlib::SimpleClientGoalState               SCGS;
 
-  void generateErrorCode(GoalHandle goal_hdl, int error_code)
+  void generateErrorCode(GoalHandle goal_hdl, int error_code, SCGS ctrl_state)
   {
     typedef control_msgs::FollowJointTrajectoryResult JTR;
     switch (error_code)
@@ -75,30 +76,44 @@ namespace
         os << "got error code " << error_code << ", motion aborted";
         goal_hdl->error_string = os.str();
     }
+    //TODO: add handling for controller state
   }
 
-  void controllerCb(int error_code, GoalHandle goal_hdl)
+  void controllerCb(int error_code, GoalHandle goal_hdl, const MoveJointGroupPtr& ctrl)
   {
-    if (goal_hdl->active_controllers < 1)
+    ControllerList::iterator it = std::find(goal_hdl->controllers.begin(),
+                                            goal_hdl->controllers.end(), ctrl);
+    if (it == goal_hdl->controllers.end())
+    {
+      ROS_ERROR_STREAM("Something is wrong in the controller callback handling. "
+                       << ctrl->getName() << " called a goal callback while no "
+                       "motion goal was alive for it.");
       return;
+    }
+    goal_hdl->controllers.erase(it);
 
-    ROS_DEBUG("return from joint group, %d active controllers, error: %d",
-              goal_hdl->active_controllers - 1, error_code);
+    ROS_DEBUG_STREAM("return from joint group " << ctrl->getName() << ", "
+                     << goal_hdl->controllers.size() << " active controllers, "
+                     "error: " << error_code);
 
-    if (error_code != 0)
+    if (goal_hdl->canceled)
     {
-      generateErrorCode(goal_hdl, error_code);
+      ROS_DEBUG("The Goal was canceled, not calling Motion callback.");
+      return;
+    }
+
+    goal_hdl->error_code = PMR::SUCCEEDED;
+    if (error_code != 0 || ctrl->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+      ROS_ERROR_STREAM("Controller " << ctrl->getName() << " aborted.");
       goal_hdl->cancel();
-      goal_hdl->active_controllers = 1; // terminate goal immediately
+      generateErrorCode(goal_hdl, error_code, ctrl->getState());
+      goal_hdl->cb(goal_hdl);
+      return;
     }
 
-    goal_hdl->active_controllers--;
-    if (goal_hdl->active_controllers == 0)
-    {
-      if (!goal_hdl->error_code)
-        goal_hdl->error_code = PMR::SUCCEEDED;
+    if (goal_hdl->controllers.empty())
       goal_hdl->cb(goal_hdl);
-    }
   }
 
   template <class T>
@@ -126,10 +141,12 @@ namespace play_motion
     : error_code(0)
     , active_controllers(0)
     , cb(cbk)
+    , canceled(false)
   {}
 
   void PlayMotion::Goal::cancel()
   {
+    canceled = true;
     foreach (MoveJointGroupPtr mjg, controllers)
       mjg->cancel();
   }
@@ -305,7 +322,7 @@ next_joint:;
       foreach (const traj_pair_t& p, joint_group_traj)
       {
         goal_hdl->addController(p.first);
-        p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl));
+        p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl, p.first));
         if (!p.first->sendGoal(p.second, duration))
           throw PMException("controller '" + p.first->getName() +
                             "' did not accept trajectory, canceling everything");

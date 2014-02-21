@@ -95,6 +95,7 @@ namespace play_motion
       int            active_controllers;
       Callback       cb;
       ControllerList controllers;
+      bool           canceled;
 
       ~Goal();
       void cancel();
