@@ -51,49 +51,14 @@
 
 #define foreach BOOST_FOREACH
 
-namespace play_motion
+namespace
 {
-  PlayMotion::PlayMotion(ros::NodeHandle& nh) :
-    nh_(nh),
-    joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this)),
-    ctrlr_updater_(nh_)
-  {
-    ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
-  }
+  typedef play_motion::PlayMotion::GoalHandle            GoalHandle;
+  typedef boost::shared_ptr<play_motion::MoveJointGroup> MoveJointGroupPtr;
+  typedef std::list<MoveJointGroupPtr>                   ControllerList;
+  typedef play_motion::PMR                               PMR;
 
-  void PlayMotion::Goal::cancel()
-  {
-    foreach (MoveJointGroupPtr mjg, controllers)
-      mjg->cancel();
-  }
-
-  void PlayMotion::Goal::addController(const MoveJointGroupPtr& ctrl)
-  {
-    controllers.push_back(ctrl);
-    active_controllers++;
-  }
-
-  PlayMotion::Goal::~Goal()
-  {
-    if (active_controllers)
-      cancel();
-  }
-
-  void PlayMotion::updateControllersCb(const ControllerUpdater::ControllerStates& states,
-                                       const ControllerUpdater::ControllerJoints& joints)
-  {
-    typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
-    move_joint_groups_.clear();
-    foreach (const ctrlr_state_pair_t& p, states)
-    {
-      if (p.second != ControllerUpdater::RUNNING)
-        continue;
-      move_joint_groups_.push_back(MoveJointGroupPtr(new MoveJointGroup(p.first, joints.at(p.first))));
-      ROS_DEBUG_STREAM("controller '" << p.first << "' with " << joints.at(p.first).size() << " joints");
-    }
-  }
-
-  static void generateErrorCode(PlayMotion::GoalHandle goal_hdl, int error_code)
+  void generateErrorCode(GoalHandle goal_hdl, int error_code)
   {
     typedef control_msgs::FollowJointTrajectoryResult JTR;
     switch (error_code)
@@ -112,7 +77,7 @@ namespace play_motion
     }
   }
 
-  void PlayMotion::controllerCb(int error_code, GoalHandle goal_hdl)
+  void controllerCb(int error_code, GoalHandle goal_hdl)
   {
     if (goal_hdl->active_controllers < 1)
       return;
@@ -134,7 +99,64 @@ namespace play_motion
         goal_hdl->error_code = PMR::SUCCEEDED;
       goal_hdl->cb(goal_hdl);
     }
-  };
+  }
+
+  template <class T>
+  bool hasNonNullIntersection(const std::vector<T>& v1, const std::vector<T>& v2)
+  {
+    foreach (const T& e1, v1)
+      foreach (const T& e2, v2)
+        if (e1 == e2)
+          return true;
+    return false;
+  }
+} // unnamed namespace
+
+namespace play_motion
+{
+  PlayMotion::PlayMotion(ros::NodeHandle& nh) :
+    nh_(nh),
+    joint_states_sub_(nh_.subscribe("joint_states", 10, &PlayMotion::jointStateCb, this)),
+    ctrlr_updater_(nh_)
+  {
+    ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
+  }
+
+  PlayMotion::Goal::Goal(const Callback& cbk)
+    : error_code(0)
+    , active_controllers(0)
+    , cb(cbk)
+  {}
+
+  void PlayMotion::Goal::cancel()
+  {
+    foreach (MoveJointGroupPtr mjg, controllers)
+      mjg->cancel();
+  }
+
+  void PlayMotion::Goal::addController(const MoveJointGroupPtr& ctrl)
+  {
+    controllers.push_back(ctrl);
+  }
+
+  PlayMotion::Goal::~Goal()
+  {
+    cancel();
+  }
+
+  void PlayMotion::updateControllersCb(const ControllerUpdater::ControllerStates& states,
+                                       const ControllerUpdater::ControllerJoints& joints)
+  {
+    typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
+    move_joint_groups_.clear();
+    foreach (const ctrlr_state_pair_t& p, states)
+    {
+      if (p.second != ControllerUpdater::RUNNING)
+        continue;
+      move_joint_groups_.push_back(MoveJointGroupPtr(new MoveJointGroup(p.first, joints.at(p.first))));
+      ROS_DEBUG_STREAM("controller '" << p.first << "' with " << joints.at(p.first).size() << " joints");
+    }
+  }
 
   void PlayMotion::jointStateCb(const sensor_msgs::JointStatePtr& msg)
   {
@@ -243,16 +265,6 @@ next_joint:;
   }
 
 
-  template <class T>
-  static bool hasNonNullIntersection(const std::vector<T>& v1, const std::vector<T>& v2)
-  {
-    foreach (const T& e1, v1)
-      foreach (const T& e2, v2)
-        if (e1 == e2)
-          return true;
-    return false;
-  }
-
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
                        GoalHandle& goal_hdl, const Callback& cb)
   {
@@ -293,10 +305,10 @@ next_joint:;
       foreach (const traj_pair_t& p, joint_group_traj)
       {
         goal_hdl->addController(p.first);
-        p.first->setCallback(boost::bind(&PlayMotion::controllerCb, this, _1, goal_hdl));
+        p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl));
         if (!p.first->sendGoal(p.second, duration))
-          throw PMException("controller '" + p.first->getName() + "' did not accept trajectory, "
-                            "canceling everything");
+          throw PMException("controller '" + p.first->getName() +
+                            "' did not accept trajectory, canceling everything");
       }
     }
     catch (const PMException& e)

@@ -39,7 +39,7 @@
 #define REACHPOSE_H
 
 #include <string>
-#include <vector>
+#include <list>
 #include <map>
 #include <ros/ros.h>
 #include <boost/foreach.hpp>
@@ -81,7 +81,7 @@ namespace play_motion
     typedef boost::shared_ptr<Goal> GoalHandle;
   private:
     typedef boost::shared_ptr<MoveJointGroup>        MoveJointGroupPtr;
-    typedef std::vector<MoveJointGroupPtr>           ControllerList;
+    typedef std::list<MoveJointGroupPtr>             ControllerList;
     typedef boost::function<void(const GoalHandle&)> Callback;
 
   public:
@@ -101,7 +101,7 @@ namespace play_motion
       void addController(const MoveJointGroupPtr& ctrl);
 
     private:
-      Goal(const Callback& cbk) : error_code(0), active_controllers(0), cb(cbk) {}
+      Goal(const Callback& cbk);
     };
 
     PlayMotion(ros::NodeHandle& nh);
@@ -115,7 +115,6 @@ namespace play_motion
 
   private:
     void jointStateCb(const sensor_msgs::JointStatePtr& msg);
-    void controllerCb(int error_code, GoalHandle goal_hdl);
 
     bool getGroupTraj(MoveJointGroupPtr move_joint_group,
                       const JointNames& motion_joints,
