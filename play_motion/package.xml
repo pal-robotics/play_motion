@@ -25,9 +25,10 @@
   <run_depend>play_motion_msgs</run_depend>
   <run_depend>roscpp</run_depend>
 
-  <test_depend>controller_manager</test_depend>
-  <test_depend>joint_state_controller</test_depend>
-  <test_depend>robot_state_publisher</test_depend>
-  <test_depend>joint_trajectory_controller</test_depend>
+  <!-- test build depends -->
+  <build_depend>controller_manager</build_depend>
+  <build_depend>joint_state_controller</build_depend>
+  <build_depend>robot_state_publisher</build_depend>
+  <build_depend>joint_trajectory_controller</build_depend>
 
 </package>
