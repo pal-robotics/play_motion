@@ -117,19 +117,22 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   // Joints excluded from motion planning
   using namespace XmlRpc;
   XmlRpcValue xml_no_plan_joints;
-  ap_nh.getParam(NO_PLANNING_JOINTS_STR, xml_no_plan_joints);
-  if (xml_no_plan_joints.getType() != XmlRpcValue::TypeArray)
+  const bool xml_no_plan_joints_ok = ap_nh.getParam(NO_PLANNING_JOINTS_STR, xml_no_plan_joints);
+  if (xml_no_plan_joints_ok)
   {
-    const string what = "The '" + NO_PLANNING_JOINTS_STR + "' parameter is not an array (namespace: " +
-                             ap_nh.getNamespace() + ").";
-    throw ros::Exception(what);
+    if (xml_no_plan_joints.getType() != XmlRpcValue::TypeArray)
+    {
+      const string what = "The '" + NO_PLANNING_JOINTS_STR + "' parameter is not an array (namespace: " +
+                               ap_nh.getNamespace() + ").";
+      throw ros::Exception(what);
+    }
+    no_plan_joints_.resize(xml_no_plan_joints.size());
+    try
+    {
+      for (int i = 0; i < xml_no_plan_joints.size(); ++i) {xh::getArrayItem(xml_no_plan_joints, i, no_plan_joints_[i]);}
+    }
+    catch(const xh::XmlrpcHelperException& ex) {throw ros::Exception(ex.what());}
   }
-  no_plan_joints_.resize(xml_no_plan_joints.size());
-  try
-  {
-    for (int i = 0; i < xml_no_plan_joints.size(); ++i) {xh::getArrayItem(xml_no_plan_joints, i, no_plan_joints_[i]);}
-  }
-  catch(const xh::XmlrpcHelperException& ex) {throw ros::Exception(ex.what());}
 
   // Planning group names
   using namespace XmlRpc;
