@@ -62,7 +62,7 @@ namespace play_motion
 
   /**
    * @param nh Nodehandle with the namespace containing the motions
-   *           (ie ros::NodeHandle( nh"play_motion"))
+   *           (ie ros::NodeHandle nh("play_motion"))
    * @throws xh::XmlrpcHelperException if motion_id cannot be found
    */
   void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id,
@@ -71,7 +71,7 @@ namespace play_motion
 
   /**
    * @param nh Nodehandle with the namespace containing the motions
-   *           (ie ros::NodeHandle( nh"play_motion"))
+   *           (ie ros::NodeHandle nh("play_motion"))
    * @throws xh::XmlrpcHelperException if motion_id cannot be found
    */
   void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id,
@@ -88,7 +88,7 @@ namespace play_motion
   /**
    * @brief getMotions obtain all motion names
    * @param nh Nodehandle with the namespace containing the motions
-   *           (ie ros::NodeHandle( nh"play_motion"))
+   *           (ie ros::NodeHandle nh("play_motion"))
    * @throws xh::XmlrpcHelperException if no motions available
    */
   void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids);
