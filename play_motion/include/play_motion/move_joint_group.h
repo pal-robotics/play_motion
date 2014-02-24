@@ -56,7 +56,7 @@ namespace play_motion
   {
   private:
     typedef actionlib::SimpleActionClient
-    <control_msgs::FollowJointTrajectoryAction>     ActionClient;
+    <control_msgs::FollowJointTrajectoryAction>       ActionClient;
     typedef control_msgs::FollowJointTrajectoryGoal   ActionGoal;
     typedef control_msgs::FollowJointTrajectoryResult ActionResult;
     typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
@@ -64,26 +64,63 @@ namespace play_motion
 
   public:
     MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
-    bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
-    bool isControllingJoint(const std::string& joint_name);
-    bool isIdle() { return !busy_; }
-    void cancel() { busy_ = false; client_.cancelAllGoals(); }
-    void setCallback(const Callback& cb) { active_cb_ = cb; }
 
-    const JointNames& getJointNames() const {return joint_names_;}
-    actionlib::SimpleClientGoalState getState() {return client_.getState();}
-    const std::string& getName() { return controller_name_; }
+    /**
+     * \brief Send a trajectory goal to the associated controller.
+     * \param traj The trajectory to send
+     * \param duration (misnamed) Time to reach the first point
+     */
+    bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
+
+    /**
+     * \brief Returns true if the specified joint is controlled by the controller.
+     * \pram joint_name Joint name
+     */
+    bool isControllingJoint(const std::string& joint_name);
+
+    /**
+     * \brief Returns true if the MoveJointGroup is ready to accept a new goal.
+     * \note This is independent from the state of the controller, but if the
+     *       controller cannot be reached, isIdle() will always return false.
+     */
+    bool isIdle() const;
+
+    /**
+     * \brief Cancel the current goal
+     */
+    void cancel();
+
+    /**
+     * \brief Register the callback to be called when the action is finished.
+     * \param cb The callback
+     */
+    void setCallback(const Callback& cb);
+
+    /**
+     * \brief Returns the list of associated joints
+     */
+    const JointNames& getJointNames() const;
+
+    /**
+     * \brief Returns the action client state
+     */
+    actionlib::SimpleClientGoalState getState();
+
+    /**
+     * \brief Returns the name that was used when creating the MoveJointGroup
+     */
+    const std::string& getName() const;
 
   private:
     void alCallback();
 
-    bool                     busy_;
-    ros::NodeHandle          nh_;               ///< Default node handle.
-    std::string              controller_name_;  ///< Controller name.
-    JointNames               joint_names_;      ///< Names of controller joints.
-    ActionClient             client_;           ///< Action client used to trigger motions.
-    Callback                 active_cb_;        ///< Call this when we are called back from the controller
-    ros::Timer               configure_timer_;  ///< To periodically check for controller actionlib server
+    bool            busy_;
+    ros::NodeHandle nh_;               ///< Default node handle.
+    std::string     controller_name_;  ///< Controller name. XXX: is this needed?
+    JointNames      joint_names_;      ///< Names of controller joints.
+    ActionClient    client_;           ///< Action client used to trigger motions.
+    Callback        active_cb_;        ///< Call this when we are called back from the controller
+    ros::Timer      configure_timer_;  ///< To periodically check for controller actionlib server
   };
 }
 
