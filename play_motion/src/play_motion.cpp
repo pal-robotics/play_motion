@@ -276,12 +276,6 @@ next_joint:;
     }
   }
 
-  void PlayMotion::populateVelocities(const Trajectory& traj_in, Trajectory& traj_out)
-  {
-    ::play_motion::populateVelocities (traj_in, traj_out);
-  }
-
-
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
                        GoalHandle& goal_hdl, const Callback& cb)
   {

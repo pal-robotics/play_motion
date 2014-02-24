@@ -43,16 +43,24 @@
 int main(int argc, char** argv)
 {
   typedef boost::shared_ptr<play_motion::PlayMotion> PlayMotionPtr;
+
   // Init the ROS node
   ros::init(argc, argv, "play_motion");
 
   // Node handle scoped to where the poses are specified
   ros::NodeHandle nh;
 
-  ROS_INFO("starting");
-  // Initialize the actionlib server
-  play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh)));
+  try
+  {
+    // Initialize the actionlib server
+    play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh)));
 
-  // guruguru
-  ros::spin();
+    // guruguru
+    ros::spin();
+  }
+  catch(const ros::Exception& ex)
+  {
+    ROS_FATAL_STREAM(ex.what());
+    return EXIT_FAILURE;
+  }
 }
