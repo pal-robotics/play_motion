@@ -93,7 +93,12 @@ namespace play_motion
    */
   void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids);
 
-
+  /**
+   * @param nh Nodehandle with the namespace containing the motions
+   *           (ie ros::NodeHandle nh("play_motion"))
+   * @param motion_id Motion identifier
+   * @return True if the motion exists, false otherwise
+   */
   bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id);
 
   /**
@@ -148,6 +153,14 @@ namespace play_motion
    */
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 
+  /**
+   * @brief Parse a motion specified in the ROS parameter server into a data structure.
+   * @param[in] nh Nodehandle with the namespace containing the motions
+   *           (ie ros::NodeHandle nh("play_motion"))
+   * @param[in] motion_id Motion identifier
+   * @param[out] motionInfo Data structure containing parsed motion
+   * @throws ros::Exception if the motion does not exist or is malformed.
+   */
   void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
                  MotionInfo &motionInfo);
 }

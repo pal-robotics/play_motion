@@ -247,6 +247,12 @@ namespace play_motion
       error_msg << "could not parse motion '" << motion_name << "': " << e.what();
       throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
     }
+    catch (const ros::Exception& e)
+    {
+      std::ostringstream error_msg;
+      error_msg << "could not parse motion '" << motion_name << "': " << e.what();
+      throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
+    }
   }
 
   void PlayMotion::getMotionPoints(const std::string& motion_name, Trajectory& motion_points)
@@ -256,6 +262,12 @@ namespace play_motion
       ::play_motion::getMotionPoints(ros::NodeHandle("~"), motion_name, motion_points);
     }
     catch (const xh::XmlrpcHelperException& e)
+    {
+      std::ostringstream error_msg;
+      error_msg << "could not parse motion '" << motion_name << "': " << e.what();
+      throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
+    }
+    catch (const ros::Exception& e)
     {
       std::ostringstream error_msg;
       error_msg << "could not parse motion '" << motion_name << "': " << e.what();

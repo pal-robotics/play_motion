@@ -112,8 +112,7 @@ TEST(PlayMotionHelpersTest, isAlreadyThere)
                sourceJoints, sourceTraj[0]), ros::Exception);
 }
 
-
-TEST(PlayMotionHelpersTest, getMotion)
+TEST(PlayMotionHelpersTest, getMotionOk)
 {
   ros::NodeHandle nh("play_motion");
   play_motion::MotionInfo info;
@@ -124,8 +123,14 @@ TEST(PlayMotionHelpersTest, getMotion)
   EXPECT_EQ("Both arms set straight pointing sideways at 45 degrees.", info.description);
 }
 
-
-
+TEST(PlayMotionHelpersTest, getMotionKo)
+{
+  ros::NodeHandle nh("play_motion");
+  play_motion::MotionInfo info;
+  EXPECT_THROW(play_motion::getMotion(nh, "",          info), ros::Exception);
+  EXPECT_THROW(play_motion::getMotion(nh, "bad_name",  info), ros::Exception);
+  EXPECT_THROW(play_motion::getMotion(nh, "~bad_name", info), ros::Exception);
+}
 
 int main(int argc, char** argv)
 {
