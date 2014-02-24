@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>play_motion_msgs</name>
-  <version>0.3.3</version>
+  <version>0.3.4</version>
   <description>Messages, services and actions used by play_motion.</description>
 
   <maintainer email="paul.mathieu@pal-robotics.com">Paul Mathieu</maintainer>

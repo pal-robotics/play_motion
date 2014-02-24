@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.4 (2014-02-24)
+------------------
 * catch and show unexpected exceptions in main()
 * Refactor populateVelocities. Document it.
 * Propagate controller action state to internal API
