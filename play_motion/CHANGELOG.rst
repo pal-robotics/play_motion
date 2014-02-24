@@ -2,6 +2,19 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* catch and show unexpected exceptions in main()
+* Refactor populateVelocities. Document it.
+* Propagate controller action state to internal API
+  Fixes `#15 <https://github.com/pal-robotics/play_motion/issues/15>`_
+* Refactor some stuff in play_motion.cpp
+* Refactor and document MoveJointGroup
+* Replace test_depend with build_depend
+* Use existing msg types for traj points. Refs `#4 <https://github.com/pal-robotics/play_motion/issues/4>`_.
+  - Move from the custom structs to trajectory_msgs types.
+  - Waypoints can now have accelerations.
+
 0.3.3 (2014-02-20)
 ------------------
 * Fix dependencies (add sensor_msgs)
