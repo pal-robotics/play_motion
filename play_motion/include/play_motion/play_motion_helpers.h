@@ -61,58 +61,58 @@ namespace play_motion
   };
 
   /**
-   * @param nh Nodehandle with the namespace containing the motions
+   * \param nh Nodehandle with the namespace containing the motions
    *           (ie ros::NodeHandle nh("play_motion"))
-   * @throws xh::XmlrpcHelperException if motion_id cannot be found
+   * \throws xh::XmlrpcHelperException if motion_id cannot be found
    */
   void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id,
                        JointNames& motion_joints);
 
 
   /**
-   * @param nh Nodehandle with the namespace containing the motions
+   * \param nh Nodehandle with the namespace containing the motions
    *           (ie ros::NodeHandle nh("play_motion"))
-   * @throws xh::XmlrpcHelperException if motion_id cannot be found
+   * \throws xh::XmlrpcHelperException if motion_id cannot be found
    */
   void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id,
                        Trajectory& motion_points);
 
 
   /**
-   * @brief getMotionDuration gets the total duration of a motion
-   * @throws xh::XmlrpcHelperException if motion_id cannot be found
+   * \brief getMotionDuration gets the total duration of a motion
+   * \throws xh::XmlrpcHelperException if motion_id cannot be found
    */
   ros::Duration getMotionDuration(const ros::NodeHandle &nh,
                                   const std::string &motion_id);
 
   /**
-   * @brief getMotions obtain all motion names
-   * @param nh Nodehandle with the namespace containing the motions
+   * \brief getMotions obtain all motion names
+   * \param nh Nodehandle with the namespace containing the motions
    *           (ie ros::NodeHandle nh("play_motion"))
-   * @throws xh::XmlrpcHelperException if no motions available
+   * \throws xh::XmlrpcHelperException if no motions available
    */
   void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids);
 
   /**
-   * @param nh Nodehandle with the namespace containing the motions
+   * \param nh Nodehandle with the namespace containing the motions
    *           (ie ros::NodeHandle nh("play_motion"))
-   * @param motion_id Motion identifier
-   * @return True if the motion exists, false otherwise
+   * \param motion_id Motion identifier
+   * \return True if the motion exists, false otherwise
    */
   bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id);
 
   /**
-   * @brief isAlreadyThere checks if the source trajPoint matches the target
+   * \brief isAlreadyThere checks if the source trajPoint matches the target
    *        trajPoint with a certain tolerance
    *        only the joints in targetJoint will be checked
-   * @param tolerance tolerance per joint in radians
+   * \param tolerance tolerance per joint in radians
    */
   bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
                       const JointNames &sourceJoints, const TrajPoint &sourcePoint,
                       double tolerance = 0.15);
 
   /**
-   * @brief Populate joint velocity information of a trajectory waypoint.
+   * \brief Populate joint velocity information of a trajectory waypoint.
    *
    * Joint velocities are computed by numeric differentiation of position information, except in the following cases,
    * where it is set to zero:
@@ -128,9 +128,9 @@ namespace play_motion
    * If the input waypoint already contains a valid velocity specification, it will \e not be overwritten, that is, this
    * method will be a no-op.
    *
-   * @param[in]  point_prev Previous trajectory waypoint.
-   * @param[in]  point_next Next trajectory waypoint.
-   * @param[out] point_curr Trajectory waypoint to which velocity information will be added.
+   * \param[in]  point_prev Previous trajectory waypoint.
+   * \param[in]  point_next Next trajectory waypoint.
+   * \param[out] point_curr Trajectory waypoint to which velocity information will be added.
    *
    * \sa populateVelocities(const Trajectory&, Trajectory&)
    */
@@ -139,14 +139,14 @@ namespace play_motion
                                 TrajPoint& point_curr);
 
   /**
-   * @brief Populate joint velocity information of a trajectory.
+   * \brief Populate joint velocity information of a trajectory.
    *
    * Joint velocities will be computed for all waypoints not containing a valid velocity specification. Waypoints with
    * an existing velocity specification will not be modified. If the trajectory endpoints don't specify velocites, they
    * will be set to zero.
    *
-   * @param[in] traj_in Input trajectory. Some waypoints may have a velocity specification (or not at all).
-   * @param[out] traj_out Output trajectory. All waypoints have a velocity specification. Can be the same instance as
+   * \param[in] traj_in Input trajectory. Some waypoints may have a velocity specification (or not at all).
+   * \param[out] traj_out Output trajectory. All waypoints have a velocity specification. Can be the same instance as
    * \c traj_in.
    *
    * \sa populateVelocities(const TrajPoint&, const TrajPoint&, TrajPoint&)
@@ -154,12 +154,12 @@ namespace play_motion
   void populateVelocities(const Trajectory& traj_in, Trajectory& traj_out);
 
   /**
-   * @brief Parse a motion specified in the ROS parameter server into a data structure.
-   * @param[in] nh Nodehandle with the namespace containing the motions
+   * \brief Parse a motion specified in the ROS parameter server into a data structure.
+   * \param[in] nh Nodehandle with the namespace containing the motions
    *           (ie ros::NodeHandle nh("play_motion"))
-   * @param[in] motion_id Motion identifier
-   * @param[out] motionInfo Data structure containing parsed motion
-   * @throws ros::Exception if the motion does not exist or is malformed.
+   * \param[in] motion_id Motion identifier
+   * \param[out] motionInfo Data structure containing parsed motion
+   * \throws ros::Exception if the motion does not exist or is malformed.
    */
   void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
                  MotionInfo &motionInfo);
