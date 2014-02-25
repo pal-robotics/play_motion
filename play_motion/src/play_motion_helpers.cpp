@@ -44,10 +44,9 @@
 
 namespace play_motion
 {
-
-  std::string getParamName(const std::string &motion_id)
+  ros::NodeHandle getMotionsNodeHandle(const ros::NodeHandle& nh)
   {
-    return  "motions/" + motion_id;
+    return ros::NodeHandle(nh, "motions");
   }
 
   void extractTrajectory(xh::Array &traj_points, Trajectory& motion_points)
@@ -183,7 +182,15 @@ namespace play_motion
 
   bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id)
   {
-    return nh.hasParam(getParamName(motion_id));
+    try
+    {
+      ros::NodeHandle motions_nh = getMotionsNodeHandle(nh);
+      return motions_nh.hasParam(motion_id + "/joints") && motions_nh.hasParam(motion_id + "/points");
+    }
+    catch (const ros::InvalidNameException&)
+    {
+      return false;
+    }
   }
 
   bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
@@ -215,9 +222,15 @@ namespace play_motion
   void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
                  MotionInfo &motionInfo)
   {
+    if (!motionExists(nh, motion_id))
+    {
+      const std::string what = "Motion '" + motion_id + "' does not exist or is malformed " +
+                               "(namespace " + getMotionsNodeHandle(nh).getNamespace() + ").";
+      throw ros::Exception(what);
+    }
     motionInfo.id = motion_id;
     xh::Struct param;
-    xh::fetchParam(nh, getParamName(motion_id), param);
+    xh::fetchParam(getMotionsNodeHandle(nh), motion_id, param);
 
     extractTrajectory(param["points"], motionInfo.traj);
     extractJoints(param["joints"], motionInfo.joints);
