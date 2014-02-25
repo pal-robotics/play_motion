@@ -2,6 +2,12 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Harmonize doxygen tags
+* Fix crash with empty motion names (`#20 <https://github.com/pal-robotics/play_motion/issues/20>`_).
+* Minor doc fix.
+
 0.3.4 (2014-02-24)
 ------------------
 * catch and show unexpected exceptions in main()
