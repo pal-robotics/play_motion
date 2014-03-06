@@ -55,11 +55,11 @@ public:
     js_sub_ = nh_.subscribe("/joint_states", 10, &PlayMotionTestClient::jsCb, this);
   }
 
-  int playMotion(const std::string& motion_name, double reach_time)
+  int playMotion(const std::string& motion_name, bool skip_planning)
   {
     ActionGoal goal;
     goal.motion_name = motion_name;
-    goal.reach_time  = ros::Duration(reach_time);
+    goal.skip_planning = skip_planning;
 
     ac_->waitForServer();
     gs_.reset(new ActionGoalState(ac_->sendGoalAndWait(goal)));
@@ -112,7 +112,7 @@ TEST(PlayMotionTest, basicReachPose)
 {
   PlayMotionTestClient pmtc;
 
-  pmtc.playMotion("pose1", 1.0);
+  pmtc.playMotion("pose1", true);
   pmtc.shouldSucceed();
 
   double final_pos = pmtc.getJointPos("joint1");
@@ -137,15 +137,11 @@ TEST(PlayMotionTest, rejectSecondGoal)
 TEST(PlayMotionTest, badMotionName)
 {
   PlayMotionTestClient pmtc;
-  pmtc.playMotion("inexistant_motion", 1.0);
+  pmtc.playMotion("inexistant_motion", true);
   pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
-}
 
-TEST(PlayMotionTest, badReachTime)
-{
-  PlayMotionTestClient pmtc;
-  pmtc.playMotion("pose1", 0.0);
-  pmtc.shouldFailWithCode(PMR::INFEASIBLE_REACH_TIME);
+  pmtc.playMotion("", true);
+  pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
 }
 
 int main(int argc, char** argv)
