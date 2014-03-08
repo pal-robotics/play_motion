@@ -54,13 +54,34 @@ namespace xh
   typedef XmlRpc::XmlRpcValue Array;
 
   template <class T>
+  void perform_cast(XmlRpc::XmlRpcValue val, T& output)
+  {
+    output = static_cast<T>(val);
+    return;
+  }
+
+  // this is to allow integers to be silently converted to doubles
+  template <>
+  void perform_cast<double>(XmlRpc::XmlRpcValue val, double& output)
+  {
+    if (val.getType() == XmlRpc::XmlRpcValue::TypeInt)
+    {
+      output = static_cast<double>(static_cast<int>(val));
+    }
+    else
+    {
+      output = static_cast<double>(val);
+    }
+  }
+
+  template <class T>
   void fetchParam(ros::NodeHandle nh, const std::string& param_name, T& output)
   {
     XmlRpc::XmlRpcValue val;
     bool ok = false;
     try
     {
-        ok = nh.getParamCached(param_name, val);
+      ok = nh.getParamCached(param_name, val);
     }
     catch(const ros::InvalidNameException& e) {}
 
@@ -72,7 +93,7 @@ namespace xh
       throw XmlrpcHelperException(err_msg.str());
     }
 
-    output = static_cast<T>(val);
+    perform_cast(val, output);
   }
 
   inline void checkArrayItem(const Array& col, int index)
@@ -103,14 +124,14 @@ namespace xh
   void getArrayItem(Array& col, int index, T& output) // XXX: XmlRpcValue::operator[] is not const
   {
     checkArrayItem(col, index);
-    output = static_cast<T>(col[index]);
+    perform_cast(col[index], output);
   }
 
   template <class T>
   void getStructMember(Struct& col, const std::string& member, T& output)
   {
     checkStructMember(col, member);
-    output = static_cast<T>(col[member]);
+    perform_cast(col[member], output);
   }
 
 }
