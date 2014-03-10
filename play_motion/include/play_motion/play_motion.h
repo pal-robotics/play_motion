@@ -122,7 +122,15 @@ namespace play_motion
                       const Trajectory& motion_points, Trajectory& traj_group);
     void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
     void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
-    void checkControllers(const JointNames& motion_joints);
+
+    /// \brief Populate a list of controllers that span the motion joints.
+    ///
+    /// In the general case, the controllers will span more than the motion joints, but never less.
+    /// This method also validates that the controllers are not busy executing another goal.
+    /// \param motion_joints List of motion joints.
+    /// \return A list of controllers that span (at least) all the motion joints.
+    /// \throws PMException if no controllers spanning the motion joints were found, or if some of them are busy.
+    ControllerList getMotionControllers(const JointNames& motion_joints);
     void updateControllersCb(const ControllerUpdater::ControllerStates& states,
                              const ControllerUpdater::ControllerJoints& joints);
 

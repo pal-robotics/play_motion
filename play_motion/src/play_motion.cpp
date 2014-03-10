@@ -275,17 +275,35 @@ namespace play_motion
     }
   }
 
-  void PlayMotion::checkControllers(const JointNames& motion_joints)
+  ControllerList PlayMotion::getMotionControllers(const JointNames& motion_joints)
   {
+    // Populate list of controllers containing at least one motion joint,...
+    ControllerList ctrlr_list;
+    foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
+    {
+      if (hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
+        ctrlr_list.push_back(move_joint_group);
+    }
+
+    // ...check that all motion joints are contained in this list...
     foreach (const std::string& jn, motion_joints)
     {
-      foreach (MoveJointGroupPtr ctrlr, move_joint_groups_)
+      foreach (MoveJointGroupPtr ctrlr, ctrlr_list)
         if (ctrlr->isControllingJoint(jn))
           goto next_joint;
 
       throw PMException("no controller was found for joint '" + jn + "'", PMR::MISSING_CONTROLLER);
 next_joint:;
     }
+
+    // ...and that no controller in the list is busy executing another goal
+    foreach (MoveJointGroupPtr move_joint_group, ctrlr_list)
+    {
+      if(!move_joint_group->isIdle())
+        throw PMException("Controller '" + move_joint_group->getName() + "' is busy", PMR::CONTROLLER_BUSY);
+    }
+
+    return ctrlr_list;
   }
 
   bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
@@ -303,22 +321,17 @@ next_joint:;
       if (duration.toSec() < shortest_time)
         throw PMException("reach time too small", PMR::INFEASIBLE_REACH_TIME);
       getMotionJoints(motion_name, motion_joints);
-      checkControllers(motion_joints);
+      ControllerList groups = getMotionControllers(motion_joints); // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
       populateVelocities(motion_points, motion_points);
 
       // Seed target pose with current joint state
-      foreach (MoveJointGroupPtr move_joint_group, move_joint_groups_)
+      foreach (MoveJointGroupPtr move_joint_group, groups)
       {
-        if (!hasNonNullIntersection(motion_joints, move_joint_group->getJointNames()))
-          continue;
         if(!getGroupTraj(move_joint_group, motion_joints, motion_points,
                          joint_group_traj[move_joint_group]))
           throw PMException("missing joint state for joint in controller '"
                             + move_joint_group->getName() + "'");
-        if(!move_joint_group->isIdle())
-          throw PMException("controller '" + move_joint_group->getName()
-                            + "' is busy", PMR::CONTROLLER_BUSY);
       }
       if (joint_group_traj.empty())
         throw PMException("nothing to send to controllers");
