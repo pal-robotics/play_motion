@@ -50,6 +50,7 @@ namespace ros
 {
   class NodeHandle;
   class AsyncSpinner;
+  class CallbackQueue;
 }
 
 namespace trajectory_msgs
@@ -89,6 +90,7 @@ namespace play_motion
     typedef moveit::planning_interface::MoveGroup MoveGroup;
     typedef boost::shared_ptr<MoveGroup> MoveGroupPtr;
     typedef boost::shared_ptr<ros::AsyncSpinner> AsyncSpinnerPtr;
+    typedef boost::shared_ptr<ros::CallbackQueue> CallbackQueuePtr;
     typedef std::vector<std::string> JointNames;
     typedef std::map<std::string, double> JointGoal;
 
@@ -103,6 +105,7 @@ namespace play_motion
     std::vector<std::string> no_plan_joints_;
     double joint_tol_; ///< Absolute tolerance used to determine if two joint positions are approximately equal.
     double skip_planning_vel_; ///< Maximum average velocity that any joint can have in a non-planned approach.
+    CallbackQueuePtr cb_queue_;
     AsyncSpinnerPtr spinner_;
 
     /// TODO

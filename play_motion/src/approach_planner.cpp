@@ -43,6 +43,7 @@
 #include <boost/foreach.hpp>
 
 #include <ros/ros.h>
+#include <ros/callback_queue.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <moveit/move_group_interface/move_group.h>
 
@@ -156,14 +157,20 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   }
   catch(const xh::XmlrpcHelperException& ex) {throw ros::Exception(ex.what());}
 
-  // Move group instances require an additional spinner thread
-  spinner_.reset(new ros::AsyncSpinner(1));
+  // Move group instances require their own spinner thread. To isolate this asynchronous spinner from the rest of the
+  // node, it is set up in a node handle with a custom callback queue
+  ros::NodeHandle as_nh;
+  cb_queue_.reset(new ros::CallbackQueue());
+  as_nh.setCallbackQueue(cb_queue_.get());
+  spinner_.reset(new ros::AsyncSpinner(1, cb_queue_.get()));
   spinner_->start();
 
   // Populate planning data
   foreach (const string& planning_group, planning_groups)
   {
-    MoveGroupPtr move_group(new MoveGroup(planning_group)); // TODO: Timeout and retry, log feedback. Throw on failure
+    MoveGroup::Options opts(planning_group);
+    opts.node_handle_ = as_nh;
+    MoveGroupPtr move_group(new MoveGroup(opts)); // TODO: Timeout and retry, log feedback. Throw on failure
     planning_data_.push_back(PlanningData(move_group));
   }
 }
