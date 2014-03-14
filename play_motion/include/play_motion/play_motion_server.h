@@ -47,6 +47,7 @@
 
 #include "play_motion/play_motion.h"
 #include "play_motion_msgs/PlayMotionAction.h"
+#include "play_motion_msgs/ListMotions.h"
 
 namespace play_motion
 {
@@ -65,12 +66,15 @@ namespace play_motion
     void alCancelCb(AlServer::GoalHandle gh);
     void alGoalCb(AlServer::GoalHandle gh);
     bool findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle& goal_id);
+    bool listMotions(play_motion_msgs::ListMotions::Request&  req,
+                     play_motion_msgs::ListMotions::Response& resp);
 
     ros::NodeHandle                                        nh_;
     std::vector<std::string>                               clist_;
     PlayMotionPtr                                          pm_;
     AlServer                                               al_server_;
     std::map<PlayMotion::GoalHandle, AlServer::GoalHandle> al_goals_;
+    ros::ServiceServer                                     list_motions_srv_;
   };
 }
 

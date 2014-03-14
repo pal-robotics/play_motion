@@ -39,6 +39,8 @@
 #include <boost/foreach.hpp>
 
 #include "play_motion/play_motion.h"
+#include "play_motion/play_motion_helpers.h"
+#include "play_motion/xmlrpc_helpers.h"
 
 #define foreach BOOST_FOREACH
 
@@ -52,6 +54,10 @@ namespace play_motion
     al_server_.registerGoalCallback(boost::bind(&PlayMotionServer::alGoalCb, this, _1));
     al_server_.registerCancelCallback(boost::bind(&PlayMotionServer::alCancelCb, this, _1));
     al_server_.start();
+
+    list_motions_srv_ = ros::NodeHandle("~").advertiseService("list_motions",
+                                                              &PlayMotionServer::listMotions,
+                                                              this);
   }
 
   PlayMotionServer::~PlayMotionServer()
@@ -115,5 +121,30 @@ namespace play_motion
     }
     gh.setAccepted();
     al_goals_[goal_hdl] = gh;
+  }
+
+  bool PlayMotionServer::listMotions(play_motion_msgs::ListMotions::Request&  req,
+                                     play_motion_msgs::ListMotions::Response& resp)
+  {
+    try
+    {
+      MotionNames motions;
+      ros::NodeHandle pnh("~");
+      getMotionIds(pnh, motions);
+      foreach (const std::string& motion, motions)
+      {
+        play_motion_msgs::MotionInfo info;
+        info.name = motion;
+        getMotionJoints(pnh, motion, info.joints);
+        getMotionDuration(pnh, motion);
+        resp.motions.push_back(info);
+      }
+    }
+    catch (const xh::XmlrpcHelperException& e)
+    {
+      ROS_ERROR_STREAM(e.what());
+      return false;
+    }
+    return true;
   }
 }
