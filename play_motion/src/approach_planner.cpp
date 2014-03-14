@@ -238,13 +238,20 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
     }
   }
 
-  // Check that if resulting motion is a single waypoint at the current position (i.e., a no-op), the waypoint
-  // does not have zero duration, otherwise trajectory execution will fail
-  if (1 == traj_out.size() &&
-      traj_out.front().time_from_start.isZero() &&
-      !needsApproach(current_pos, traj_out.front().positions))
+  // Deal with first waypoints specifying zero time from start. Two cases can happen:
+  // 1. If at least one joint is not at its destination, compute an appropriate reach time
+  if (traj_out.front().time_from_start.isZero())
   {
-    traj_out.front().time_from_start = ros::Duration(1e-3);
+    const double reach_time = noPlanningReachTime(current_pos, traj_out.front().positions);
+    traj_out.front().time_from_start = ros::Duration(reach_time);
+  }
+  // 2 . First waypoint corresponds to current state: Make the first time_from_start a small nonzero value.
+  // Rationale: Sending a waypoint with zero time from start will make the controllers complain with a warning, and
+  // rightly so, because in general it's impossible to reach a point in zero time.
+  // This avoids unsavory warnings that might confuse users.
+  if (traj_out.front().time_from_start.isZero()) // If still zero it's because previous step yield zero time
+  {
+    traj_out.front().time_from_start = ros::Duration(1e-3); // NOTE: Magic number
   }
 
   return true;

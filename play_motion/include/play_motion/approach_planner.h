@@ -133,7 +133,6 @@ namespace play_motion
     /// TODO
     bool isPlanningJoint(const std::string& joint_name) const;
 
-
     /// TODO
     double noPlanningReachTime(const std::vector<double>& curr_pos,
                                const std::vector<double>& goal_pos);
