@@ -206,10 +206,16 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
 
   if (skip_planning)
   {
-    // Skip motion planning altogether. Reach first trajectory point without exceeding specified max avg velocity
+    // Skip motion planning altogether
     traj_out = traj_in;
-    const double reach_time = noPlanningReachTime(current_pos, traj_out.front().positions);
-    foreach(TrajPoint& point, traj_out) {point.time_from_start += ros::Duration(reach_time);}
+
+    // If the first waypoint specifies zero time from start, set a duration that does not exceed a specified
+    // max avg velocity
+    if (traj_out.front().time_from_start.isZero())
+    {
+      const double reach_time = noPlanningReachTime(current_pos, traj_out.front().positions);
+      foreach(TrajPoint& point, traj_out) {point.time_from_start += ros::Duration(reach_time);}
+    }
   }
   else
   {
