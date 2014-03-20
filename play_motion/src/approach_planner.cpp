@@ -190,7 +190,7 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
     return true;
   }
 
-  const int joint_dim = traj_in.front().positions.size();
+  const unsigned int joint_dim = traj_in.front().positions.size();
 
   // Preconditions
   if (joint_dim != joint_names.size())
@@ -267,7 +267,7 @@ bool ApproachPlanner::needsApproach(const std::vector<double>& current_pos,
                                     const std::vector<double>& goal_pos)
 {
   assert(current_pos.size() == goal_pos.size());
-  for (int i = 0; i < current_pos.size(); ++i)
+  for (unsigned int i = 0; i < current_pos.size(); ++i)
   {
     if (std::abs(current_pos[i] - goal_pos[i]) > joint_tol_) return true;
   }
@@ -294,7 +294,7 @@ bool ApproachPlanner::computeApproach(const vector<string>&             joint_na
   // either excluded from planning or already at the goal.
   JointNames min_planning_group;
 
-  for (int i = 0; i < joint_names.size(); ++i)
+  for (unsigned int i = 0; i < joint_names.size(); ++i)
   {
     if (isPlanningJoint(joint_names[i]))
     {
@@ -346,7 +346,7 @@ bool ApproachPlanner::planApproach(const JointNames&                 joint_names
                                    trajectory_msgs::JointTrajectory& traj)
 {
   move_group->setStartStateToCurrentState();
-  for (int i = 0; i < joint_names.size(); ++i)
+  for (unsigned int i = 0; i < joint_names.size(); ++i)
   {
     const bool set_goal_ok = move_group->setJointValueTarget(joint_names[i], joint_values[i]);
     if (!set_goal_ok)
@@ -381,7 +381,7 @@ void ApproachPlanner::combineTrajectories(const JointNames&                  joi
                                           trajectory_msgs::JointTrajectory&  approach,
                                           std::vector<TrajPoint>&            traj_out)
 {
-  const int joint_dim = traj_in.front().positions.size();
+  const unsigned int joint_dim = traj_in.front().positions.size();
 
   foreach(const TrajPoint& point_appr, approach.points)
   {
@@ -480,7 +480,7 @@ double ApproachPlanner::noPlanningReachTime(const std::vector<double>& curr_pos,
                                             const std::vector<double>& goal_pos)
 {
   double dmax = 0.0; // Maximum joint displacement
-  for (int i = 0; i < curr_pos.size(); ++i)
+  for (unsigned int i = 0; i < curr_pos.size(); ++i)
   {
     const double d = std::abs(goal_pos[i] - curr_pos[i]);
     if (d > dmax)
