@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import argparse
+from sys import stderr
+from time import time, sleep
+from uuid import uuid4
+import rospy
+from actionlib import SimpleActionClient, GoalStatus
+from play_motion_msgs.msg import PlayMotionAction, PlayMotionGoal, PlayMotionResult
+
+class MotionData:
+    def __init__(self):
+        self.motion_name = None
+        self.joint_name  = None
+        self.position    = None
+        self.duration    = None
+
+class MoveJointException(Exception):
+    pass
+
+# Globals
+play_motion_ns = 'play_motion' # play_motion namespace # TODO: How to resolve names?
+motion_ns      = play_motion_ns + '/motions'
+client         = None
+motion_data    = MotionData()
+
+def parse_args(args=None):
+    parser = argparse.ArgumentParser(description='Move individual joints.')
+    parser.add_argument('name',
+                        help='Name of the joint to move.')
+    parser.add_argument('position', type=float,
+                        help='Desired joint position in radians/meters.')
+    parser.add_argument('duration', type=float, default=0.0, nargs='?',
+                        help='Motion duration in seconds.')
+    return parser.parse_args(args=args)
+
+def wait_for_clock():
+    timeout = time() + 2.0 # Wall-clock time
+    while not rospy.is_shutdown() and rospy.Time.now().is_zero():
+        if time() > timeout:
+            raise MoveJointException('Timed out waiting for a valid time. Is the /clock topic being published?.')
+        sleep(0.1) # Wall-clock sleep
+
+def play_motion_client(action_ns):
+    client = SimpleActionClient(action_ns, PlayMotionAction)
+    if not client.wait_for_server(rospy.Duration(1)):
+        raise MoveJointException("No play_motion server running (namespace '{}')".format(action_ns))
+    return client
+
+def load_motion(motion_namespace, motion_data):
+    motion_param = motion_namespace + '/' + motion_data.motion_name
+    rospy.set_param(motion_param + '/joints', [motion_data.joint_name])
+    rospy.set_param(motion_param + '/points', [{'positions': [motion_data.position],
+                                                'time_from_start': motion_data.duration}])
+
+def unload_motion(motion_namespace, motion_name):
+    motion_param = motion_namespace + '/' + motion_name
+    if rospy.has_param(motion_param):
+        rospy.delete_param(motion_param)
+
+def done_cb(al_res, pm_res):
+    global client
+
+    if al_res == GoalStatus.SUCCEEDED and pm_res.error_code == PlayMotionResult.SUCCEEDED:
+        print('Done!')
+    else:
+        print("Execution failed with status '{}'. {}"
+              .format(GoalStatus.to_string(al_res), pm_res.error_string), file = stderr)
+    client = None
+    rospy.signal_shutdown('')
+
+def active_cb():
+    msg = "Moving joint '" + motion_data.joint_name + "' to position " + str(motion_data.position)
+    if motion_data.duration > 0.0:
+        msg += " in " + str(motion_data.duration) + "s"
+    print(msg)
+
+def shutdown():
+  global client
+
+  if client:
+      client.cancel_goal()
+  unload_motion(motion_ns, motion_data.motion_name)
+
+def main():
+    global client, motion_data
+
+    args = parse_args(rospy.myargv()[1:])
+    rospy.init_node('move_joint', anonymous=True)
+
+    motion_data.motion_name = args.name + '_' + uuid4().hex
+    motion_data.joint_name  = args.name
+    motion_data.position    = args.position
+    motion_data.duration    = args.duration
+
+    rospy.on_shutdown(shutdown) # Hook for canceling the active goal, if any
+
+    try:
+        wait_for_clock()
+        client = play_motion_client(play_motion_ns)
+    except MoveJointException, e:
+        print(str(e), file = stderr)
+
+    load_motion(motion_ns, motion_data)
+    goal = PlayMotionGoal(motion_name = motion_data.motion_name, skip_planning = True)
+    client.send_goal(goal, done_cb, active_cb) # TODO: Register callbacks, make async
+    rospy.spin()
+
+if __name__ == "__main__":
+    main()
