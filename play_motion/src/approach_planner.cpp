@@ -246,10 +246,14 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
 
   // Deal with first waypoints specifying zero time from start. Two cases can happen:
   // 1. If at least one joint is not at its destination, compute an appropriate reach time
+  const double eps_time = 1e-3; // NOTE: Magic number
   if (traj_out.front().time_from_start.isZero())
   {
     const double reach_time = noPlanningReachTime(current_pos, traj_out.front().positions);
-    traj_out.front().time_from_start = ros::Duration(reach_time);
+    if (reach_time > eps_time)
+    {
+      foreach(TrajPoint& point, traj_out) {point.time_from_start += ros::Duration(reach_time);}
+    }
   }
   // 2 . First waypoint corresponds to current state: Make the first time_from_start a small nonzero value.
   // Rationale: Sending a waypoint with zero time from start will make the controllers complain with a warning, and
@@ -257,7 +261,7 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
   // This avoids unsavory warnings that might confuse users.
   if (traj_out.front().time_from_start.isZero()) // If still zero it's because previous step yield zero time
   {
-    traj_out.front().time_from_start = ros::Duration(1e-3); // NOTE: Magic number
+    traj_out.front().time_from_start = ros::Duration(eps_time);
   }
 
   return true;
