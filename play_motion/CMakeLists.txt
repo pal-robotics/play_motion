@@ -4,6 +4,8 @@ project(play_motion)
 find_package(catkin REQUIRED COMPONENTS roscpp play_motion_msgs actionlib moveit_ros_planning_interface sensor_msgs)
 find_package(Boost REQUIRED COMPONENTS thread)
 
+catkin_python_setup()
+
 catkin_package(INCLUDE_DIRS include
                LIBRARIES play_motion_helpers)
 
@@ -32,6 +34,9 @@ install(TARGETS play_motion_helpers
 
 install (PROGRAMS scripts/is_already_there.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(PROGRAMS scripts/move_joint
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 # tests
 #######
