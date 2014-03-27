@@ -2,7 +2,8 @@
 
 from __future__ import print_function
 import argparse
-from sys import stderr
+import sys
+import signal
 from time import time, sleep
 from uuid import uuid4
 import rospy
@@ -20,10 +21,7 @@ class MoveJointException(Exception):
     pass
 
 # Globals
-play_motion_ns = 'play_motion' # play_motion namespace # TODO: How to resolve names?
-motion_ns      = play_motion_ns + '/motions'
-client         = None
-motion_data    = MotionData()
+motion_data = MotionData()
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description='Move individual joints.')
@@ -59,32 +57,14 @@ def unload_motion(motion_namespace, motion_name):
     if rospy.has_param(motion_param):
         rospy.delete_param(motion_param)
 
-def done_cb(al_res, pm_res):
-    global client
-
-    if al_res == GoalStatus.SUCCEEDED and pm_res.error_code == PlayMotionResult.SUCCEEDED:
-        print('Done!')
-    else:
-        print("Execution failed with status '{}'. {}"
-              .format(GoalStatus.to_string(al_res), pm_res.error_string), file = stderr)
-    client = None
-    rospy.signal_shutdown('')
-
 def active_cb():
     msg = "Moving joint '" + motion_data.joint_name + "' to position " + str(motion_data.position)
     if motion_data.duration > 0.0:
         msg += " in " + str(motion_data.duration) + "s"
     print(msg)
 
-def shutdown():
-  global client
-
-  if client:
-      client.cancel_goal()
-  unload_motion(motion_ns, motion_data.motion_name)
-
 def main():
-    global client, motion_data
+    global motion_data
 
     args = parse_args(rospy.myargv()[1:])
     rospy.init_node('move_joint', anonymous=True)
@@ -94,18 +74,32 @@ def main():
     motion_data.position    = args.position
     motion_data.duration    = args.duration
 
-    rospy.on_shutdown(shutdown) # Hook for canceling the active goal, if any
+    play_motion_ns = 'play_motion' # TODO: How to resolve names?
+    motion_ns      = play_motion_ns + '/motions'
 
     try:
         wait_for_clock()
         client = play_motion_client(play_motion_ns)
     except MoveJointException, e:
-        print(str(e), file = stderr)
+        print(str(e), file = sys.stderr)
+
+    def cancel(signum, frame):
+      client.cancel_goal()
+      rospy.signal_shutdown("goal canceled")
+    signal.signal(signal.SIGINT, cancel)
 
     load_motion(motion_ns, motion_data)
     goal = PlayMotionGoal(motion_name = motion_data.motion_name, skip_planning = True)
-    client.send_goal(goal, done_cb, active_cb) # TODO: Register callbacks, make async
-    rospy.spin()
+    client.send_goal(goal, None, active_cb)
+    client.wait_for_result()
+
+    unload_motion(motion_ns, motion_data.motion_name)
+    al_res = client.get_state()
+    pm_res = client.get_result()
+    if al_res != GoalStatus.SUCCEEDED or pm_res.error_code != PlayMotionResult.SUCCEEDED:
+        print("Execution failed with status {}. {}".format(GoalStatus.to_string(al_res), pm_res.error_string),
+              file = sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
