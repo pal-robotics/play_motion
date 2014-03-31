@@ -69,7 +69,7 @@ public:
 
   double getJointPos(const std::string& joint_name)
   {
-    int i;
+    unsigned int i;
     for (i = 0; i < js_.name.size(); ++i)
     {
       if (js_.name[i] == joint_name)
@@ -124,10 +124,10 @@ TEST(PlayMotionTest, rejectSecondGoal)
   PlayMotionTestClient pmtc1;
   PlayMotionTestClient pmtc2;
 
-  boost::thread t(boost::bind(&PlayMotionTestClient::playMotion, &pmtc1, "home", 1.0));
+  boost::thread t(boost::bind(&PlayMotionTestClient::playMotion, &pmtc1, "home", true));
   ros::Duration(0.3).sleep();
 
-  pmtc2.playMotion("home", 1.0);
+  pmtc2.playMotion("home", true);
   pmtc2.shouldFailWithCode(PMR::CONTROLLER_BUSY);
 
   t.join();

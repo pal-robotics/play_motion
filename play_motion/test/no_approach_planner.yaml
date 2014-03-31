@@ -1,0 +1,3 @@
+approach_planner:
+  skip_planning_approach_vel: 0.5
+  disable_motion_planning: true
