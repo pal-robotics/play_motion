@@ -94,7 +94,8 @@ ApproachPlanner::PlanningData::PlanningData(MoveGroupPtr move_group_ptr)
 
 ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   : joint_tol_(1e-3),
-    skip_planning_vel_(0.5)
+    skip_planning_vel_(0.5),
+    planning_disabled_(false)
 {
   ros::NodeHandle ap_nh(nh, "approach_planner");
 
@@ -103,17 +104,26 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   const string NO_PLANNING_JOINTS_STR = "exclude_from_planning_joints";
   const string SKIP_PLANNING_VEL      = "skip_planning_approach_vel";
 
-  // Joint tolerance
-  const bool joint_tol_ok = ap_nh.getParam(JOINT_TOL_STR, joint_tol_);
-  if (joint_tol_ok) {ROS_DEBUG_STREAM("Using joint tolerance of " << joint_tol_);}
-  else              {ROS_DEBUG_STREAM("Joint tolerance not specified. Using default value of " << joint_tol_);}
-
   // Velocity used in non-planned approaches
   const bool skip_planning_vel_ok = ap_nh.getParam(SKIP_PLANNING_VEL, skip_planning_vel_);
   if (skip_planning_vel_ok) {ROS_DEBUG_STREAM("Using a max velocity of " << skip_planning_vel_ <<
                                               " for unplanned approaches.");}
   else                      {ROS_DEBUG_STREAM("Max velocity for unplanned approaches not specified. " <<
                                               "Using default value of " << skip_planning_vel_);}
+
+  // Initialize motion planning capability, unless explicitly disabled
+  ap_nh.getParam("disable_motion_planning", planning_disabled_);
+  if (planning_disabled_)
+  {
+    ROS_WARN_STREAM("Motion planning capability disabled. Goals requesting planning (the default) will be rejected.\n"
+                    << "To disable planning in goal requests set 'skip_planning=true'");
+    return; // Skip initialization of planning-related members
+  }
+
+  // Joint tolerance
+  const bool joint_tol_ok = ap_nh.getParam(JOINT_TOL_STR, joint_tol_);
+  if (joint_tol_ok) {ROS_DEBUG_STREAM("Using joint tolerance of " << joint_tol_);}
+  else              {ROS_DEBUG_STREAM("Joint tolerance not specified. Using default value of " << joint_tol_);}
 
   // Joints excluded from motion planning
   using namespace XmlRpc;
@@ -182,6 +192,8 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
                                       const vector<TrajPoint>& traj_in,
                                             vector<TrajPoint>& traj_out)
 {
+  // TODO: Instead of returning false, raise exceptions, so error message can be forwarded to goal result
+
   // Empty trajectory. Nothing to do
   if (traj_in.empty())
   {
@@ -201,6 +213,11 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
   if (joint_dim != current_pos.size())
   {
     ROS_ERROR("Can't compute approach trajectory: Size mismatch between current joint positions and input trajectory.");
+    return false;
+  }
+  if (!skip_planning && planning_disabled_) // Reject goal if plannign is disabled, but goal requests it
+  {
+    ROS_ERROR("Motion planning capability disabled. To disable planning in goal requests, set 'skip_planning=true'");
     return false;
   }
 

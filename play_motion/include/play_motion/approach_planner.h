@@ -107,6 +107,7 @@ namespace play_motion
     double skip_planning_vel_; ///< Maximum average velocity that any joint can have in a non-planned approach.
     CallbackQueuePtr cb_queue_;
     AsyncSpinnerPtr spinner_;
+    bool planning_disabled_;
 
     /// TODO
     bool computeApproach(const JointNames&                 joint_names,
