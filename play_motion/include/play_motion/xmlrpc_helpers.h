@@ -62,7 +62,7 @@ namespace xh
 
   // this is to allow integers to be silently converted to doubles
   template <>
-  void perform_cast<double>(XmlRpc::XmlRpcValue val, double& output)
+  inline void perform_cast<double>(XmlRpc::XmlRpcValue val, double& output)
   {
     if (val.getType() == XmlRpc::XmlRpcValue::TypeInt)
     {
