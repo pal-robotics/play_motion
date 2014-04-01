@@ -58,7 +58,9 @@ namespace play_motion
     {
       xh::Struct &name_value = traj_points[i];
       TrajPoint point;
-      xh::getStructMember(name_value, "time_from_start", point.time_from_start);
+      double tfs;
+      xh::getStructMember(name_value, "time_from_start", tfs);
+      point.time_from_start = ros::Duration(tfs);
 
       xh::Array positions;
       xh::getStructMember(name_value, "positions", positions);
