@@ -1,4 +1,21 @@
 play_motion:
+  # uncomment line below to launch the node without motion planning capabilities
+  # disable_motion_planning: true
+
+  # not needed if disable_motion_planning: true
+  approach_planner:
+    planning_groups: # moveit group names, sorted by order of preference
+      - group_1
+      - group_2
+
+    exclude_from_planning_joints: # motion planning will not be used for these
+      -fake_joint_2
+
+    joint_tolerance: 0.01
+    skip_planning_approach_vel: 0.5
+
+  # actual motions that robot can execute. Normally loaded in a separate file,
+  # to decouple play_motion behavior config (above) from robot-specific motions
   motions:
     say_hi:
       joints: [fake_joint_2, fake_joint_1]
