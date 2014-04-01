@@ -6,7 +6,9 @@
   <rosparam file="$(find play_motion)/test/rrbot_poses.yaml" command="load" />
 
   <!-- start play_motion -->
-  <node name="play_motion" pkg="play_motion" type="play_motion" />
+  <node pkg="play_motion" type="play_motion" name="play_motion">
+    <param name="disable_motion_planning" type="bool" value="true" />
+  </node>
 
   <!-- Start RRbot -->
   <node name="rrbot" pkg="play_motion" type="pm_rrbot"/>
@@ -27,5 +29,5 @@
               joint_state_controller" />
 
   <!-- play_motion test -->
-  <test test-name="play_motion_test" pkg="play_motion" type="play_motion_test" time-limit="10.0"/>
+  <test test-name="play_motion_test" pkg="play_motion" type="play_motion_test"/>
 </launch>

@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+try:
+    import play_motion
+    play_motion.move_joint()
+except (Exception, KeyboardInterrupt):
+    play_motion.print_err('Unexpected program termination.')

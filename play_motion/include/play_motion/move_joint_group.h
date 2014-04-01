@@ -68,9 +68,8 @@ namespace play_motion
     /**
      * \brief Send a trajectory goal to the associated controller.
      * \param traj The trajectory to send
-     * \param duration (misnamed) Time to reach the first point
      */
-    bool sendGoal(const std::vector<TrajPoint>& traj, const ros::Duration& duration);
+    bool sendGoal(const std::vector<TrajPoint>& traj);
 
     /**
      * \brief Returns true if the specified joint is controlled by the controller.

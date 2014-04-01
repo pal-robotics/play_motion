@@ -46,6 +46,7 @@
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <sensor_msgs/JointState.h>
 
+#include "play_motion/approach_planner.h"
 #include "play_motion/move_joint_group.h"
 #include "play_motion/xmlrpc_helpers.h"
 
@@ -73,7 +74,7 @@ namespace
       default:
         std::ostringstream os;
         goal_hdl->error_code = PMR::OTHER_ERROR;
-        os << "got error code " << error_code << ", motion aborted";
+        os << "Got error code " << error_code << ", motion aborted.";
         goal_hdl->error_string = os.str();
     }
     //TODO: add handling for controller state
@@ -92,7 +93,7 @@ namespace
     }
     goal_hdl->controllers.erase(it);
 
-    ROS_DEBUG_STREAM("return from joint group " << ctrl->getName() << ", "
+    ROS_DEBUG_STREAM("Return from joint group " << ctrl->getName() << ", "
                      << goal_hdl->controllers.size() << " active controllers, "
                      "error: " << error_code);
 
@@ -135,6 +136,9 @@ namespace play_motion
     ctrlr_updater_(nh_)
   {
     ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
+
+    ros::NodeHandle private_nh("~");
+    approach_planner_.reset(new ApproachPlanner(private_nh));
   }
 
   PlayMotion::Goal::Goal(const Callback& cbk)
@@ -171,7 +175,7 @@ namespace play_motion
       if (p.second != ControllerUpdater::RUNNING)
         continue;
       move_joint_groups_.push_back(MoveJointGroupPtr(new MoveJointGroup(p.first, joints.at(p.first))));
-      ROS_DEBUG_STREAM("controller '" << p.first << "' with " << joints.at(p.first).size() << " joints");
+      ROS_DEBUG_STREAM("Controller '" << p.first << "' with " << joints.at(p.first).size() << " joints.");
     }
   }
 
@@ -210,11 +214,14 @@ namespace play_motion
 
     foreach (const TrajPoint& p, motion_points)
     {
-      bool has_velocities = !p.velocities.empty();
+      bool has_velocities    = !p.velocities.empty();
+      bool has_accelerations = !p.accelerations.empty();
       TrajPoint point;
       point.positions.resize(group_joint_names.size());
       if (has_velocities)
         point.velocities.resize(group_joint_names.size(), 0);
+      if (has_accelerations)
+        point.accelerations.resize(group_joint_names.size(), 0);
       point.time_from_start = p.time_from_start;
 
       for (std::size_t i = 0; i < group_joint_names.size(); ++i)
@@ -228,6 +235,8 @@ namespace play_motion
           point.positions[i] = p.positions[index];
           if (has_velocities)
             point.velocities[i] = p.velocities[index];
+          if (has_accelerations)
+            point.accelerations[i] = p.accelerations[index];
         }
       }
       traj_group.push_back(point);
@@ -244,7 +253,7 @@ namespace play_motion
     catch (const xh::XmlrpcHelperException& e)
     {
       std::ostringstream error_msg;
-      error_msg << "could not parse motion '" << motion_name << "': " << e.what();
+      error_msg << "Could not parse motion '" << motion_name << "': " << e.what();
       throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
     }
     catch (const ros::Exception& e)
@@ -264,7 +273,7 @@ namespace play_motion
     catch (const xh::XmlrpcHelperException& e)
     {
       std::ostringstream error_msg;
-      error_msg << "could not parse motion '" << motion_name << "': " << e.what();
+      error_msg << "Could not parse motion '" << motion_name << "': " << e.what();
       throw PMException(error_msg.str(), PMR::MOTION_NOT_FOUND);
     }
     catch (const ros::Exception& e)
@@ -292,7 +301,7 @@ namespace play_motion
         if (ctrlr->isControllingJoint(jn))
           goto next_joint;
 
-      throw PMException("no controller was found for joint '" + jn + "'", PMR::MISSING_CONTROLLER);
+      throw PMException("No controller was found for joint '" + jn + "'", PMR::MISSING_CONTROLLER);
 next_joint:;
     }
 
@@ -306,8 +315,10 @@ next_joint:;
     return ctrlr_list;
   }
 
-  bool PlayMotion::run(const std::string& motion_name, const ros::Duration& duration,
-                       GoalHandle& goal_hdl, const Callback& cb)
+  bool PlayMotion::run(const std::string& motion_name,
+                       bool               skip_planning,
+                       GoalHandle&        goal_hdl,
+                       const Callback&    cb)
   {
     JointNames                              motion_joints;
     Trajectory                              motion_points;
@@ -317,24 +328,34 @@ next_joint:;
 
     try
     {
-      double shortest_time = 1.0e-2;
-      if (duration.toSec() < shortest_time)
-        throw PMException("reach time too small", PMR::INFEASIBLE_REACH_TIME);
       getMotionJoints(motion_name, motion_joints);
       ControllerList groups = getMotionControllers(motion_joints); // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
-      populateVelocities(motion_points, motion_points);
+
+      std::vector<double> curr_pos; // Current position of motion joints
+      foreach(const std::string& motion_joint, motion_joints)
+        curr_pos.push_back(joint_states_[motion_joint]); // TODO: What if motion joint does not exist?
+
+      // Approach trajectory
+      Trajectory motion_points_safe;
+      if (!approach_planner_->prependApproach(motion_joints, curr_pos,
+                                              skip_planning,
+                                              motion_points, motion_points_safe))
+        throw PMException("Approach motion planning failed", PMR::NO_PLAN_FOUND);// TODO: Expose descriptive error string from approach_planner
+
+      // TODO: Resample and validate output trajectory
+      populateVelocities(motion_points_safe, motion_points_safe);
 
       // Seed target pose with current joint state
       foreach (MoveJointGroupPtr move_joint_group, groups)
       {
-        if(!getGroupTraj(move_joint_group, motion_joints, motion_points,
+        if(!getGroupTraj(move_joint_group, motion_joints, motion_points_safe,
                          joint_group_traj[move_joint_group]))
-          throw PMException("missing joint state for joint in controller '"
+          throw PMException("Missing joint state for joint in controller '"
                             + move_joint_group->getName() + "'");
       }
       if (joint_group_traj.empty())
-        throw PMException("nothing to send to controllers");
+        throw PMException("Nothing to send to controllers");
 
       // Send pose commands
       typedef std::pair<MoveJointGroupPtr, Trajectory> traj_pair_t;
@@ -342,9 +363,9 @@ next_joint:;
       {
         goal_hdl->addController(p.first);
         p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl, p.first));
-        if (!p.first->sendGoal(p.second, duration))
-          throw PMException("controller '" + p.first->getName() +
-                            "' did not accept trajectory, canceling everything");
+        if (!p.first->sendGoal(p.second))
+          throw PMException("Controller '" + p.first->getName() + "' did not accept trajectory, "
+                            "canceling everything");
       }
     }
     catch (const PMException& e)

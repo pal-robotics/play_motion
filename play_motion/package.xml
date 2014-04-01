@@ -15,6 +15,7 @@
   <build_depend>control_msgs</build_depend>
   <build_depend>controller_manager_msgs</build_depend>
   <build_depend>play_motion_msgs</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>rostest</build_depend>
@@ -23,6 +24,7 @@
   <run_depend>control_msgs</run_depend>
   <run_depend>controller_manager_msgs</run_depend>
   <run_depend>play_motion_msgs</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>roscpp</run_depend>
 
   <!-- test build depends -->
