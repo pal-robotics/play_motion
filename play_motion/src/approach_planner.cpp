@@ -112,7 +112,7 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
                                               "Using default value of " << skip_planning_vel_);}
 
   // Initialize motion planning capability, unless explicitly disabled
-  ap_nh.getParam("disable_motion_planning", planning_disabled_);
+  nh.getParam("disable_motion_planning", planning_disabled_);
   if (planning_disabled_)
   {
     ROS_WARN_STREAM("Motion planning capability disabled. Goals requesting planning (the default) will be rejected.\n"

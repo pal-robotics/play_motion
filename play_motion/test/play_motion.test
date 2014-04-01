@@ -7,7 +7,7 @@
 
   <!-- start play_motion -->
   <node pkg="play_motion" type="play_motion" name="play_motion">
-    <rosparam file="$(find play_motion)/test/no_approach_planner.yaml" command="load" />
+    <param name="disable_motion_planning" type="bool" value="true" />
   </node>
 
   <!-- Start RRbot -->
