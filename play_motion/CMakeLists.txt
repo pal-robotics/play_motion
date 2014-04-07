@@ -38,6 +38,11 @@ install (PROGRAMS scripts/is_already_there.py
 install(PROGRAMS scripts/move_joint
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+install(DIRECTORY include/
+   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+)
+
 # tests
 #######
 if(CATKIN_ENABLE_TESTING)
