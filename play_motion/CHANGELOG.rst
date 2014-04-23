@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2014-04-23)
+------------------
 * Add install() rule for headers
 * Fetch time_from_start as a double. (`#28 <https://github.com/pal-robotics/play_motion/issues/28>`_)
 * MoveIt! integration (`#36 <https://github.com/pal-robotics/play_motion/issues/36>`_)
