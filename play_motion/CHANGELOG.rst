@@ -2,6 +2,24 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add install() rule for headers
+* Fetch time_from_start as a double. (`#28 <https://github.com/pal-robotics/play_motion/issues/28>`_)
+* MoveIt! integration (`#36 <https://github.com/pal-robotics/play_motion/issues/36>`_)
+* Allow to disable motion planning altogether.
+* Silence compiler warnings.
+* Add move_joint script (`#33 <https://github.com/pal-robotics/play_motion/issues/33>`_)
+* Don't compute approach time if specified.
+* Handle first waypoints with time_from_start == 0.
+* Add service call to query available motions.
+* Isolate move_group async spinner from rest of node (`#31 <https://github.com/pal-robotics/play_motion/issues/31>`_)
+* Make planning optional. Deprecate reach_time.
+* First prototype of motion planning support.
+* Refactor how controllers are checked.
+* Allow cast from int to double in xmlrpc helpers (`#28 <https://github.com/pal-robotics/play_motion/issues/28>`_)
+* Contributors: Adolfo Rodriguez Tsouroukdissian, Paul Mathieu
+
 0.3.5 (2014-02-25)
 ------------------
 * Harmonize doxygen tags
