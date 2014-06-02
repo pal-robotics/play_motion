@@ -105,6 +105,7 @@ namespace play_motion
     std::vector<std::string> no_plan_joints_;
     double joint_tol_; ///< Absolute tolerance used to determine if two joint positions are approximately equal.
     double skip_planning_vel_; ///< Maximum average velocity that any joint can have in a non-planned approach.
+    double skip_planning_min_dur_; ///< Minimum duration that a non-planned approach can have
     CallbackQueuePtr cb_queue_;
     AsyncSpinnerPtr spinner_;
     bool planning_disabled_;

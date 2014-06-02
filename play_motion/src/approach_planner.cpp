@@ -95,21 +95,30 @@ ApproachPlanner::PlanningData::PlanningData(MoveGroupPtr move_group_ptr)
 ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   : joint_tol_(1e-3),
     skip_planning_vel_(0.5),
+    skip_planning_min_dur_(0.0),
     planning_disabled_(false)
 {
   ros::NodeHandle ap_nh(nh, "approach_planner");
 
-  const string JOINT_TOL_STR          = "joint_tolerance";
-  const string PLANNING_GROUPS_STR    = "planning_groups";
-  const string NO_PLANNING_JOINTS_STR = "exclude_from_planning_joints";
-  const string SKIP_PLANNING_VEL      = "skip_planning_approach_vel";
+  const string JOINT_TOL_STR             = "joint_tolerance";
+  const string PLANNING_GROUPS_STR       = "planning_groups";
+  const string NO_PLANNING_JOINTS_STR    = "exclude_from_planning_joints";
+  const string SKIP_PLANNING_VEL_STR     = "skip_planning_approach_vel";
+  const string SKIP_PLANNING_MIN_DUR_STR = "skip_planning_approach_min_dur";
 
   // Velocity used in non-planned approaches
-  const bool skip_planning_vel_ok = ap_nh.getParam(SKIP_PLANNING_VEL, skip_planning_vel_);
+  const bool skip_planning_vel_ok = ap_nh.getParam(SKIP_PLANNING_VEL_STR, skip_planning_vel_);
   if (skip_planning_vel_ok) {ROS_DEBUG_STREAM("Using a max velocity of " << skip_planning_vel_ <<
                                               " for unplanned approaches.");}
   else                      {ROS_DEBUG_STREAM("Max velocity for unplanned approaches not specified. " <<
                                               "Using default value of " << skip_planning_vel_);}
+
+  // Minimum duration used in non-planned approaches
+  const bool skip_planning_min_dur_ok = ap_nh.getParam(SKIP_PLANNING_MIN_DUR_STR, skip_planning_min_dur_);
+  if (skip_planning_min_dur_ok) {ROS_DEBUG_STREAM("Using a min duration of " << skip_planning_min_dur_ <<
+                                              " for unplanned approaches.");}
+  else                      {ROS_DEBUG_STREAM("Min duration for unplanned approaches not specified. " <<
+                                              "Using default value of " << skip_planning_min_dur_);}
 
   // Initialize motion planning capability, unless explicitly disabled
   nh.getParam("disable_motion_planning", planning_disabled_);
@@ -507,7 +516,7 @@ double ApproachPlanner::noPlanningReachTime(const std::vector<double>& curr_pos,
     if (d > dmax)
       dmax = d;
   }
-  return dmax / skip_planning_vel_;
+  return std::max(dmax / skip_planning_vel_, skip_planning_min_dur_);
 }
 
 } // namesapce
