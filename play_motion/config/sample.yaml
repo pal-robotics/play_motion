@@ -11,8 +11,12 @@ play_motion:
     exclude_from_planning_joints: # motion planning will not be used for these
       -fake_joint_2
 
-    joint_tolerance: 0.01
-    skip_planning_approach_vel: 0.5
+    joint_tolerance: 0.001              # rad or m
+
+    # The following two parameters are likely to be removed soon in favor of a
+    # better solution:
+    skip_planning_approach_vel: 0.5     # rad/s or m/s
+    skip_planning_approach_min_dur: 0.0 # s
 
   # actual motions that robot can execute. Normally loaded in a separate file,
   # to decouple play_motion behavior config (above) from robot-specific motions
