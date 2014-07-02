@@ -86,7 +86,10 @@ namespace play_motion
     }
     else
     {
-      ROS_WARN("Motion ended with an error.");
+      if (r.error_code == 0)
+        ROS_ERROR("Motion ended with INVALID ERROR code %d and description '%s'", r.error_code, r.error_string.c_str());
+      else
+        ROS_WARN("Motion ended with an error code %d and description '%s'", r.error_code, r.error_string.c_str());
       al_goals_[goal_hdl].setAborted(r);
     }
     al_goals_.erase(goal_hdl);
