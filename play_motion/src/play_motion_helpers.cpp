@@ -34,6 +34,7 @@
 
 /** \author Paul Mathieu. */
 /** \author Victor Lopez. */
+/** \author Bence Magyar. */
 #include "play_motion/play_motion_helpers.h"
 #include <cassert>
 
@@ -96,12 +97,24 @@ namespace play_motion
     motion_joints = info.joints;
   }
 
+  void getMotionJoints(const std::string& motion_id, JointNames& motion_joints)
+  {
+    ros::NodeHandle pm_nh("play_motion");
+    getMotionJoints(pm_nh, motion_id, motion_joints);
+  }
+
   void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id,
                        Trajectory& motion_points)
   {
     MotionInfo info;
     getMotion(nh, motion_id, info);
     motion_points = info.traj;
+  }
+
+  void getMotionPoints(const std::string& motion_id, Trajectory& motion_points)
+  {
+    ros::NodeHandle pm_nh("play_motion");
+    getMotionPoints(pm_nh, motion_id, motion_points);
   }
 
   void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids)
@@ -113,6 +126,12 @@ namespace play_motion
     {
       motion_ids.push_back(it->first);
     }
+  }
+
+  void getMotionIds(MotionNames& motion_ids)
+  {
+    ros::NodeHandle pm_nh("play_motion");
+    getMotionIds(pm_nh, motion_ids);
   }
 
   void populateVelocities(const TrajPoint& point_prev,
@@ -182,6 +201,12 @@ namespace play_motion
     return traj.back().time_from_start;
   }
 
+  ros::Duration getMotionDuration(const std::string &motion_id)
+  {
+      ros::NodeHandle pm_nh("play_motion");
+      return getMotionDuration(pm_nh, motion_id);
+  }
+
   bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id)
   {
     try
@@ -194,6 +219,13 @@ namespace play_motion
       return false;
     }
   }
+
+  bool motionExists(const std::string &motion_id)
+  {
+    ros::NodeHandle pm_nh("play_motion");
+    return motionExists(pm_nh, motion_id);
+  }
+
 
   bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
                       const JointNames &sourceJoints, const TrajPoint &sourcePoint,
@@ -250,5 +282,10 @@ namespace play_motion
     }
   }
 
+  void getMotion(const std::string &motion_id, MotionInfo &motionInfo)
+  {
+    ros::NodeHandle pm_nh("play_motion");
+    play_motion::getMotion(pm_nh, motion_id, motionInfo);
+  }
 
 }
