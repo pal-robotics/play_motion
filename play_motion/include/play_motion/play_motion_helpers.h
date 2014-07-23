@@ -112,8 +112,8 @@ namespace play_motion
    *        only the joints in targetJoint will be checked
    * \param tolerance tolerance per joint in radians
    */
-  bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
-                      const JointNames &sourceJoints, const TrajPoint &sourcePoint,
+  bool isAlreadyThere(const JointNames &target_joints, const TrajPoint &target_point,
+                      const JointNames &source_joints, const TrajPoint &source_point,
                       double tolerance = 0.15);
 
   /**
@@ -167,8 +167,8 @@ namespace play_motion
    * \throws ros::Exception if the motion does not exist or is malformed.
    */
   void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
-                 MotionInfo &motionInfo);
-  void getMotion(const std::string &motion_id, MotionInfo &motionInfo);
+                 MotionInfo &motion_info);
+  void getMotion(const std::string &motion_id, MotionInfo &motion_info);
 }
 
 #endif

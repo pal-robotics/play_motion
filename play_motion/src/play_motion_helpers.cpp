@@ -226,35 +226,34 @@ namespace play_motion
     return motionExists(pm_nh, motion_id);
   }
 
-
-  bool isAlreadyThere(const JointNames &targetJoints, const TrajPoint &targetPoint,
-                      const JointNames &sourceJoints, const TrajPoint &sourcePoint,
+  bool isAlreadyThere(const JointNames &target_joints, const TrajPoint &target_point,
+                      const JointNames &source_joints, const TrajPoint &source_point,
                       double tolerance)
   {
-    if (targetJoints.size() != targetPoint.positions.size())
+    if (target_joints.size() != target_point.positions.size())
       throw ros::Exception("targetJoint and targetPoint positions sizes do not match");
 
-    if (sourceJoints.size() != sourcePoint.positions.size())
+    if (source_joints.size() != source_point.positions.size())
       throw ros::Exception("sourceJoint and sourcePoint positions sizes do not match");
 
-    for (int tIndex = 0; tIndex < targetJoints.size(); ++tIndex)
+    for (int tIndex = 0; tIndex < target_joints.size(); ++tIndex)
     {
-      JointNames::const_iterator it = std::find(sourceJoints.begin(), sourceJoints.end(),
-                                                targetJoints[tIndex]);
+      JointNames::const_iterator it = std::find(source_joints.begin(), source_joints.end(),
+                                                target_joints[tIndex]);
       /// If a joint used in the target is not used in the available in the
       /// source can't guarantee that the points are equivalent
-      if (it == sourceJoints.end())
+      if (it == source_joints.end())
         return false;
 
-      int sIndex = it - sourceJoints.begin();
-      if (std::fabs(targetPoint.positions[tIndex] - sourcePoint.positions[sIndex]) > tolerance)
+      int sIndex = it - source_joints.begin();
+      if (std::fabs(target_point.positions[tIndex] - source_point.positions[sIndex]) > tolerance)
         return false;
     }
     return true;
   }
 
   void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
-                 MotionInfo &motionInfo)
+                 MotionInfo &motion_info)
   {
     if (!motionExists(nh, motion_id))
     {
@@ -262,30 +261,30 @@ namespace play_motion
                                "(namespace " + getMotionsNodeHandle(nh).getNamespace() + ").";
       throw ros::Exception(what);
     }
-    motionInfo.id = motion_id;
+    motion_info.id = motion_id;
     xh::Struct param;
     xh::fetchParam(getMotionsNodeHandle(nh), motion_id, param);
 
-    extractTrajectory(param["points"], motionInfo.traj);
-    extractJoints(param["joints"], motionInfo.joints);
+    extractTrajectory(param["points"], motion_info.traj);
+    extractJoints(param["joints"], motion_info.joints);
     if (param.hasMember("meta"))
     {
-      xh::getStructMember(param["meta"], "description", motionInfo.description);
-      xh::getStructMember(param["meta"], "name", motionInfo.name);
-      xh::getStructMember(param["meta"], "usage", motionInfo.usage);
+      xh::getStructMember(param["meta"], "description", motion_info.description);
+      xh::getStructMember(param["meta"], "name", motion_info.name);
+      xh::getStructMember(param["meta"], "usage", motion_info.usage);
     }
     else
     {
-      motionInfo.description = "";
-      motionInfo.name = "";
-      motionInfo.usage = "";
+      motion_info.description = "";
+      motion_info.name = "";
+      motion_info.usage = "";
     }
   }
 
-  void getMotion(const std::string &motion_id, MotionInfo &motionInfo)
+  void getMotion(const std::string &motion_id, MotionInfo &motion_info)
   {
     ros::NodeHandle pm_nh("play_motion");
-    play_motion::getMotion(pm_nh, motion_id, motionInfo);
+    play_motion::getMotion(pm_nh, motion_id, motion_info);
   }
 
 }
