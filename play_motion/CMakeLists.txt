@@ -7,7 +7,9 @@ find_package(Boost REQUIRED COMPONENTS thread)
 catkin_python_setup()
 
 catkin_package(INCLUDE_DIRS include
-               LIBRARIES play_motion_helpers)
+               LIBRARIES play_motion_helpers
+               CATKIN_DEPENDS roscpp  play_motion_msgs actionlib moveit_ros_planning_interface sensor_msgs)
+
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
