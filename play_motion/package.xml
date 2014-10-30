@@ -4,8 +4,9 @@
   <version>0.4.0</version>
   <description>Plays a pre-recorded motion on a robot</description>
 
-  <maintainer email="paul.mathieu@pal-robotics.com">Paul Mathieu</maintainer>
+  <maintainer email="adolfo.rodriguez@pal-robotics.com">Adolfo Rodriguez Tsouroukdissian</maintainer>
   <author email="paul.mathieu@pal-robotics.com">Paul Mathieu</author>
+  <author email="adolfo.rodriguez@pal-robotics.com">Adolfo Rodriguez Tsouroukdissian</author>
 
   <license>BSD</license>
 
