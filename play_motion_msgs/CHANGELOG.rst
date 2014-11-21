@@ -2,11 +2,23 @@
 Changelog for package play_motion_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update package maintainer/authors
+* Contributors: Adolfo Rodriguez Tsouroukdissian
+
 0.4.0 (2014-04-23)
 ------------------
 * Add service call to query available motions.
 * Make planning optional. Deprecate reach_time.
 * Contributors: Adolfo Rodriguez Tsouroukdissian
+
+0.3.7 (2014-11-07)
+------------------
+* Barium release
+
+0.3.6 (2014-04-07)
+------------------
 
 0.3.5 (2014-02-25)
 ------------------

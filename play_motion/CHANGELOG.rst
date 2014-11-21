@@ -2,6 +2,18 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update package maintainer/authors
+* Add missing configuration for depender projects
+* Refactor argument names to convention
+* Add function alternatives where NodeHandle defaults to one of play_motion
+* log error when error code is 0
+* Add default values and units to sample config.
+* Add new parameter to configure the minimum approach time to use when
+  skip_planning = true.
+* Contributors: Adolfo Rodriguez Tsouroukdissian, Bence Magyar, Daniel Pinyol, Víctor López
+
 0.4.0 (2014-04-23)
 ------------------
 * Add install() rule for headers
@@ -19,6 +31,13 @@ Changelog for package play_motion
 * Refactor how controllers are checked.
 * Allow cast from int to double in xmlrpc helpers (`#28 <https://github.com/pal-robotics/play_motion/issues/28>`_)
 * Contributors: Adolfo Rodriguez Tsouroukdissian, Paul Mathieu
+
+0.3.7 (2014-11-07)
+------------------
+* Barium release
+
+0.3.6 (2014-04-07)
+------------------
 
 0.3.5 (2014-02-25)
 ------------------
