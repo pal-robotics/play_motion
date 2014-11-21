@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.1 (2014-11-21)
+------------------
 * Update package maintainer/authors
 * Add missing configuration for depender projects
 * Refactor argument names to convention
