@@ -491,9 +491,8 @@ vector<ApproachPlanner::MoveGroupPtr> ApproachPlanner::getValidMoveGroups(const 
   {
     const JointNames& group_s = data.sorted_joint_names;
 
-    // A valid planning group is one that has the minimum group as a subset, and is a subset of the maximum group
-    if (std::includes(group_s.begin(), group_s.end(), min_group_s.begin(), min_group_s.end()) &&
-        std::includes(max_group_s.begin(), max_group_s.end(), group_s.begin(), group_s.end()))
+    // A valid planning group is one that has the minimum group as a subset
+    if (std::includes(group_s.begin(), group_s.end(), min_group_s.begin(), min_group_s.end()))
     {
       valid_groups.push_back(data.move_group);
     }
