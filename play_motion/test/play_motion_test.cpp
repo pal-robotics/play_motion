@@ -144,6 +144,13 @@ TEST(PlayMotionTest, badMotionName)
   pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
 }
 
+TEST(PlayMotionTest, malformedPose)
+{
+  PlayMotionTestClient pmtc;
+  pmtc.playMotion("malformed_pose", true);
+  pmtc.shouldFailWithCode(PMR::OTHER_ERROR);
+}
+
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);

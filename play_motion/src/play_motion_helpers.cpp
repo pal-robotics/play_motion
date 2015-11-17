@@ -139,7 +139,9 @@ namespace play_motion
                                 TrajPoint& point_curr)
   {
     const int num_joints = point_curr.positions.size();
-    assert(num_joints == point_prev.positions.size() && num_joints == point_next.positions.size());
+    if (num_joints != point_prev.positions.size() || num_joints != point_next.positions.size())
+        throw ros::Exception("The positions array of a point of the trajectory does not have the same number of joints as the trajectory joint_names say.");
+
 
     // Do nothing if waypoint contains a valid velocity specification
     if (int(point_curr.velocities.size()) == num_joints) {return;}

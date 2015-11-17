@@ -344,7 +344,13 @@ next_joint:;
         throw PMException("Approach motion planning failed", PMR::NO_PLAN_FOUND);// TODO: Expose descriptive error string from approach_planner
 
       // TODO: Resample and validate output trajectory
-      populateVelocities(motion_points_safe, motion_points_safe);
+      try
+      {
+        populateVelocities(motion_points_safe, motion_points_safe);
+      }
+      catch (const ros::Exception& e){
+          throw PMException(e.what(), PMR::OTHER_ERROR);
+      }
 
       // Seed target pose with current joint state
       foreach (MoveJointGroupPtr move_joint_group, groups)
