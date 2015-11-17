@@ -15,3 +15,14 @@ play_motion:
       points:
       - positions: [1.8, 1.8]
         time_from_start: 0.0
+    malformed_pose:
+      joints:
+        - joint1
+        - joint2
+      points:
+      - positions: [1.8, 1.8]
+        time_from_start: 0.0
+      - positions: [1.8]
+        time_from_start: 1.0
+      - positions: [1.8, 1.8]
+        time_from_start: 3.0
