@@ -2,6 +2,11 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix crash when malformed motion was requested
+* Contributors: Sammy Pfeiffer
+
 0.4.1 (2014-11-21)
 ------------------
 * Update package maintainer/authors
