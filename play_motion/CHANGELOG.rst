@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.3 (2016-03-30)
+------------------
 * Add play_motion continuous test
 * Migrate package to format 2, catkin lint fixes
 * Contributors: Victor Lopez
