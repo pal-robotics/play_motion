@@ -42,6 +42,9 @@
 #include "play_motion/play_motion_helpers.h"
 #include "play_motion/xmlrpc_helpers.h"
 
+#include <diagnostic_msgs/DiagnosticArray.h>
+#include <diagnostic_updater/DiagnosticStatusWrapper.h>
+
 #define foreach BOOST_FOREACH
 
 namespace play_motion
@@ -58,6 +61,10 @@ namespace play_motion
     list_motions_srv_ = ros::NodeHandle("~").advertiseService("list_motions",
                                                               &PlayMotionServer::listMotions,
                                                               this);
+
+    diagnostic_pub_ = nh_.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1);
+    diagnostic_timer_ = nh_.createTimer(ros::Duration(1.0), &PlayMotionServer::publishDiagnostics,
+                                        this);
   }
 
   PlayMotionServer::~PlayMotionServer()
@@ -153,5 +160,25 @@ namespace play_motion
       return false;
     }
     return true;
+  }
+
+  void PlayMotionServer::publishDiagnostics(const ros::TimerEvent &) const
+  {
+  diagnostic_msgs::DiagnosticArray array;
+  diagnostic_updater::DiagnosticStatusWrapper status;
+  status.name = "Functionality: Play Motion";
+  for (std::map<PlayMotion::GoalHandle, AlServer::GoalHandle>::const_iterator it = al_goals_.begin();
+       it != al_goals_.end(); ++it)
+  {
+    const AlServer::GoalHandle &hdl = it->second;
+    status.add("Executing motion", hdl.getGoal()->motion_name);
+  }
+  if (al_goals_.empty())
+    status.mergeSummary(diagnostic_msgs::DiagnosticStatus::OK, "Not executing any motion");
+  else
+    status.mergeSummary(diagnostic_msgs::DiagnosticStatus::OK, "Executing motions");
+
+  array.status.push_back(status);
+  diagnostic_pub_.publish(array);
   }
 }

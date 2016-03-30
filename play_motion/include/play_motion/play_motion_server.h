@@ -68,6 +68,7 @@ namespace play_motion
     bool findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle& goal_id);
     bool listMotions(play_motion_msgs::ListMotions::Request&  req,
                      play_motion_msgs::ListMotions::Response& resp);
+    void publishDiagnostics(const ros::TimerEvent &ev) const;
 
     ros::NodeHandle                                        nh_;
     std::vector<std::string>                               clist_;
@@ -75,6 +76,9 @@ namespace play_motion
     AlServer                                               al_server_;
     std::map<PlayMotion::GoalHandle, AlServer::GoalHandle> al_goals_;
     ros::ServiceServer                                     list_motions_srv_;
+
+    ros::Publisher                                         diagnostic_pub_;
+    ros::Timer                                             diagnostic_timer_;
   };
 }
 
