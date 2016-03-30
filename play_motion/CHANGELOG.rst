@@ -2,6 +2,12 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add play_motion continuous test
+* Migrate package to format 2, catkin lint fixes
+* Contributors: Victor Lopez
+
 0.4.2 (2015-11-17)
 ------------------
 * Fix crash when malformed motion was requested

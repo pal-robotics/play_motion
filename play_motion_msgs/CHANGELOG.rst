@@ -2,6 +2,9 @@
 Changelog for package play_motion_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.4.2 (2015-11-17)
 ------------------
 
