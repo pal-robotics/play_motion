@@ -97,7 +97,7 @@ namespace play_motion
         if (!isJointTrajectoryController(cs.type))
           continue;
         states[cs.name] = (cs.state == "running" ? RUNNING : STOPPED);
-        joints[cs.name] = cs.resources;
+        joints[cs.name] = cs.claimed_resources[0].resources;
       }
 
       if (states == last_cstates_)
