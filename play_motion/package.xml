@@ -27,5 +27,7 @@
   <test_depend>controller_manager</test_depend>
   <test_depend>joint_state_controller</test_depend>
   <test_depend>robot_state_publisher</test_depend>
+  <test_depend>hardware_interface</test_depend>
+  <test_depend>controller_manager</test_depend>
 
 </package>
