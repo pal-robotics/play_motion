@@ -30,17 +30,25 @@ add_executable(play_motion
 target_link_libraries(play_motion play_motion_helpers ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(play_motion play_motion_msgs_generate_messages_cpp)
 
+add_executable(run_motion src/run_motion_node.cpp)
+target_link_libraries(run_motion ${catkin_LIBRARIES})
+add_dependencies(run_motion ${catkin_EXPORTED_TARGETS})
+
 install(TARGETS play_motion
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
-install(TARGETS play_motion_helpers
+install(TARGETS play_motion_helpers 
     DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+install(TARGETS run_motion
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 install (PROGRAMS scripts/is_already_there.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-install(PROGRAMS scripts/move_joint
+install(PROGRAMS scripts/move_joint scripts/run_motion_python_node.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY include/
