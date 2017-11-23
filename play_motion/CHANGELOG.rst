@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.4 (2017-11-23)
+------------------
 * add command line run_motion executables
 * Contributors: Jordi Pages
 
