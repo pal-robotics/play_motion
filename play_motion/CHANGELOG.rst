@@ -2,6 +2,11 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add command line run_motion executables
+* Contributors: Jordi Pages
+
 0.4.3 (2016-03-30)
 ------------------
 * Add play_motion continuous test
