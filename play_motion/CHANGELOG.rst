@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.4 (2018-01-11)
+------------------
 * added missing joint trajectory controller for test
 * added missing position_controllers test
 * added missing xacro test depend
