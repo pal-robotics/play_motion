@@ -30,5 +30,6 @@
   <test_depend>hardware_interface</test_depend>
   <test_depend>controller_manager</test_depend>
   <test_depend>xacro</test_depend>
+  <test_depend>position_controllers</test_depend>
 
 </package>
