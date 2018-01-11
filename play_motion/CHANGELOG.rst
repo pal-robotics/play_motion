@@ -2,6 +2,16 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* added missing joint trajectory controller for test
+* added missing position_controllers test
+* added missing xacro test depend
+* migration to kinetic
+* added extra test dependencies
+* added gitignore and update new ros_control kinetic compatibility
+* Contributors: Hilario Tome, Hilario Tomé
+
 0.4.3 (2016-03-30)
 ------------------
 * Add play_motion continuous test
