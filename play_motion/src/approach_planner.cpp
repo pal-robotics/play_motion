@@ -386,9 +386,9 @@ bool ApproachPlanner::planApproach(const JointNames&                 joint_names
       return false;
     }
   }
-  move_group_interface::MoveGroup::Plan plan;
-  const bool planning_ok = move_group->plan(plan);
-  if (!planning_ok)
+  moveit::planning_interface::MoveGroupInterface::Plan plan;
+  const moveit::planning_interface::MoveItErrorCode planning_ok = move_group->plan(plan);
+  if (!(planning_ok == moveit::planning_interface::MoveItErrorCode::SUCCESS))
   {
     ROS_DEBUG_STREAM("Could not compute approach trajectory with planning group '" << move_group->getName() << "'.");
     return false;
