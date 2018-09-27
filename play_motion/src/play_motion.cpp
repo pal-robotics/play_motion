@@ -56,6 +56,7 @@ namespace
 {
   typedef play_motion::PlayMotion::GoalHandle            GoalHandle;
   typedef boost::shared_ptr<play_motion::MoveJointGroup> MoveJointGroupPtr;
+  typedef boost::weak_ptr<play_motion::MoveJointGroup>   MoveJointGroupWeakPtr;
   typedef std::list<MoveJointGroupPtr>                   ControllerList;
   typedef play_motion::PMR                               PMR;
   typedef actionlib::SimpleClientGoalState               SCGS;
@@ -80,8 +81,16 @@ namespace
     //TODO: add handling for controller state
   }
 
-  void controllerCb(int error_code, GoalHandle goal_hdl, const MoveJointGroupPtr& ctrl)
+  void controllerCb(int error_code, GoalHandle goal_hdl, const MoveJointGroupWeakPtr& weak_ctrl)
   {
+    // If we don't use a weak ptr, using a boost::bind on controllerCb keeps a copy
+    // of the shared ptr and keeps it alive.
+    if (weak_ctrl.expired())
+    {
+      ROS_ERROR_STREAM("Got callback on expired MoveJointGroup, ignoring it");
+      return;      
+    }
+    MoveJointGroupPtr ctrl = weak_ctrl.lock();
     ControllerList::iterator it = std::find(goal_hdl->controllers.begin(),
                                             goal_hdl->controllers.end(), ctrl);
     if (it == goal_hdl->controllers.end())
@@ -169,6 +178,16 @@ namespace play_motion
                                        const ControllerUpdater::ControllerJoints& joints)
   {
     typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
+    
+    ROS_INFO_STREAM("Controllers have changed, cancelling all active goals");
+    foreach (MoveJointGroupPtr mjg, move_joint_groups_)
+    {
+      // Deleting the groups isn't enough, because they are referenced by
+      // the goalhandles. They will only be destroyed when the action ends,
+      // which will crash because you cannot destroy actionclient from within a callback
+      // We must abort, so the goalhandle is destroyed
+      mjg->abort();
+    }
     move_joint_groups_.clear();
     foreach (const ctrlr_state_pair_t& p, states)
     {
@@ -368,7 +387,7 @@ next_joint:;
       foreach (const traj_pair_t& p, joint_group_traj)
       {
         goal_hdl->addController(p.first);
-        p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl, p.first));
+        p.first->setCallback(boost::bind(controllerCb, _1, goal_hdl, MoveJointGroupWeakPtr(p.first)));
         if (!p.first->sendGoal(p.second))
           throw PMException("Controller '" + p.first->getName() + "' did not accept trajectory, "
                             "canceling everything");

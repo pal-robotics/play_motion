@@ -36,6 +36,7 @@
 /** \author Paul Mathieu.                     */
 
 #include "play_motion/move_joint_group.h"
+#include <play_motion_msgs/PlayMotionResult.h>
 
 #include <ros/ros.h>
 #include <boost/foreach.hpp>
@@ -68,6 +69,17 @@ namespace play_motion
   {
     busy_ = false;
     client_.cancelAllGoals();
+  }
+  
+  void MoveJointGroup::abort()
+  {
+    if (busy_)
+    {
+      client_.cancelAllGoals();
+      client_.stopTrackingGoal(); 
+    }
+    if (active_cb_)
+      active_cb_(play_motion_msgs::PlayMotionResult::OTHER_ERROR);
   }
 
   void MoveJointGroup::setCallback(const Callback& cb)
