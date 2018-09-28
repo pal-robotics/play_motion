@@ -2,6 +2,14 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'use-weak-ref' into 'erbium-devel'
+  Fix error when changing controllers during a motion
+  See merge request app-tools/play_motion!4
+* Fix error when changing controllers during a motion
+* Contributors: Victor Lopez
+
 0.4.5 (2018-01-11)
 ------------------
 * fixed merge
