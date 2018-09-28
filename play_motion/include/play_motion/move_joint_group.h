@@ -88,6 +88,12 @@ namespace play_motion
      * \brief Cancel the current goal
      */
     void cancel();
+    
+    /**
+     * \brief Cancel the current goal, stop tracking it and call the callback
+     *        to notify an error
+     */
+    void abort();
 
     /**
      * \brief Register the callback to be called when the action is finished.
