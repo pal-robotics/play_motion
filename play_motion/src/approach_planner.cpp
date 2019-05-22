@@ -45,7 +45,7 @@
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <trajectory_msgs/JointTrajectory.h>
-#include <moveit/move_group_interface/move_group.h>
+#include <moveit/move_group_interface/move_group_interface.h>
 
 #include <play_motion/approach_planner.h>
 #include <play_motion/xmlrpc_helpers.h>
@@ -68,14 +68,14 @@ string enumerateElementsStr(const T& val)
   return ret;
 }
 
-typedef moveit::planning_interface::MoveGroup MoveGroup;
-typedef boost::shared_ptr<MoveGroup> MoveGroupPtr;
+typedef moveit::planning_interface::MoveGroupInterface MoveGroupInterface;
+typedef boost::shared_ptr<MoveGroupInterface> MoveGroupInterfacePtr;
 
 /// \return Comma-separated list of planning groups.
-string enumeratePlanningGroups(const std::vector<MoveGroupPtr>& move_groups)
+string enumeratePlanningGroups(const std::vector<MoveGroupInterfacePtr>& move_groups)
 {
   string ret;
-  foreach(MoveGroupPtr group, move_groups) {ret += group->getName() + ", ";}
+  foreach(MoveGroupInterfacePtr group, move_groups) {ret += group->getName() + ", ";}
   if (!ret.empty()) {ret.erase(ret.size() - 2);} // Remove last ", "
   return ret;
 }
@@ -85,7 +85,7 @@ string enumeratePlanningGroups(const std::vector<MoveGroupPtr>& move_groups)
 namespace play_motion
 {
 
-ApproachPlanner::PlanningData::PlanningData(MoveGroupPtr move_group_ptr)
+ApproachPlanner::PlanningData::PlanningData(MoveGroupInterfacePtr move_group_ptr)
   : move_group(move_group_ptr),
     sorted_joint_names(move_group_ptr->getActiveJoints())
 {
@@ -187,9 +187,9 @@ ApproachPlanner::ApproachPlanner(const ros::NodeHandle& nh)
   // Populate planning data
   foreach (const string& planning_group, planning_groups)
   {
-    MoveGroup::Options opts(planning_group);
+    MoveGroupInterface::Options opts(planning_group);
     opts.node_handle_ = as_nh;
-    MoveGroupPtr move_group(new MoveGroup(opts)); // TODO: Timeout and retry, log feedback. Throw on failure
+    MoveGroupInterfacePtr move_group(new MoveGroupInterface(opts)); // TODO: Timeout and retry, log feedback. Throw on failure
     planning_data_.push_back(PlanningData(move_group));
   }
 }
@@ -338,7 +338,7 @@ bool ApproachPlanner::computeApproach(const vector<string>&             joint_na
   if (min_planning_group.empty()) {return true;}
 
   // Find planning groups that are eligible for computing this particular approach trajectory
-  vector<MoveGroupPtr> valid_move_groups = getValidMoveGroups(min_planning_group, max_planning_group);
+  vector<MoveGroupInterfacePtr> valid_move_groups = getValidMoveGroups(min_planning_group, max_planning_group);
   if (valid_move_groups.empty())
   {
     ROS_ERROR_STREAM("Can't compute approach trajectory. There are no planning groups that span at least these joints:"
@@ -354,7 +354,7 @@ bool ApproachPlanner::computeApproach(const vector<string>&             joint_na
 
   // Call motion planners
   bool approach_ok = false;
-  foreach(MoveGroupPtr move_group, valid_move_groups)
+  foreach(MoveGroupInterfacePtr move_group, valid_move_groups)
   {
     approach_ok = planApproach(max_planning_group, max_planning_values, move_group, traj);
     if (approach_ok) {break;}
@@ -372,7 +372,7 @@ bool ApproachPlanner::computeApproach(const vector<string>&             joint_na
 
 bool ApproachPlanner::planApproach(const JointNames&                 joint_names,
                                    const std::vector<double>&        joint_values,
-                                   MoveGroupPtr                      move_group,
+                                   MoveGroupInterfacePtr             move_group,
                                    trajectory_msgs::JointTrajectory& traj)
 {
   move_group->setStartStateToCurrentState();
@@ -476,10 +476,10 @@ void ApproachPlanner::combineTrajectories(const JointNames&                  joi
   }
 }
 
-vector<ApproachPlanner::MoveGroupPtr> ApproachPlanner::getValidMoveGroups(const JointNames& min_group,
+vector<ApproachPlanner::MoveGroupInterfacePtr> ApproachPlanner::getValidMoveGroups(const JointNames& min_group,
                                                                           const JointNames& max_group)
 {
-  vector<MoveGroupPtr> valid_groups;
+  vector<MoveGroupInterfacePtr> valid_groups;
 
   // Create sorted ranges of min/max planning groups
   JointNames min_group_s = min_group;

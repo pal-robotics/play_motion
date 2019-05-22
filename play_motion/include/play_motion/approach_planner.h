@@ -62,7 +62,7 @@ namespace moveit
 {
   namespace planning_interface
   {
-    class MoveGroup;
+    class MoveGroupInterface;
   }
 }
 
@@ -87,8 +87,8 @@ namespace play_motion
                        const std::vector<double>& goal_pos);
 
   private:
-    typedef moveit::planning_interface::MoveGroup MoveGroup;
-    typedef boost::shared_ptr<MoveGroup> MoveGroupPtr;
+    typedef moveit::planning_interface::MoveGroupInterface MoveGroupInterface;
+    typedef boost::shared_ptr<MoveGroupInterface> MoveGroupInterfacePtr;
     typedef boost::shared_ptr<ros::AsyncSpinner> AsyncSpinnerPtr;
     typedef boost::shared_ptr<ros::CallbackQueue> CallbackQueuePtr;
     typedef std::vector<std::string> JointNames;
@@ -96,8 +96,8 @@ namespace play_motion
 
     struct PlanningData
     {
-      PlanningData(MoveGroupPtr move_group_ptr);
-      MoveGroupPtr move_group;
+      PlanningData(MoveGroupInterfacePtr move_group_ptr);
+      MoveGroupInterfacePtr move_group;
       JointNames   sorted_joint_names;
     };
 
@@ -119,7 +119,7 @@ namespace play_motion
     /// TODO
     bool planApproach(const JointNames&                 joint_names,
                       const std::vector<double>&        joint_values,
-                      MoveGroupPtr                      move_group,
+                      MoveGroupInterfacePtr             move_group,
                       trajectory_msgs::JointTrajectory& traj);
     /// TODO
     void combineTrajectories(const JointNames&                  joint_names,
@@ -129,7 +129,7 @@ namespace play_motion
                              std::vector<TrajPoint>&            traj_out);
 
     /// TODO
-    std::vector<MoveGroupPtr> getValidMoveGroups(const JointNames& min_group,
+    std::vector<MoveGroupInterfacePtr> getValidMoveGroups(const JointNames& min_group,
                                                  const JointNames& max_group);
 
     /// TODO
