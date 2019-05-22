@@ -2,6 +2,14 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'melodic_fixes' into 'erbium-devel'
+  changes for melodic deprecated MoveGroup (was renamed to MoveGroupInterface)
+  See merge request app-tools/play_motion!5
+* changes for melodic deprecated MoveGroup (was renamed to MoveGroupInterface)
+* Contributors: Sai Kishor Kothakota, Victor Lopez
+
 0.4.6 (2018-09-28)
 ------------------
 * Merge branch 'use-weak-ref' into 'erbium-devel'
