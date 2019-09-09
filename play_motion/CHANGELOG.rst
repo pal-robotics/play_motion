@@ -2,6 +2,11 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixes for shadowed variables
+* Contributors: Jordan Palacios
+
 0.4.7 (2019-05-22)
 ------------------
 * Merge branch 'melodic_fixes' into 'erbium-devel'
