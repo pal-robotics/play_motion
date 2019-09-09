@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.8 (2019-09-09)
+------------------
 * Fixes for shadowed variables
 * Contributors: Jordan Palacios
 
