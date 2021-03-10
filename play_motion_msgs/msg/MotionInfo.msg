@@ -1,3 +1,3 @@
 string name
 string[] joints
-duration duration
+builtin_interfaces/Duration duration
