@@ -38,18 +38,15 @@
 #define PM_DATATYPES_H
 
 #include <vector>
-#include <ros/duration.h>
-#include <trajectory_msgs/JointTrajectoryPoint.h>
+
+#include "trajectory_msgs/msg/joint_trajectory_point.hpp"
 
 namespace play_motion
 {
-
-  typedef std::vector<std::string>              MotionNames;
-  typedef std::vector<std::string>              JointNames;
-  typedef trajectory_msgs::JointTrajectoryPoint TrajPoint;
-  typedef std::vector<TrajPoint>                Trajectory;
-
+  typedef std::vector<std::string> MotionNames;
+  typedef std::vector<std::string> JointNames;
+  typedef trajectory_msgs::msg::JointTrajectoryPoint TrajPoint;
+  typedef std::vector<TrajPoint> Trajectory;
 }
-
 
 #endif

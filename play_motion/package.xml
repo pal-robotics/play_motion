@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>play_motion</name>
   <version>0.4.8</version>
   <description>Plays a pre-recorded motion on a robot</description>
@@ -10,20 +10,26 @@
 
   <license>BSD</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>actionlib</depend>
   <depend>control_msgs</depend>
   <depend>controller_manager_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>play_motion_msgs</depend>
   <depend>moveit_ros_planning_interface</depend>
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
 
   <!-- test build depends -->
-  <test_depend>rostest</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_index_cpp</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>rcl_yaml_param_parser</test_depend>
+  <test_depend>rclcpp_action</test_depend>
+
+  <!--
   <test_depend>controller_manager</test_depend>
   <test_depend>joint_state_controller</test_depend>
   <test_depend>robot_state_publisher</test_depend>
@@ -32,5 +38,9 @@
   <test_depend>xacro</test_depend>
   <test_depend>position_controllers</test_depend>
   <test_depend>joint_trajectory_controller</test_depend>
+  -->
 
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

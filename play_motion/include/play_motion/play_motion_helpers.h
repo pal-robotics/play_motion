@@ -41,12 +41,11 @@
 #define PLAYMOTIONHELPERS_H
 
 #include <string>
+
 #include "play_motion/datatypes.h"
 
-namespace ros
-{
-  class NodeHandle;
-}
+#include "rclcpp/duration.hpp"
+#include "rclcpp/node.hpp"
 
 namespace play_motion
 {
@@ -66,9 +65,10 @@ namespace play_motion
    *           (When omitted, defaults to ros::NodeHandle nh("play_motion"))
    * \throws xh::XmlrpcHelperException if motion_id cannot be found
    */
-  void getMotionJoints(const ros::NodeHandle &nh, const std::string& motion_id,
+  void getMotionJoints(const rclcpp::Node & node, const std::string& motion_id,
                        JointNames& motion_joints);
-  void getMotionJoints(const std::string& motion_id, JointNames& motion_joints);
+
+  // void getMotionJoints(const std::string& motion_id, JointNames& motion_joints);
 
 
   /**
@@ -76,16 +76,17 @@ namespace play_motion
    *           (When omitted, defaults to ros::NodeHandle nh("play_motion"))
    * \throws xh::XmlrpcHelperException if motion_id cannot be found
    */
-  void getMotionPoints(const ros::NodeHandle &nh, const std::string& motion_id,
+  void getMotionPoints(const rclcpp::Node & node, const std::string& motion_id,
                        Trajectory& motion_points);
-  void getMotionPoints(const std::string& motion_id, Trajectory& motion_points);
+
+  // void getMotionPoints(const std::string& motion_id, Trajectory& motion_points);
 
 
   /**
    * \brief getMotionDuration gets the total duration of a motion
    * \throws xh::XmlrpcHelperException if motion_id cannot be found
    */
-  ros::Duration getMotionDuration(const ros::NodeHandle &nh,
+  rclcpp::Duration getMotionDuration(const rclcpp::Node & node,
                                   const std::string &motion_id);
 
   /**
@@ -94,8 +95,9 @@ namespace play_motion
    *           (When omitted, defaults to ros::NodeHandle nh("play_motion"))
    * \throws xh::XmlrpcHelperException if no motions available
    */
-  void getMotionIds(const ros::NodeHandle &nh, MotionNames& motion_ids);
-  void getMotionIds(MotionNames& motion_ids);
+  void getMotionIds(const rclcpp::Node & node, MotionNames& motion_ids);
+
+  // void getMotionIds(MotionNames& motion_ids);
 
   /**
    * \param nh Nodehandle with the namespace containing the motions
@@ -103,8 +105,9 @@ namespace play_motion
    * \param motion_id Motion identifier
    * \return True if the motion exists, false otherwise
    */
-  bool motionExists(const ros::NodeHandle &nh, const std::string &motion_id);
-  bool motionExists(const std::string &motion_id);
+  bool motionExists(const rclcpp::Node & node, const std::string &motion_id);
+
+  // bool motionExists(const std::string &motion_id);
 
   /**
    * \brief isAlreadyThere checks if the source trajPoint matches the target
@@ -166,9 +169,10 @@ namespace play_motion
    * \param[out] motionInfo Data structure containing parsed motion
    * \throws ros::Exception if the motion does not exist or is malformed.
    */
-  void getMotion(const ros::NodeHandle &nh, const std::string &motion_id,
+  void getMotion(const rclcpp::Node & node, const std::string &motion_id,
                  MotionInfo &motion_info);
-  void getMotion(const std::string &motion_id, MotionInfo &motion_info);
+
+  // void getMotion(const std::string &motion_id, MotionInfo &motion_info);
 }
 
 #endif

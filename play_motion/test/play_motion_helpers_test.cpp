@@ -27,117 +27,207 @@
 
 /// \author Víctor Lopez
 
-#include <gtest/gtest.h>
+#include <exception>
 
-#include <ros/ros.h>
-#include <ros/time.h>
+#include "ament_index_cpp/get_package_share_directory.hpp"
+
+#include "gtest/gtest.h"
 
 #include "play_motion/play_motion_helpers.h"
 
-TEST(PlayMotionHelpersTest, getMotions)
+#include "rcl/allocator.h"
+
+#include "rcl_yaml_param_parser/parser.h"
+
+#include "rclcpp/duration.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/parameter_map.hpp"
+
+class PlayMotionHelpersTest : public ::testing::Test
+{
+public:
+  void SetUp()
+  {
+    node_ = std::make_unique<rclcpp::Node>(
+      "play_motion",
+      rclcpp::NodeOptions().allow_undeclared_parameters(true));
+
+    load_parameters();
+  }
+
+  void TearDown()
+  {
+    node_.reset(nullptr);
+  }
+
+  bool load_parameters()
+  {
+    const auto pkg_path = ament_index_cpp::get_package_share_directory("play_motion");
+    const std::string file_path = pkg_path + "/test/play_motion_helpers_poses.yaml";
+
+    auto allocator = rcl_get_default_allocator();
+    auto params = rcl_yaml_node_struct_init(allocator);
+    if (rcl_parse_yaml_file(file_path.c_str(), params)) {
+      auto param_map = rclcpp::parameter_map_from(params);
+      node_->set_parameters(param_map["/play_motion"]);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  const rclcpp::Node & node()
+  {
+    return *node_.get();
+  }
+
+private:
+  rclcpp::Node::UniquePtr node_;
+};
+
+TEST_F(PlayMotionHelpersTest, GetMotionsIdsTest)
 {
   play_motion::MotionNames motion_names;
-  ros::NodeHandle nh("play_motion");
-  play_motion::getMotionIds(nh, motion_names);
+  play_motion::getMotionIds(node(), motion_names);
   EXPECT_EQ(4, motion_names.size());
   EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "arms_t"));
   EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "bow"));
-  EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "five_joint_motion"));
-  EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "three_point_motion"));
+  EXPECT_NE(
+    motion_names.end(),
+    std::find(motion_names.begin(), motion_names.end(), "five_joint_motion"));
+  EXPECT_NE(
+    motion_names.end(),
+    std::find(motion_names.begin(), motion_names.end(), "three_point_motion"));
 }
 
-TEST(PlayMotionHelpersTest, getMotionJoints)
+TEST_F(PlayMotionHelpersTest, MotionExistsTest)
 {
-  ros::NodeHandle nh("play_motion");
-  play_motion::JointNames names;
-  play_motion::getMotionJoints(nh, "bow", names);
-  EXPECT_EQ(18, names.size());
-  play_motion::getMotionJoints(nh, "five_joint_motion", names);
-  EXPECT_EQ(5, names.size());
+  ASSERT_TRUE(play_motion::motionExists(node(), "arms_t"));
+  ASSERT_TRUE(play_motion::motionExists(node(), "bow"));
+  ASSERT_TRUE(play_motion::motionExists(node(), "five_joint_motion"));
+  ASSERT_TRUE(play_motion::motionExists(node(), "three_point_motion"));
+  ASSERT_FALSE(play_motion::motionExists(node(), "no_motion"));
 }
 
-
-TEST(PlayMotionHelpersTest, getMotionPoints)
+TEST_F(PlayMotionHelpersTest, GetMotionJointsTest)
 {
-  ros::NodeHandle nh("play_motion");
-  play_motion::Trajectory traj;
-  play_motion::getMotionPoints(nh, "arms_t", traj);
-  EXPECT_EQ(1, traj.size());
-  traj.clear();
-  play_motion::getMotionPoints(nh, "three_point_motion", traj);
-  EXPECT_EQ(3, traj.size());
+  play_motion::JointNames arms_t_joints, bow_joints, five_joints, three_joints, no_joints;
+  ASSERT_NO_THROW(play_motion::getMotionJoints(node(), "arms_t", arms_t_joints));
+  ASSERT_NO_THROW(play_motion::getMotionJoints(node(), "bow", bow_joints));
+  ASSERT_THROW(
+    play_motion::getMotionJoints(
+      node(), "five_joint_motion", five_joints), std::runtime_error);
+  ASSERT_NO_THROW(play_motion::getMotionJoints(node(), "three_point_motion", three_joints));
+  ASSERT_THROW(play_motion::getMotionJoints(node(), "no_motion", no_joints), std::runtime_error);
+  ASSERT_EQ(arms_t_joints.size(), 18);
+  ASSERT_EQ(bow_joints.size(), 18);
+  ASSERT_EQ(three_joints.size(), 18);
 }
 
-TEST(PlayMotionHelpersTest, getMotionDuration)
+TEST_F(PlayMotionHelpersTest, GetMotionPointsTest)
 {
-  ros::NodeHandle nh("play_motion");
-  ros::Duration d = play_motion::getMotionDuration(nh, "arms_t");
-  EXPECT_NEAR(0.0, d.toSec(), 0.01);
-  d = play_motion::getMotionDuration(nh, "bow");
-  EXPECT_NEAR(6.5, d.toSec(), 0.01);
+  play_motion::Trajectory arms_t_traj, bow_traj, five_traj, three_traj, no_traj;
+  ASSERT_NO_THROW(play_motion::getMotionPoints(node(), "arms_t", arms_t_traj));
+  ASSERT_NO_THROW(play_motion::getMotionPoints(node(), "bow", bow_traj));
+  ASSERT_THROW(
+    play_motion::getMotionPoints(
+      node(), "five_joint_motion", five_traj), std::runtime_error);
+  ASSERT_NO_THROW(play_motion::getMotionPoints(node(), "three_point_motion", three_traj));
+  ASSERT_THROW(play_motion::getMotionPoints(node(), "no_motion", no_traj), std::runtime_error);
+  ASSERT_EQ(arms_t_traj.size(), 1);
+  ASSERT_EQ(bow_traj.size(), 2);
+  ASSERT_EQ(three_traj.size(), 3);
 }
 
-TEST(PlayMotionHelpersTest, isAlreadyThere)
+TEST_F(PlayMotionHelpersTest, GetMotionDurationTest)
 {
-  ros::NodeHandle nh("play_motion");
+  std::unique_ptr<rclcpp::Duration> duration;
 
-  play_motion::JointNames sourceJoints;
-  play_motion::Trajectory sourceTraj;
-  play_motion::getMotionJoints(nh, "bow", sourceJoints);
-  play_motion::getMotionPoints(nh, "bow", sourceTraj);
+  ASSERT_NO_THROW(
+    duration = std::make_unique<rclcpp::Duration>(
+      play_motion::getMotionDuration(node(), "arms_t")));
+  EXPECT_NEAR(duration->seconds(), 0.0, 0.01);
 
+  ASSERT_NO_THROW(
+    duration = std::make_unique<rclcpp::Duration>(
+      play_motion::getMotionDuration(node(), "bow")));
+  EXPECT_NEAR(duration->seconds(), 6.5, 0.01);
 
-  /// Same position
-  EXPECT_TRUE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0],
-              sourceJoints, sourceTraj[0]));
+  ASSERT_THROW(
+    duration = std::make_unique<rclcpp::Duration>(
+      play_motion::getMotionDuration(node(), "five_joint_motion")), std::runtime_error);
 
-  /// Different position
-  EXPECT_FALSE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0],
-               sourceJoints, sourceTraj[1]));
+  ASSERT_NO_THROW(
+    duration = std::make_unique<rclcpp::Duration>(
+      play_motion::getMotionDuration(node(), "three_point_motion")));
+  EXPECT_NEAR(duration->seconds(), 12.799, 0.01);
 
-  /// Different position but with  360º tolerance
-  EXPECT_TRUE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0],
-              sourceJoints, sourceTraj[1], M_2_PI));
-
-  play_motion::JointNames differentJoints;
-  play_motion::getMotionJoints(nh, "bow", differentJoints);
-  differentJoints[0] = "made_up_joint";
-  /// Same position but different joint names
-  EXPECT_FALSE(play_motion::isAlreadyThere(differentJoints, sourceTraj[0],
-               sourceJoints, sourceTraj[0]));
-
-
-  differentJoints.clear();
-  EXPECT_THROW(play_motion::isAlreadyThere(differentJoints, sourceTraj[0],
-               sourceJoints, sourceTraj[0]), ros::Exception);
+  ASSERT_THROW(
+    duration = std::make_unique<rclcpp::Duration>(
+      play_motion::getMotionDuration(node(), "no_motion")), std::runtime_error);
 }
 
-TEST(PlayMotionHelpersTest, getMotionOk)
+TEST_F(PlayMotionHelpersTest, IsAlreadyThereTest)
 {
-  ros::NodeHandle nh("play_motion");
+  play_motion::JointNames source_joints;
+  play_motion::Trajectory source_traj;
+  play_motion::getMotionJoints(node(), "bow", source_joints);
+  play_motion::getMotionPoints(node(), "bow", source_traj);
+
+  // same position
+  EXPECT_TRUE(
+    play_motion::isAlreadyThere(
+      source_joints, source_traj[0],
+      source_joints, source_traj[0]));
+
+  // different position
+  EXPECT_FALSE(
+    play_motion::isAlreadyThere(
+      source_joints, source_traj[0],
+      source_joints, source_traj[1]));
+
+  // different position but with 360º tolerance
+  EXPECT_TRUE(
+    play_motion::isAlreadyThere(
+      source_joints, source_traj[0],
+      source_joints, source_traj[1], M_2_PI));
+
+  play_motion::JointNames different_joints;
+  play_motion::getMotionJoints(node(), "bow", different_joints);
+  different_joints[0] = "made_up_joint";
+
+  // same position but different joint names
+  EXPECT_FALSE(
+    play_motion::isAlreadyThere(
+      different_joints, source_traj[0],
+      source_joints, source_traj[0]));
+
+  different_joints.clear();
+  EXPECT_THROW(
+    play_motion::isAlreadyThere(
+      different_joints, source_traj[0],
+      source_joints, source_traj[0]), std::runtime_error);
+}
+
+TEST_F(PlayMotionHelpersTest, GetMotionTest)
+{
   play_motion::MotionInfo info;
-  play_motion::getMotion(nh, "arms_t", info);
-  EXPECT_EQ("arms_t", info.id);
-  EXPECT_EQ("Arms T", info.name);
-  EXPECT_EQ("posture", info.usage);
-  EXPECT_EQ("Both arms set straight pointing sideways at 45 degrees.", info.description);
+
+  ASSERT_THROW(play_motion::getMotion(node(), "", info), std::runtime_error);
+  ASSERT_THROW(play_motion::getMotion(node(), "bad_name", info), std::runtime_error);
+
+  ASSERT_NO_THROW(play_motion::getMotion(node(), "arms_t", info));
+  EXPECT_EQ(info.id, "arms_t");
+  EXPECT_EQ(info.name, "Arms T");
+  EXPECT_EQ(info.usage, "posture");
+  EXPECT_EQ(info.description, "Both arms set straight pointing sideways at 45 degrees.");
 }
 
-TEST(PlayMotionHelpersTest, getMotionKo)
-{
-  ros::NodeHandle nh("play_motion");
-  play_motion::MotionInfo info;
-  EXPECT_THROW(play_motion::getMotion(nh, "",          info), ros::Exception);
-  EXPECT_THROW(play_motion::getMotion(nh, "bad_name",  info), ros::Exception);
-  EXPECT_THROW(play_motion::getMotion(nh, "~bad_name", info), ros::Exception);
-}
-
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "play_motion_helpers_test");
+  rclcpp::init(argc, argv);
 
   int ret = RUN_ALL_TESTS();
   return ret;
 }
-
