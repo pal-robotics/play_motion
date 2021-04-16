@@ -124,4 +124,18 @@
     </inertial>
   </link>
 
+  <ros2_control name="rrbot_system" type="system">
+    <hardware>
+        <plugin>play_motion/RRBotSystem</plugin>
+    </hardware>
+    <joint name="joint1">
+      <command_interface name="position" />
+      <state_interface   name="position"/>
+    </joint>
+    <joint name="joint2">
+      <command_interface name="position" />
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
+
 </robot>

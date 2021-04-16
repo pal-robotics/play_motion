@@ -18,7 +18,7 @@ find_package(rclcpp REQUIRED)
 # catkin_python_setup()
 
 # play_motion_helpers
-add_library(play_motion_helpers
+add_library(play_motion_helpers SHARED
   src/play_motion_helpers.cpp
 )
 
@@ -93,7 +93,9 @@ if(BUILD_TESTING)
   find_package(ament_index_cpp REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_lint_common REQUIRED)
+  find_package(hardware_interface REQUIRED)
   find_package(play_motion_msgs REQUIRED)
+  find_package(pluginlib REQUIRED)
   find_package(rcl_yaml_param_parser REQUIRED)
   find_package(rclcpp_action REQUIRED)
   find_package(sensor_msgs REQUIRED)
@@ -102,8 +104,36 @@ if(BUILD_TESTING)
 
   # test configuration files
   install(
-    FILES test/play_motion_helpers_poses.yaml
+    FILES
+      test/play_motion_helpers_poses.yaml
+      test/rrbot/controller_manager.yaml
+      test/rrbot/controllers.launch.py
+      test/rrbot/joint_state_broadcaster.launch.py
+      test/rrbot/joint_state_broadcaster.yaml
+      test/rrbot/joint_trajectory_controller.launch.py
+      test/rrbot/joint_trajectory_controller.yaml
+      test/rrbot/rrbot.launch.py
+      test/rrbot/rrbot.rviz
+      test/rrbot/rrbot.xacro
     DESTINATION share/play_motion/test
+  )
+
+  # rrbot_system
+  add_library(rrbot_system SHARED
+    test/rrbot/rrbot_system.cpp
+  )
+  target_include_directories(rrbot_system PRIVATE
+    include
+  )
+  ament_target_dependencies(rrbot_system
+    hardware_interface
+    pluginlib
+    rclcpp
+  )
+  pluginlib_export_plugin_description_file(hardware_interface test/rrbot/rrbot_system.xml)
+  install(
+    TARGETS rrbot_system
+    DESTINATION lib
   )
 
   # play_motion_helpers_test
@@ -137,15 +167,15 @@ if(BUILD_TESTING)
 
   # play_motion_test
   # @TODO this should be a launch test that also runs the rrbot
-  ament_add_gtest(play_motion_test
-    test/play_motion_test.cpp
-  )
-  ament_target_dependencies(play_motion_test
-    play_motion_msgs
-    rclcpp
-    rclcpp_action
-    sensor_msgs
-  )
+#  ament_add_gtest(play_motion_test
+#    test/play_motion_test.cpp
+#  )
+#  ament_target_dependencies(play_motion_test
+#    play_motion_msgs
+#    rclcpp
+#    rclcpp_action
+#    sensor_msgs
+#  )
 
 endif()
 

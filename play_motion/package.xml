@@ -24,8 +24,15 @@
   <!-- test build depends -->
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_index_cpp</test_depend>
+  <test_depend>ament_index_python</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>controller_manager</test_depend>
+  <test_depend>hardware_interface</test_depend>
+  <test_depend>launch</test_depend>
+  <test_depend>launch_pal</test_depend>
+  <test_depend>launch_ros</test_depend>
+  <test_depend>pluginlib</test_depend>
   <test_depend>rcl_yaml_param_parser</test_depend>
   <test_depend>rclcpp_action</test_depend>
 

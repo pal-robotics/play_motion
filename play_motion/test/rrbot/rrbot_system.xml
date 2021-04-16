@@ -1,0 +1,8 @@
+<library path="rrbot_system">
+    <class name="play_motion/RRBotSystem" type="play_motion::RRBotSystem"
+        base_class_type="hardware_interface::SystemInterface">
+    <description>
+      A minimal rrbot system hardware for play_motion testing
+    </description>
+  </class>
+</library>
