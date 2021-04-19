@@ -35,32 +35,22 @@
 /** \author Adolfo Rodriguez Tsouroukdissian. */
 /** \author Paul Mathieu.                     */
 
-#include <ros/ros.h>
+#include <memory>
 
 #include "play_motion/play_motion_server.h"
 #include "play_motion/play_motion.h"
 
+#include "rclcpp/executors.hpp"
+#include "rclcpp/utilities.hpp"
+
 int main(int argc, char** argv)
 {
-  typedef boost::shared_ptr<play_motion::PlayMotion> PlayMotionPtr;
+  rclcpp::init(argc, argv);
 
-  // Init the ROS node
-  ros::init(argc, argv, "play_motion");
+  auto play_motion = std::make_shared<play_motion::PlayMotion>();
+  play_motion::PlayMotionServer pms(play_motion);
 
-  // Node handle scoped to where the poses are specified
-  ros::NodeHandle nh;
-
-  try
-  {
-    // Initialize the actionlib server
-    play_motion::PlayMotionServer pms(nh, PlayMotionPtr(new play_motion::PlayMotion(nh)));
-
-    // guruguru
-    ros::spin();
-  }
-  catch(const ros::Exception& ex)
-  {
-    ROS_FATAL_STREAM(ex.what());
-    return EXIT_FAILURE;
-  }
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(play_motion);
+  executor.spin();
 }

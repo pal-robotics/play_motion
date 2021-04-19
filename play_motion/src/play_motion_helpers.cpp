@@ -95,7 +95,7 @@ namespace play_motion
 //      xh::getArrayItem(joint_names, i, motion_joints[i]);
 //  }
 
-  void getMotionJoints(const rclcpp::Node & node, const std::string& motion_id,
+  void getMotionJoints(const rclcpp::Node * node, const std::string& motion_id,
                        JointNames& motion_joints)
   {
     MotionInfo info;
@@ -109,7 +109,7 @@ namespace play_motion
 //    getMotionJoints(pm_nh, motion_id, motion_joints);
 //  }
 
-  void getMotionPoints(const rclcpp::Node & node, const std::string& motion_id,
+  void getMotionPoints(const rclcpp::Node * node, const std::string& motion_id,
                        Trajectory& motion_points)
   {
     MotionInfo info;
@@ -123,9 +123,9 @@ namespace play_motion
 //    getMotionPoints(pm_nh, motion_id, motion_points);
 //  }
 
-  void getMotionIds(const rclcpp::Node & node, MotionNames& motion_ids)
+  void getMotionIds(const rclcpp::Node * node, MotionNames& motion_ids)
   {
-    auto params = node.list_parameters({"motions"}, 0);
+    auto params = node->list_parameters({"motions"}, 0);
 
     std::unordered_set<std::string> unique_names;
     for(auto param_name : params.names)
@@ -219,7 +219,7 @@ namespace play_motion
     for (int i = 1; i < num_waypoints - 1; ++i) {populateVelocities(traj_in[i - 1], traj_in[i + 1], traj_out[i]);}
   }
 
-  rclcpp::Duration getMotionDuration(const rclcpp::Node & node, const std::string &motion_id)
+  rclcpp::Duration getMotionDuration(const rclcpp::Node * node, const std::string &motion_id)
   {
     Trajectory traj;
     getMotionPoints(node, motion_id, traj);
@@ -233,11 +233,11 @@ namespace play_motion
 //      return getMotionDuration(pm_nh, motion_id);
 //  }
 
-  bool motionExists(const rclcpp::Node & node, const std::string & motion_id)
+  bool motionExists(const rclcpp::Node * node, const std::string & motion_id)
   {
-    return node.has_parameter("motions." + motion_id + ".joints") &&
-           node.has_parameter("motions." + motion_id + ".positions") &&
-           node.has_parameter("motions." + motion_id + ".times_from_start");
+    return node->has_parameter("motions." + motion_id + ".joints") &&
+           node->has_parameter("motions." + motion_id + ".positions") &&
+           node->has_parameter("motions." + motion_id + ".times_from_start");
   }
 
 //  bool motionExists(const std::string &motion_id)
@@ -278,20 +278,21 @@ namespace play_motion
     return true;
   }
 
-  void getMotion(const rclcpp::Node & node, const std::string & motion_id, MotionInfo & motion_info)
+  void getMotion(const rclcpp::Node * node, const std::string & motion_id, MotionInfo & motion_info)
   {
     if (!motionExists(node, motion_id)) {
       const std::string what = "Motion '" + motion_id + "' does not exist or is malformed " +
-        "(namespace " + node.get_namespace() + ").";
+        "(namespace " + node->get_namespace() + ").";
       throw std::runtime_error(what);
     }
 
+
     const auto joints =
-      node.get_parameter("motions." + motion_id + ".joints").as_string_array();
+      node->get_parameter("motions." + motion_id + ".joints").as_string_array();
     const auto positions =
-      node.get_parameter("motions." + motion_id + ".positions").as_double_array();
+      node->get_parameter("motions." + motion_id + ".positions").as_double_array();
     const auto times =
-      node.get_parameter("motions." + motion_id + ".times_from_start").as_double_array();
+      node->get_parameter("motions." + motion_id + ".times_from_start").as_double_array();
 
     // check trajectory is well formed
     const auto num_joints = joints.size();
@@ -337,8 +338,8 @@ namespace play_motion
     auto get_meta_info = [&](const std::string & param_name, std::string & dst)
       {
         const std::string full_name = "motions." + motion_id + ".meta." + param_name;
-        if (node.has_parameter(full_name)) {
-          dst = node.get_parameter(full_name).as_string();
+        if (node->has_parameter(full_name)) {
+          dst = node->get_parameter(full_name).as_string();
         } else {
           dst = "";
         }

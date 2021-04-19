@@ -38,33 +38,17 @@
 #define PLAY_MOTION_APPROACH_PLANNER_H
 
 #include <map>
+#include <memory>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include "play_motion/datatypes.h"
 
-#include <ros/message_forward.h>
+#include "rclcpp/node.hpp"
+#include "rclcpp/logger.hpp"
 
-#include <play_motion/datatypes.h>
+#include "trajectory_msgs/msg/joint_trajectory.hpp"
 
-namespace ros
-{
-  class NodeHandle;
-  class AsyncSpinner;
-  class CallbackQueue;
-}
-
-namespace trajectory_msgs
-{
-  ROS_DECLARE_MESSAGE(JointTrajectory);
-}
-
-namespace moveit
-{
-  namespace planning_interface
-  {
-    class MoveGroupInterface;
-  }
-}
+#include "moveit/move_group_interface/move_group_interface.h"
 
 namespace play_motion
 {
@@ -73,7 +57,7 @@ namespace play_motion
   {
   public:
 
-    ApproachPlanner(const ros::NodeHandle& nh);
+    ApproachPlanner(const rclcpp::Node::SharedPtr & node);
 
     /// TODO
     bool prependApproach(const std::vector<std::string>& joint_names,
@@ -87,10 +71,10 @@ namespace play_motion
                        const std::vector<double>& goal_pos);
 
   private:
-    typedef moveit::planning_interface::MoveGroupInterface MoveGroupInterface;
-    typedef boost::shared_ptr<MoveGroupInterface> MoveGroupInterfacePtr;
-    typedef boost::shared_ptr<ros::AsyncSpinner> AsyncSpinnerPtr;
-    typedef boost::shared_ptr<ros::CallbackQueue> CallbackQueuePtr;
+    using MoveGroupInterface = moveit::planning_interface::MoveGroupInterface;
+    using MoveGroupInterfacePtr = moveit::planning_interface::MoveGroupInterfacePtr;
+    // typedef std::shared_ptr<ros::AsyncSpinner> AsyncSpinnerPtr;
+    // typedef std::shared_ptr<ros::CallbackQueue> CallbackQueuePtr;
     typedef std::vector<std::string> JointNames;
     typedef std::map<std::string, double> JointGoal;
 
@@ -101,31 +85,33 @@ namespace play_motion
       JointNames   sorted_joint_names;
     };
 
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Logger logger_;
     std::vector<PlanningData> planning_data_;
     std::vector<std::string> no_plan_joints_;
     double joint_tol_; ///< Absolute tolerance used to determine if two joint positions are approximately equal.
     double skip_planning_vel_; ///< Maximum average velocity that any joint can have in a non-planned approach.
     double skip_planning_min_dur_; ///< Minimum duration that a non-planned approach can have
-    CallbackQueuePtr cb_queue_;
-    AsyncSpinnerPtr spinner_;
+    // CallbackQueuePtr cb_queue_;
+    // AsyncSpinnerPtr spinner_;
     bool planning_disabled_;
 
     /// TODO
     bool computeApproach(const JointNames&                 joint_names,
                          const std::vector<double>&        current_pos,
                          const std::vector<double>&        goal_pos,
-                         trajectory_msgs::JointTrajectory& traj);
+                         trajectory_msgs::msg::JointTrajectory& traj);
 
     /// TODO
     bool planApproach(const JointNames&                 joint_names,
                       const std::vector<double>&        joint_values,
                       MoveGroupInterfacePtr             move_group,
-                      trajectory_msgs::JointTrajectory& traj);
+                      trajectory_msgs::msg::JointTrajectory& traj);
     /// TODO
     void combineTrajectories(const JointNames&                  joint_names,
                              const std::vector<double>&         current_pos,
                              const std::vector<TrajPoint>&      traj_in,
-                             trajectory_msgs::JointTrajectory&  approach,
+                             trajectory_msgs::msg::JointTrajectory&  approach,
                              std::vector<TrajPoint>&            traj_out);
 
     /// TODO

@@ -11,9 +11,11 @@ find_package(ament_cmake REQUIRED)
 find_package(controller_manager_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
 find_package(diagnostic_updater REQUIRED)
-find_package(play_motion_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(play_motion_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(control_msgs REQUIRED)
 
 # catkin_python_setup()
 
@@ -27,31 +29,38 @@ target_include_directories(play_motion_helpers PRIVATE
 )
 
 ament_target_dependencies(play_motion_helpers
+  diagnostic_msgs
   rclcpp
   trajectory_msgs
 )
 
 # play_motion
-# add_executable(play_motion
-#   src/approach_planner.cpp
-#   src/controller_updater.cpp
-#   src/move_joint_group.cpp
-#   src/play_motion.cpp
-#   src/play_motion_main.cpp
-#   src/play_motion_server.cpp
-# )
-# 
-# target_include_directories(play_motion PRIVATE
-#   include
-# )
-# 
-# target_link_libraries(play_motion
-#   play_motion_helpers
-# )
-# 
-# ament_target_dependencies(play_motion
-#   play_motion_msgs
-# )
+add_executable(play_motion
+  src/approach_planner.cpp
+  src/controller_updater.cpp
+  src/move_joint_group.cpp
+  src/play_motion.cpp
+  src/play_motion_main.cpp
+  src/play_motion_server.cpp
+)
+
+target_include_directories(play_motion PRIVATE
+  include
+)
+
+target_link_libraries(play_motion
+  play_motion_helpers
+)
+
+ament_target_dependencies(play_motion
+  controller_manager_msgs
+  moveit_ros_planning_interface
+  play_motion_msgs
+  rclcpp
+  rclcpp_action
+  trajectory_msgs
+  control_msgs
+)
 
 
 # add_executable(run_motion src/run_motion_node.cpp)
@@ -167,15 +176,15 @@ if(BUILD_TESTING)
 
   # play_motion_test
   # @TODO this should be a launch test that also runs the rrbot
-#  ament_add_gtest(play_motion_test
-#    test/play_motion_test.cpp
-#  )
-#  ament_target_dependencies(play_motion_test
-#    play_motion_msgs
-#    rclcpp
-#    rclcpp_action
-#    sensor_msgs
-#  )
+  # ament_add_gtest(play_motion_test
+  #   test/play_motion_test.cpp
+  # )
+  # ament_target_dependencies(play_motion_test
+  #   play_motion_msgs
+  #   rclcpp
+  #   rclcpp_action
+  #   sensor_msgs
+  # )
 
 endif()
 

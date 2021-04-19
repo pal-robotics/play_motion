@@ -38,14 +38,18 @@
 #ifndef MOVEJOINTGROUP_H
 #define MOVEJOINTGROUP_H
 
+#include <functional>
 #include <string>
 #include <vector>
-#include <ros/ros.h>
-#include <ros/time.h>
-#include <actionlib/client/simple_action_client.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
+
+#include "control_msgs/action/follow_joint_trajectory.hpp"
 
 #include "play_motion/datatypes.h"
+
+#include "rclcpp_action/client.hpp"
+#include "rclcpp/logger.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/timer.hpp"
 
 namespace play_motion
 {
@@ -55,15 +59,19 @@ namespace play_motion
   class MoveJointGroup
   {
   private:
-    typedef actionlib::SimpleActionClient
-    <control_msgs::FollowJointTrajectoryAction>       ActionClient;
-    typedef control_msgs::FollowJointTrajectoryGoal   ActionGoal;
-    typedef control_msgs::FollowJointTrajectoryResult ActionResult;
-    typedef boost::shared_ptr<const ActionResult>     ActionResultPtr;
-    typedef boost::function<void(int)>                Callback;
+    using FollowJointTrajectory = control_msgs::action::FollowJointTrajectory;
+    using ActionClient = rclcpp_action::Client<FollowJointTrajectory>;
+    using ActionClientPtr = ActionClient::SharedPtr;
+    using ActionGoal = control_msgs::action::FollowJointTrajectory::Goal;
+    using ActionResult = control_msgs::action::FollowJointTrajectory::Result;
+    using ActionResultPtr = ActionResult::SharedPtr;
+
+    using GoalHandleFollowJointTrajectory = rclcpp_action::ClientGoalHandle<FollowJointTrajectory>;
+
+    using Callback = std::function<void(int)>;
 
   public:
-    MoveJointGroup(const std::string& controller_name, const JointNames& joint_names);
+    MoveJointGroup(const rclcpp::Node::SharedPtr & node, const std::string& controller_name, const JointNames& joint_names);
 
     /**
      * \brief Send a trajectory goal to the associated controller.
@@ -109,7 +117,8 @@ namespace play_motion
     /**
      * \brief Returns the action client state
      */
-    actionlib::SimpleClientGoalState getState();
+    int8_t getState();
+
 
     /**
      * \brief Returns the name that was used when creating the MoveJointGroup
@@ -117,16 +126,20 @@ namespace play_motion
     const std::string& getName() const;
 
   private:
-    void alCallback();
+    void resultCallback(const GoalHandleFollowJointTrajectory::WrappedResult & result);
 
     bool            busy_;
-    ros::NodeHandle nh_;               ///< Default node handle.
+    rclcpp::Node::SharedPtr node_;               ///< Default node handle.
+    rclcpp::Logger logger_;
     std::string     controller_name_;  ///< Controller name. XXX: is this needed?
     JointNames      joint_names_;      ///< Names of controller joints.
-    ActionClient    client_;           ///< Action client used to trigger motions.
+    ActionClientPtr    client_;           ///< Action client used to trigger motions.
     Callback        active_cb_;        ///< Call this when we are called back from the controller
-    ros::Timer      configure_timer_;  ///< To periodically check for controller actionlib server
+    rclcpp::TimerBase::SharedPtr      configure_timer_;  ///< To periodically check for controller actionlib server
+
+    std::shared_future<GoalHandleFollowJointTrajectory::SharedPtr> goal_future_;
   };
+
 }
 
 #endif

@@ -38,113 +38,123 @@
 #ifndef REACHPOSE_H
 #define REACHPOSE_H
 
-#include <string>
+#include <exception>
+#include <functional>
 #include <list>
+#include <memory>
 #include <map>
-#include <ros/ros.h>
-#include <boost/foreach.hpp>
+#include <string>
 
 #include "play_motion/datatypes.h"
 #include "play_motion/controller_updater.h"
-#include "play_motion_msgs/PlayMotionResult.h"
+#include "play_motion_msgs/action/play_motion.hpp"
 
-namespace sensor_msgs
-{ ROS_DECLARE_MESSAGE(JointState); }
+#include "rclcpp/node.hpp"
+#include "rclcpp/subscription.hpp"
+
+#include "sensor_msgs/msg/joint_state.hpp"
 
 namespace play_motion
 {
-  typedef play_motion_msgs::PlayMotionResult PMR;
+using PlayMotionResult = play_motion_msgs::action::PlayMotion::Result;
 
-  class MoveJointGroup;
-  class ApproachPlanner;
+class MoveJointGroup;
+class ApproachPlanner;
 
-  class PMException : public ros::Exception
+class PlayMotionException : public std::exception
+{
+public:
+  PlayMotionException(const std::string & what, int error_code = PlayMotionResult::OTHER_ERROR)
+  : error_msg_(what), error_code_(error_code)
+  {}
+
+  int error_code() const
+  {return error_code_;}
+
+  const char * what() const noexcept override
+  {return std::string(error_msg_ + " with error code " + std::to_string(error_code_)).c_str();}
+
+private:
+  std::string error_msg_;
+  int error_code_;
+};
+
+/** Move robot joints to a given pose.
+ * Poses are specified in the parameter server, and are identified by name.
+ */
+class PlayMotion : public rclcpp::Node
+{
+public:
+  class Goal;
+  using GoalHandle = std::shared_ptr<Goal>;
+
+private:
+  using ApproachPlannerPtr = std::shared_ptr<ApproachPlanner>;
+  using MoveJointGroupPtr = std::shared_ptr<MoveJointGroup>;
+  using ControllerList = std::list<MoveJointGroupPtr>;
+  using Callback = std::function<void (const GoalHandle &)>;
+
+public:
+  class Goal
   {
-  public:
-    PMException(const std::string& what, int error_code = PMR::OTHER_ERROR)
-      : ros::Exception(what)
-    { error_code_ = error_code; }
+    friend class PlayMotion;
 
-    int error_code() const
-    { return error_code_; }
+public:
+    int error_code;
+    std::string error_string;
+    int active_controllers;
+    Callback cb;
+    ControllerList controllers;
+    bool canceled;
 
-  private:
-    int error_code_;
+    ~Goal();
+    void cancel();
+    void addController(const MoveJointGroupPtr & ctrl);
+
+private:
+    Goal(const Callback & cbk);
   };
 
-  /** Move robot joints to a given pose.
-   * Poses are specified in the parameter server, and are identified by name.
-   */
-  class PlayMotion
-  {
-  public:
-    class Goal;
-    typedef boost::shared_ptr<Goal> GoalHandle;
-  private:
-    typedef boost::shared_ptr<MoveJointGroup>        MoveJointGroupPtr;
-    typedef std::list<MoveJointGroupPtr>             ControllerList;
-    typedef boost::function<void(const GoalHandle&)> Callback;
-    typedef boost::shared_ptr<ApproachPlanner>       ApproachPlannerPtr;
+  PlayMotion();
 
-  public:
-    class Goal
-    {
-      friend class PlayMotion;
+  /// \brief Send motion goal request
+  /// \param motion_name Name of motion to execute.
+  /// \param skip_planning Skip motion planning for computing the approach trajectory.
+  /// \param[out] goal_id contains the goal ID if function returns true
+  bool run(
+    const std::string & motion_name,
+    bool skip_planning,
+    GoalHandle & gh,
+    const Callback & cb);
 
-    public:
-      int            error_code;
-      std::string    error_string;
-      int            active_controllers;
-      Callback       cb;
-      ControllerList controllers;
-      bool           canceled;
+private:
+  void jointStateCb(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-      ~Goal();
-      void cancel();
-      void addController(const MoveJointGroupPtr& ctrl);
+  bool getGroupTraj(
+    MoveJointGroupPtr move_joint_group,
+    const JointNames & motion_joints,
+    const Trajectory & motion_points, Trajectory & traj_group);
+  void getMotionJoints(const std::string & motion_name, JointNames & motion_joints);
+  void getMotionPoints(const std::string & motion_name, Trajectory & motion_points);
 
-    private:
-      Goal(const Callback& cbk);
-    };
+  /// \brief Populate a list of controllers that span the motion joints.
+  ///
+  /// In the general case, the controllers will span more than the motion joints, but never less.
+  /// This method also validates that the controllers are not busy executing another goal.
+  /// \param motion_joints List of motion joints.
+  /// \return A list of controllers that span (at least) all the motion joints.
+  /// \throws PMException if no controllers spanning the motion joints were found, or if some of them are busy.
+  ControllerList getMotionControllers(const JointNames & motion_joints);
+  void updateControllersCb(
+    const ControllerUpdater::ControllerStates & states,
+    const ControllerUpdater::ControllerJoints & joints);
 
-    PlayMotion(ros::NodeHandle& nh);
-
-    /// \brief Send motion goal request
-    /// \param motion_name Name of motion to execute.
-    /// \param skip_planning Skip motion planning for computing the approach trajectory.
-    /// \param[out] goal_id contains the goal ID if function returns true
-    bool run(const std::string& motion_name,
-             bool               skip_planning,
-             GoalHandle&        gh,
-             const Callback&    cb);
-
-  private:
-    void jointStateCb(const sensor_msgs::JointStatePtr& msg);
-
-    bool getGroupTraj(MoveJointGroupPtr move_joint_group,
-                      const JointNames& motion_joints,
-                      const Trajectory& motion_points, Trajectory& traj_group);
-    void getMotionJoints(const std::string& motion_name, JointNames& motion_joints);
-    void getMotionPoints(const std::string& motion_name, Trajectory& motion_points);
-
-    /// \brief Populate a list of controllers that span the motion joints.
-    ///
-    /// In the general case, the controllers will span more than the motion joints, but never less.
-    /// This method also validates that the controllers are not busy executing another goal.
-    /// \param motion_joints List of motion joints.
-    /// \return A list of controllers that span (at least) all the motion joints.
-    /// \throws PMException if no controllers spanning the motion joints were found, or if some of them are busy.
-    ControllerList getMotionControllers(const JointNames& motion_joints);
-    void updateControllersCb(const ControllerUpdater::ControllerStates& states,
-                             const ControllerUpdater::ControllerJoints& joints);
-
-    ros::NodeHandle                  nh_;
-    ControllerList                   move_joint_groups_;
-    std::map<std::string, double>    joint_states_;
-    ros::Subscriber                  joint_states_sub_;
-    ControllerUpdater                ctrlr_updater_;
-    ApproachPlannerPtr               approach_planner_;
-  };
+  ControllerList move_joint_groups_;
+  std::map<std::string, double> joint_states_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
+  ControllerUpdater ctrlr_updater_;
+  ApproachPlannerPtr approach_planner_;
+};
 }
 
 #endif

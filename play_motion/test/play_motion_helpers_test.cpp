@@ -76,9 +76,9 @@ public:
     }
   }
 
-  const rclcpp::Node & node()
+  const rclcpp::Node * node()
   {
-    return *node_.get();
+    return node_.get();
   }
 
 private:

@@ -34,26 +34,29 @@
 
 /** \author Paul Mathieu. */
 
+#include <chrono>
+
 #include "play_motion/controller_updater.h"
 
-#include <boost/foreach.hpp>
-#include <controller_manager_msgs/ListControllers.h>
+#include "controller_manager_msgs/srv/list_controllers.hpp"
 
-#define foreach BOOST_FOREACH
+#include "rclcpp/executors.hpp"
+#include "rclcpp/logger.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/service.hpp"
+#include "rclcpp/timer.hpp"
+#include "rclcpp/rate.hpp"
+
+using namespace std::chrono_literals;
 
 namespace play_motion
 {
-
-  static ros::ServiceClient initCmClient(ros::NodeHandle nh)
+  ControllerUpdater::ControllerUpdater(const rclcpp::Node::SharedPtr & node)
+    : node_(node),
+      logger_(node->get_logger().get_child("controller_updater"))
   {
-    return nh.serviceClient<controller_manager_msgs::ListControllers>
-        ("controller_manager/list_controllers", true);
-  }
-
-  ControllerUpdater::ControllerUpdater(ros::NodeHandle nh) : nh_(nh)
-  {
-    cm_client_ = initCmClient(nh_);
-    main_thread_ = boost::thread(&ControllerUpdater::mainLoop, this);
+    cm_client_ = node_->create_client<ListControllers>("/controller_manager/list_controllers");
+    main_thread_ = std::thread(&ControllerUpdater::mainLoop, this);
   }
 
   ControllerUpdater::~ControllerUpdater()
@@ -73,40 +76,49 @@ namespace play_motion
 
   void ControllerUpdater::mainLoop()
   {
-    ros::Rate r(1.0); //XXX: magic value
-    for (; ros::ok(); r.sleep())
+    rclcpp::Rate r(1s); //XXX: magic value
+    while(rclcpp::ok())
     {
+      r.sleep();
+
       if (!update_cb_)
         continue;
 
-      controller_manager_msgs::ListControllers srv;
-
-      if (!cm_client_.isValid())
-        cm_client_ = initCmClient(nh_);
-      if(!cm_client_.call(srv))
-      {
-        ROS_WARN_THROTTLE(5.0, "Could not get list of controllers from controller manager.");
+      if(!cm_client_->wait_for_service(5s)) {
+        RCLCPP_WARN(logger_, "List controllers service is not ready");
         continue;
+      }
+
+      auto request = std::make_shared<ListControllers::Request>();
+      auto result = cm_client_->async_send_request(request);
+      if (rclcpp::spin_until_future_complete(node_, result) != rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_ERROR(logger_, "Failed to call list controllers service");
       }
 
       ControllerStates states;
       ControllerJoints joints;
-      typedef controller_manager_msgs::ControllerState cstate_t;
-      foreach (const cstate_t& cs, srv.response.controller)
+      using cstate_t = controller_manager_msgs::msg::ControllerState;
+
+      for (const cstate_t & cs : result.get()->controller)
       {
         if (!isJointTrajectoryController(cs.type))
           continue;
         states[cs.name] = (cs.state == "running" ? RUNNING : STOPPED);
-        joints[cs.name] = cs.claimed_resources[0].resources;
+
+        /// @todo add this to the controller_manager
+        // joints[cs.name] = cs.claimed_resources[0].resources;
       }
 
       if (states == last_cstates_)
         continue;
 
-      ROS_INFO("The set of running joint trajectory controllers has changed, updating it.");
-      update_timer_ = nh_.createTimer(ros::Duration(0), boost::bind(update_cb_, states, joints), true);
+      RCLCPP_INFO(logger_, "The set of running joint trajectory controllers has changed, updating it");
+
+      /// @todo this must be a oneshot
+      // update_timer_ = nh_.createTimer(ros::Duration(0), boost::bind(update_cb_, states, joints), true);
+      // update_timer_ = rclcpp::create_timer(node_, node_->get_clock(), 0s, std::bind(update_cb_, states, joints));
+
       last_cstates_ = states;
     }
   }
-
 }

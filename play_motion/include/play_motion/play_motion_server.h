@@ -38,47 +38,60 @@
 #ifndef PLAYMOTIONSERVER_H
 #define PLAYMOTIONSERVER_H
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <map>
-#include <ros/ros.h>
-#include <boost/shared_ptr.hpp>
-#include <actionlib/server/action_server.h>
+
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 
 #include "play_motion/play_motion.h"
-#include "play_motion_msgs/PlayMotionAction.h"
-#include "play_motion_msgs/ListMotions.h"
+#include "play_motion_msgs/action/play_motion.hpp"
+#include "play_motion_msgs/srv/list_motions.hpp"
+
+#include "rclcpp/logger.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/service.hpp"
+#include "rclcpp/time.hpp"
+#include "rclcpp_action/server.hpp"
 
 namespace play_motion
 {
   class PlayMotionServer
   {
   private:
-    typedef actionlib::ActionServer<play_motion_msgs::PlayMotionAction> AlServer;
-    typedef boost::shared_ptr<PlayMotion> PlayMotionPtr;
+    using PlayMotionAction = play_motion_msgs::action::PlayMotion;
+    using GoalHandlePlayMotionAction = rclcpp_action::ServerGoalHandle<PlayMotionAction>;
+
+    using PlayMotionPtr = std::shared_ptr<PlayMotion>;
 
   public:
-    PlayMotionServer(const ros::NodeHandle& nh, const PlayMotionPtr& pm);
+    PlayMotionServer(const PlayMotionPtr& pm);
     virtual ~PlayMotionServer();
 
   private:
     void playMotionCb(const PlayMotion::GoalHandle& goal_hdl);
-    void alCancelCb(AlServer::GoalHandle gh);
-    void alGoalCb(AlServer::GoalHandle gh);
-    bool findGoalId(AlServer::GoalHandle gh, PlayMotion::GoalHandle& goal_id);
-    bool listMotions(play_motion_msgs::ListMotions::Request&  req,
-                     play_motion_msgs::ListMotions::Response& resp);
-    void publishDiagnostics(const ros::TimerEvent &ev) const;
 
-    ros::NodeHandle                                        nh_;
+    rclcpp_action::GoalResponse handleGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const PlayMotionAction::Goal> goal);
+    rclcpp_action::CancelResponse handleCancel(const std::shared_ptr<GoalHandlePlayMotionAction> goal_handle);
+    void handleAccepted(const std::shared_ptr<GoalHandlePlayMotionAction> goal_handle);
+
+    bool findGoalId(const GoalHandlePlayMotionAction & gh, PlayMotion::GoalHandle& goal_id);
+
+    bool listMotions(const play_motion_msgs::srv::ListMotions::Request::SharedPtr req,
+                     play_motion_msgs::srv::ListMotions::Response::SharedPtr resp);
+
+    void publishDiagnostics() const;
+
     std::vector<std::string>                               clist_;
     PlayMotionPtr                                          pm_;
-    AlServer                                               al_server_;
-    std::map<PlayMotion::GoalHandle, AlServer::GoalHandle> al_goals_;
-    ros::ServiceServer                                     list_motions_srv_;
+    rclcpp::Logger logger_;
+    rclcpp_action::Server<PlayMotionAction>::SharedPtr al_server_;
+    std::map<PlayMotion::GoalHandle, std::shared_ptr<GoalHandlePlayMotionAction>> al_goals_;
+    rclcpp::Service<play_motion_msgs::srv::ListMotions>::SharedPtr list_motions_srv_;
 
-    ros::Publisher                                         diagnostic_pub_;
-    ros::Timer                                             diagnostic_timer_;
+    rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostic_pub_;
+    rclcpp::TimerBase::SharedPtr diagnostic_timer_;
   };
 }
 

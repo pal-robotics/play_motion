@@ -16,9 +16,10 @@
   <depend>controller_manager_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
-  <depend>play_motion_msgs</depend>
   <depend>moveit_ros_planning_interface</depend>
+  <depend>play_motion_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
   <depend>sensor_msgs</depend>
 
   <!-- test build depends -->

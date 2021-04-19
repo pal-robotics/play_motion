@@ -35,29 +35,34 @@
 /** \author Adolfo Rodriguez Tsouroukdissian. */
 /** \author Paul Mathieu.                     */
 
+#include <functional>
+
+#include "play_motion_msgs/action/play_motion.hpp"
 #include "play_motion/move_joint_group.h"
-#include <play_motion_msgs/PlayMotionResult.h>
 
-#include <ros/ros.h>
-#include <boost/foreach.hpp>
+#include "rclcpp_action/create_client.hpp"
+#include "rclcpp/logging.hpp"
 
-#define foreach BOOST_FOREACH
+#include "trajectory_msgs/msg/joint_trajectory_point.hpp"
 
 namespace play_motion
 {
-  MoveJointGroup::MoveJointGroup(const std::string& controller_name, const JointNames& joint_names)
+  MoveJointGroup::MoveJointGroup(const rclcpp::Node::SharedPtr & node, const std::string& controller_name, const JointNames& joint_names)
     : busy_(false),
+      node_(node),
+      logger_(node->get_logger().get_child("move_joint_group")),
       controller_name_(controller_name),
       joint_names_(joint_names),
-      client_(controller_name_ + "/follow_joint_trajectory", false)
-  { }
+      client_()
+  {
+    client_ = rclcpp_action::create_client<FollowJointTrajectory>(node_, controller_name_ + "/follow_joint_trajectory");
+  }
 
-  void MoveJointGroup::alCallback()
+  void MoveJointGroup::resultCallback(const GoalHandleFollowJointTrajectory::WrappedResult & result)
   {
     busy_ = false;
-    ActionResultPtr r = client_.getResult();
-    active_cb_(r->error_code);
-    active_cb_.clear();
+    active_cb_(result.result->error_code);
+    active_cb_ = nullptr;
   }
 
   bool MoveJointGroup::isIdle() const
@@ -68,18 +73,20 @@ namespace play_motion
   void MoveJointGroup::cancel()
   {
     busy_ = false;
-    client_.cancelAllGoals();
+    auto cancel_future = client_->async_cancel_all_goals();
+    cancel_future.wait();
   }
-  
+
   void MoveJointGroup::abort()
   {
     if (busy_)
     {
-      client_.cancelAllGoals();
-      client_.stopTrackingGoal(); 
+      auto cancel_future = client_->async_cancel_all_goals();
+      cancel_future.wait();
     }
-    if (active_cb_)
-      active_cb_(play_motion_msgs::PlayMotionResult::OTHER_ERROR);
+    if (active_cb_) {
+      active_cb_(play_motion_msgs::action::PlayMotion_Result::OTHER_ERROR);
+    }
   }
 
   void MoveJointGroup::setCallback(const Callback& cb)
@@ -92,9 +99,13 @@ namespace play_motion
     return joint_names_;
   }
 
-  actionlib::SimpleClientGoalState MoveJointGroup::getState()
+  int8_t MoveJointGroup::getState()
   {
-    return client_.getState();
+    if (goal_future_.valid()) {
+      return goal_future_.get()->get_status();
+    } else {
+      return rclcpp_action::GoalStatus::STATUS_UNKNOWN;
+    }
   }
 
   const std::string& MoveJointGroup::getName() const
@@ -104,33 +115,44 @@ namespace play_motion
 
   bool MoveJointGroup::isControllingJoint(const std::string& joint_name)
   {
-    if (!client_.isServerConnected())
+    if (!client_->wait_for_action_server()) {
+      RCLCPP_ERROR_STREAM(logger_, "action server not available");
       return false;
+    }
 
-    foreach (const std::string& jn, joint_names_)
-      if (joint_name == jn)
+    for (const std::string & jn : joint_names_) {
+      if (joint_name == jn) {
         return true;
+      }
+    }
 
     return false;
   }
 
   bool MoveJointGroup::sendGoal(const std::vector<TrajPoint>& traj)
   {
-    ROS_DEBUG_STREAM("Sending trajectory goal to " << controller_name_ << ".");
+    if (!client_->wait_for_action_server()) {
+      RCLCPP_ERROR_STREAM(logger_, "action server not available");
+      return false;
+    }
+
+    RCLCPP_DEBUG_STREAM(logger_, "Sending trajectory goal to " << controller_name_ << ".");
 
     ActionGoal goal;
     goal.trajectory.joint_names = joint_names_;
     goal.trajectory.points.reserve(traj.size());
 
-    foreach (const TrajPoint& p, traj)
+    for(const TrajPoint & p : traj)
     {
       if (p.positions.size() != joint_names_.size())
       {
-        ROS_ERROR_STREAM("Pose size mismatch. Expected: " << joint_names_.size()
-                         << ", got: " << p.positions.size() << ".");
+        RCLCPP_ERROR_STREAM(
+          logger_,
+          "Pose size mismatch. Expected: " << joint_names_.size() << ", got: " <<
+            p.positions.size() << ".");
         return false;
       }
-      trajectory_msgs::JointTrajectoryPoint point;
+      trajectory_msgs::msg::JointTrajectoryPoint point;
 
       point.positions     = p.positions;         // Reach these joint positions...
       point.velocities    = p.velocities;        // ...with a given velocity (may be unset)
@@ -140,8 +162,18 @@ namespace play_motion
 
       goal.trajectory.points.push_back(point);
     }
-    client_.sendGoal(goal, boost::bind(&MoveJointGroup::alCallback, this));
+
+    using namespace std::placeholders;
+
+    // set up goal options
+    auto goal_options = ActionClient::SendGoalOptions();
+    goal_options.result_callback =
+        std::bind(&MoveJointGroup::resultCallback, this, _1);
+
+    /// @todo replace this busy_ with the state of the goal_future?
     busy_ = true;
+
+    goal_future_ = client_->async_send_goal(goal, goal_options);
 
     return true;
   }

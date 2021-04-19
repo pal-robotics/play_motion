@@ -37,18 +37,22 @@
 #ifndef CONSTROLLERUPDATER_H
 #define CONSTROLLERUPDATER_H
 
-#include <string>
+#include <functional>
 #include <map>
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
-#include <ros/ros.h>
-#include <ros/timer.h>
+#include <string>
+#include <thread>
+
+#include "controller_manager_msgs/srv/list_controllers.hpp"
 
 #include "play_motion/datatypes.h"
 
+#include "rclcpp/logger.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/service.hpp"
+#include "rclcpp/timer.hpp"
+
 namespace play_motion
 {
-
   /** Keeps track of controller statuses by polling the controller manager.
  * The service call happens in a separate thread to not disrupt the main code.
  */
@@ -61,15 +65,15 @@ namespace play_motion
       STOPPED
     };
 
-    typedef std::map<std::string, ControllerState> ControllerStates;
-    typedef std::map<std::string, JointNames>      ControllerJoints;
+    using ControllerStates = std::map<std::string, ControllerState>;
+    using ControllerJoints = std::map<std::string, JointNames>;
 
   private:
-    typedef boost::function<void(const ControllerStates& states,
-                                 const ControllerJoints& joints)> Callback;
+    using Callback = std::function<void(const ControllerStates& states, const ControllerJoints& joints)>;
+    using ListControllers = controller_manager_msgs::srv::ListControllers;
 
   public:
-    ControllerUpdater(ros::NodeHandle nh);
+    ControllerUpdater(const rclcpp::Node::SharedPtr & node);
     virtual ~ControllerUpdater();
 
     void registerUpdateCb(const Callback& cb) { update_cb_ = cb; }
@@ -77,14 +81,14 @@ namespace play_motion
   private:
     void mainLoop();
 
-    ros::NodeHandle    nh_;
-    ros::Timer         update_timer_;
-    boost::thread      main_thread_;
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Logger logger_;
+    rclcpp::TimerBase::SharedPtr update_timer_;
+    std::thread      main_thread_;
     Callback           update_cb_;
-    ros::ServiceClient cm_client_;
+    rclcpp::Client<ListControllers>::SharedPtr cm_client_;
     ControllerStates   last_cstates_;
   };
 
 }
-
 #endif
