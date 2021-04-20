@@ -50,7 +50,13 @@ namespace play_motion
       controller_name_(controller_name),
       joint_names_(joint_names),
       client_(controller_name_ + "/follow_joint_trajectory", false)
-  { }
+  { 
+    //Wait for server
+    if(!client_.waitForServer(ros::Duration(0.5)))
+    {
+      ROS_ERROR_STREAM("Error connecting to the client : " << controller_name_ << "/follow_joint_trajectory !");
+    }
+  }
 
   void MoveJointGroup::alCallback()
   {
