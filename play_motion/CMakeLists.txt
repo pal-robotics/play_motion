@@ -17,7 +17,7 @@ catkin_package(INCLUDE_DIRS include
 
 
 include_directories(include)
-include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS})
 
 add_library(play_motion_helpers src/play_motion_helpers.cpp)
 
