@@ -90,24 +90,23 @@ bool PlayMotionServer::findGoalId(const GoalHandlePlayMotionAction & gh, PlayMot
 void PlayMotionServer::playMotionCb(const PlayMotion::GoalHandle & goal_hdl)
 {
   auto result = std::make_shared<PlayMotionResult>();
-  PlayMotionResult r;
   result->error_code = goal_hdl->error_code;
   result->error_string = goal_hdl->error_string;
 
-  if (r.error_code == PlayMotionResult::SUCCEEDED) {
+  if (result->error_code == PlayMotionResult::SUCCEEDED) {
     RCLCPP_INFO_STREAM(logger_, "Motion played successfully.");
     al_goals_[goal_hdl]->succeed(result);
   } else {
-    if (r.error_code == 0) {
+    if (result->error_code == 0) {
       RCLCPP_ERROR(
         logger_,
-        "Motion ended with INVALID ERROR code %d and description '%s'", r.error_code,
-        r.error_string.c_str());
+        "Motion ended with INVALID ERROR code %d and description '%s'", result->error_code,
+        result->error_string.c_str());
     } else {
       RCLCPP_WARN(
         logger_,
-        "Motion ended with an error code %d and description '%s'", r.error_code,
-        r.error_string.c_str());
+        "Motion ended with an error code %d and description '%s'", result->error_code,
+        result->error_string.c_str());
     }
     al_goals_[goal_hdl]->abort(result);
   }
@@ -166,13 +165,15 @@ void PlayMotionServer::handleAccepted(const std::shared_ptr<GoalHandlePlayMotion
     }
     RCLCPP_ERROR_STREAM(logger_, "Motion '" << goal->motion_name << "' could not be played.");
 
+    /// @todo this must be done somehow in the handleGoal callback,
+    /// rejects are signeld before the goal is accepted
     // gh.setRejected(r);
-    goal_handle->abort(result);
     return;
   }
 
+  /// @todo this must be done somehow in the handleGoal callback,
+  /// acceptance are signeld before the goal is accepted
   // gh.setAccepted();
-  goal_handle->succeed(result);
 
   // what's the point of this map?
   al_goals_[goal_hdl] = goal_handle;

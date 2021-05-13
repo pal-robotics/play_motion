@@ -138,6 +138,8 @@ namespace play_motion
     rclcpp::TimerBase::SharedPtr      configure_timer_;  ///< To periodically check for controller actionlib server
 
     std::shared_future<GoalHandleFollowJointTrajectory::SharedPtr> goal_future_;
+
+    rclcpp_action::ResultCode last_result_code_;
   };
 
 }

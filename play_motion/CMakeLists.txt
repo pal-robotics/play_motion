@@ -34,6 +34,12 @@ ament_target_dependencies(play_motion_helpers
   trajectory_msgs
 )
 
+install(TARGETS play_motion_helpers
+  RUNTIME DESTINATION bin
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+)
+
 # play_motion
 add_executable(play_motion
   src/approach_planner.cpp
@@ -62,24 +68,14 @@ ament_target_dependencies(play_motion
   control_msgs
 )
 
+install(TARGETS play_motion
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
 
 # add_executable(run_motion src/run_motion_node.cpp)
 # target_link_libraries(run_motion ${catkin_LIBRARIES})
 # add_dependencies(run_motion ${catkin_EXPORTED_TARGETS})
-
-
-# install(TARGETS play_motion
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-install(
-  TARGETS
-    play_motion_helpers
-    # play_motion
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-)
 
 #install(TARGETS run_motion
 #        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -176,15 +172,15 @@ if(BUILD_TESTING)
 
   # play_motion_test
   # @TODO this should be a launch test that also runs the rrbot
-  # ament_add_gtest(play_motion_test
-  #   test/play_motion_test.cpp
-  # )
-  # ament_target_dependencies(play_motion_test
-  #   play_motion_msgs
-  #   rclcpp
-  #   rclcpp_action
-  #   sensor_msgs
-  # )
+  ament_add_gtest(play_motion_test
+    test/play_motion_test.cpp
+  )
+  ament_target_dependencies(play_motion_test
+    play_motion_msgs
+    rclcpp
+    rclcpp_action
+    sensor_msgs
+  )
 
 endif()
 

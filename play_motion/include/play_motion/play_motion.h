@@ -61,21 +61,17 @@ using PlayMotionResult = play_motion_msgs::action::PlayMotion::Result;
 class MoveJointGroup;
 class ApproachPlanner;
 
-class PlayMotionException : public std::exception
+class PlayMotionException : public std::runtime_error
 {
 public:
-  PlayMotionException(const std::string & what, int error_code = PlayMotionResult::OTHER_ERROR)
-  : error_msg_(what), error_code_(error_code)
+  PlayMotionException(const std::string & error_msg, int error_code = PlayMotionResult::OTHER_ERROR)
+  : std::runtime_error(error_msg), error_code_(error_code)
   {}
 
   int error_code() const
   {return error_code_;}
 
-  const char * what() const noexcept override
-  {return std::string(error_msg_ + " with error code " + std::to_string(error_code_)).c_str();}
-
 private:
-  std::string error_msg_;
   int error_code_;
 };
 
@@ -90,6 +86,7 @@ public:
 
 private:
   using ApproachPlannerPtr = std::shared_ptr<ApproachPlanner>;
+  using ControllerUpdaterPtr = std::shared_ptr<ControllerUpdater>;
   using MoveJointGroupPtr = std::shared_ptr<MoveJointGroup>;
   using ControllerList = std::list<MoveJointGroupPtr>;
   using Callback = std::function<void (const GoalHandle &)>;
@@ -116,6 +113,8 @@ private:
   };
 
   PlayMotion();
+
+  void init();
 
   /// \brief Send motion goal request
   /// \param motion_name Name of motion to execute.
@@ -152,7 +151,7 @@ private:
   ControllerList move_joint_groups_;
   std::map<std::string, double> joint_states_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
-  ControllerUpdater ctrlr_updater_;
+  ControllerUpdaterPtr ctrlr_updater_;
   ApproachPlannerPtr approach_planner_;
 };
 }

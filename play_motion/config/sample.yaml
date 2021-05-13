@@ -1,7 +1,7 @@
 /play_motion:
   ros__parameters:
     # uncomment line below to launch the node without motion planning capabilities
-    # disable_motion_planning: true
+    disable_motion_planning: true
 
     # not needed if disable_motion_planning: true
     approach_planner:
@@ -10,7 +10,7 @@
         - group_2
 
       exclude_from_planning_joints: # motion planning will not be used for these
-        -fake_joint_2
+        - fake_joint_2
 
       joint_tolerance: 0.001              # rad or m
 
@@ -28,3 +28,4 @@
                     -0.4, -0.2, # position 2
                     -0.4, 0.2]  # position 3
         times_from_start: [0.0, 1.0, 2.0]
+

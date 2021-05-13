@@ -27,13 +27,16 @@
 
 /// \author Paul Mathieu
 
+#include <chrono>
 #include <functional>
 #include <memory>
+#include <thread>
 
 #include "gtest/gtest.h"
 
 #include "play_motion_msgs/action/play_motion.hpp"
 
+#include "rclcpp/executors.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/subscription.hpp"
@@ -41,6 +44,7 @@
 
 #include "sensor_msgs/msg/joint_state.hpp"
 
+using namespace std::chrono_literals;
 using std::placeholders::_1;
 
 class PlayMotionTestClient : public rclcpp::Node
@@ -67,6 +71,8 @@ public:
       rclcpp::shutdown();
     }
 
+    bool is_goal_completed = false;
+
     // set up goal
     ActionGoal goal;
     goal.motion_name = motion_name;
@@ -87,13 +93,20 @@ public:
       };
     goal_options.result_callback = [&](const auto & result)
       {
+        is_goal_completed = true;
         goal_result_ = result.code;
         play_motion_result_ = result.result->error_code;
       };
 
     // send goal and wait for it to complete
+    RCLCPP_INFO_STREAM(get_logger(), "Sending goal");
     auto goal_future = ac_->async_send_goal(goal, goal_options);
-    goal_future.wait();
+
+    RCLCPP_INFO_STREAM(get_logger(), "Wait for goal to complete");
+    while (!is_goal_completed) {
+      std::this_thread::sleep_for(500ms);
+    }
+    RCLCPP_INFO_STREAM(get_logger(), "Goal completed");
   }
 
   double getJointPos(const std::string & joint_name)
@@ -144,13 +157,19 @@ private:
 
 TEST(PlayMotionTest, basicReachPose)
 {
-  PlayMotionTestClient pmtc;
+  auto pmtc = std::make_shared<PlayMotionTestClient>();
 
-  pmtc.playMotion("pose1", true);
-  pmtc.shouldSucceed();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(pmtc);
+  auto runner = std::thread([&]() {executor.spin();});
 
-  double final_pos = pmtc.getJointPos("joint1");
+  pmtc->playMotion("pose1", true);
+  pmtc->shouldSucceed();
+  double final_pos = pmtc->getJointPos("joint1");
   EXPECT_NEAR(final_pos, 1.8, 0.01);
+
+  executor.cancel();
+  runner.join();
 }
 
 #if 0

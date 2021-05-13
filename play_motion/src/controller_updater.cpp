@@ -91,8 +91,14 @@ namespace play_motion
 
       auto request = std::make_shared<ListControllers::Request>();
       auto result = cm_client_->async_send_request(request);
-      if (rclcpp::spin_until_future_complete(node_, result) != rclcpp::FutureReturnCode::SUCCESS) {
+//      if (rclcpp::spin_until_future_complete(node_, result) != rclcpp::FutureReturnCode::SUCCESS) {
+//        RCLCPP_ERROR(logger_, "Failed to call list controllers service");
+//      }
+
+      result.wait();
+      if (!result.get()) {
         RCLCPP_ERROR(logger_, "Failed to call list controllers service");
+        return;
       }
 
       ControllerStates states;
@@ -103,10 +109,20 @@ namespace play_motion
       {
         if (!isJointTrajectoryController(cs.type))
           continue;
-        states[cs.name] = (cs.state == "running" ? RUNNING : STOPPED);
+        states[cs.name] = (cs.state == "active" ? RUNNING : STOPPED);
 
-        /// @todo add this to the controller_manager
-        // joints[cs.name] = cs.claimed_resources[0].resources;
+        /// @note claimed_interfaces are expressed like "[joint_name]/[interface_name]",
+        /// we need to extract the joint names here
+        auto get_joint_names = [](const std::vector<std::string> & claimed_interfaces)
+          {
+            JointNames joint_names;
+            for (const auto & interface : claimed_interfaces) {
+              auto dash = interface.find_first_of("/");
+              joint_names.emplace_back(interface.substr(0, dash));
+            }
+            return joint_names;
+          };
+        joints[cs.name] = get_joint_names(cs.claimed_interfaces);
       }
 
       if (states == last_cstates_)
@@ -117,6 +133,9 @@ namespace play_motion
       /// @todo this must be a oneshot
       // update_timer_ = nh_.createTimer(ros::Duration(0), boost::bind(update_cb_, states, joints), true);
       // update_timer_ = rclcpp::create_timer(node_, node_->get_clock(), 0s, std::bind(update_cb_, states, joints));
+
+      /// @note ros2: any problem with doing this synchronously instead?
+      update_cb_(states, joints);
 
       last_cstates_ = states;
     }

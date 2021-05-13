@@ -50,6 +50,7 @@
 #include "play_motion/play_motion_helpers.h"
 
 #include "rclcpp/logging.hpp"
+#include "rclcpp/node_options.hpp"
 
 
 namespace
@@ -108,7 +109,7 @@ void controllerCb(rclcpp::Logger & logger, int error_code, GoalHandle goal_hdl, 
       "error: " << error_code);
 
   if (goal_hdl->canceled) {
-    RCLCPP_DEBUG_STREAM(logger, "The Goal was canceled, not calling Motion callback.");
+    RCLCPP_INFO_STREAM(logger, "The Goal was canceled, not calling Motion callback.");
     return;
   }
 
@@ -144,15 +145,30 @@ namespace play_motion
 {
   using namespace std::placeholders;
 
+  rclcpp::NodeOptions get_pm_node_options()
+  {
+    rclcpp::NodeOptions node_options;
+    node_options.allow_undeclared_parameters(true);
+    node_options.automatically_declare_parameters_from_overrides(true);
+    return node_options;
+  }
+
 PlayMotion::PlayMotion()
-  : rclcpp::Node("play_motion"),
-  ctrlr_updater_(shared_from_this())
+  : rclcpp::Node("play_motion", get_pm_node_options()),
+  ctrlr_updater_(nullptr),
+  approach_planner_(nullptr)
 {
-  joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>("/joint_states", 10, std::bind(&PlayMotion::jointStateCb, this, _1));
+}
 
-  ctrlr_updater_.registerUpdateCb(std::bind(&PlayMotion::updateControllersCb, this, _1, _2));
+void PlayMotion::init()
+{
+  ctrlr_updater_ = std::make_shared<ControllerUpdater>(shared_from_this());
+  approach_planner_ = std::make_shared<ApproachPlanner>(shared_from_this());
 
-  approach_planner_.reset(new ApproachPlanner(shared_from_this()));
+  ctrlr_updater_->registerUpdateCb(std::bind(&PlayMotion::updateControllersCb, this, _1, _2));
+
+  joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
+    "/joint_states", 10, std::bind(&PlayMotion::jointStateCb, this, _1));
 }
 
 PlayMotion::Goal::Goal(const Callback & cbk)
@@ -207,7 +223,7 @@ void PlayMotion::updateControllersCb(
           shared_from_this(),
           p.first,
           joints.at(p.first))));
-    RCLCPP_DEBUG_STREAM(get_logger(),
+    RCLCPP_INFO_STREAM(get_logger(),
       "Controller '" << p.first << "' with " << joints.at(
         p.first).size() << " joints.");
   }
@@ -353,9 +369,15 @@ bool PlayMotion::run(
   goal_hdl = GoalHandle(new Goal(cb));
 
   try {
-    getMotionJoints(motion_name, motion_joints);
-    ControllerList groups = getMotionControllers(motion_joints);   // Checks many preconditions
-    getMotionPoints(motion_name, motion_points);
+    ControllerList groups;
+
+    try {
+      getMotionJoints(motion_name, motion_joints);
+      groups = getMotionControllers(motion_joints);       // Checks many preconditions
+      getMotionPoints(motion_name, motion_points);
+    } catch (const std::runtime_error & e) {
+      throw PlayMotionException(e.what(), PlayMotionResult::OTHER_ERROR);
+    }
 
     std::vector<double> curr_pos;   // Current position of motion joints
     for (const std::string & motion_joint : motion_joints) {
@@ -391,6 +413,7 @@ bool PlayMotion::run(
                 move_joint_group->getName() + "'");
       }
     }
+
     if (joint_group_traj.empty()) {
       throw PlayMotionException("Nothing to send to controllers");
     }

@@ -132,7 +132,9 @@ ApproachPlanner::ApproachPlanner(const rclcpp::Node::SharedPtr & node)
   }
 
   // Initialize motion planning capability, unless explicitly disabled
-  planning_disabled_ = node->get_parameter("disable_motion_planning").as_bool();
+  if (node->has_parameter("disable_motion_planning")) {
+    planning_disabled_ = node->get_parameter("disable_motion_planning").as_bool();
+  }
   if (planning_disabled_) {
     RCLCPP_WARN_STREAM(
       logger_,

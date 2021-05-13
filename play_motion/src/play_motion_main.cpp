@@ -48,6 +48,8 @@ int main(int argc, char** argv)
   rclcpp::init(argc, argv);
 
   auto play_motion = std::make_shared<play_motion::PlayMotion>();
+  play_motion->init();
+
   play_motion::PlayMotionServer pms(play_motion);
 
   rclcpp::executors::SingleThreadedExecutor executor;

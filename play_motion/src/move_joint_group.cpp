@@ -53,14 +53,16 @@ namespace play_motion
       logger_(node->get_logger().get_child("move_joint_group")),
       controller_name_(controller_name),
       joint_names_(joint_names),
-      client_()
+      client_(),
+      last_result_code_(rclcpp_action::ResultCode::UNKNOWN)
   {
     client_ = rclcpp_action::create_client<FollowJointTrajectory>(node_, controller_name_ + "/follow_joint_trajectory");
   }
 
   void MoveJointGroup::resultCallback(const GoalHandleFollowJointTrajectory::WrappedResult & result)
   {
-    busy_ = false;
+    busy_ = false;    
+    last_result_code_ = result.code;
     active_cb_(result.result->error_code);
     active_cb_ = nullptr;
   }
@@ -101,11 +103,7 @@ namespace play_motion
 
   int8_t MoveJointGroup::getState()
   {
-    if (goal_future_.valid()) {
-      return goal_future_.get()->get_status();
-    } else {
-      return rclcpp_action::GoalStatus::STATUS_UNKNOWN;
-    }
+    return static_cast<int8_t>(last_result_code_);
   }
 
   const std::string& MoveJointGroup::getName() const
@@ -136,7 +134,7 @@ namespace play_motion
       return false;
     }
 
-    RCLCPP_DEBUG_STREAM(logger_, "Sending trajectory goal to " << controller_name_ << ".");
+    RCLCPP_INFO_STREAM(logger_, "Sending trajectory goal to " << controller_name_ << ".");
 
     ActionGoal goal;
     goal.trajectory.joint_names = joint_names_;
@@ -173,6 +171,7 @@ namespace play_motion
     /// @todo replace this busy_ with the state of the goal_future?
     busy_ = true;
 
+    last_result_code_ = rclcpp_action::ResultCode::UNKNOWN;
     goal_future_ = client_->async_send_goal(goal, goal_options);
 
     return true;
