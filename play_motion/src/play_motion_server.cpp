@@ -151,18 +151,19 @@ void PlayMotionServer::handleAccepted(const std::shared_ptr<GoalHandlePlayMotion
   auto result = std::make_shared<PlayMotionResult>();
 
   PlayMotion::GoalHandle goal_hdl;
+
   if (!pm_->run(
       goal->motion_name,
       goal->skip_planning,
       goal_hdl,
       std::bind(&PlayMotionServer::playMotionCb, this, _1)))
   {
-    PlayMotionResult r;
-    r.error_code = goal_hdl->error_code;
-    r.error_string = goal_hdl->error_string;
-    if (!r.error_string.empty()) {
-      RCLCPP_ERROR_STREAM(logger_, r.error_string);
+    result->error_code = goal_hdl->error_code;
+    result->error_string = goal_hdl->error_string;
+    if (!result->error_string.empty()) {
+      RCLCPP_ERROR_STREAM(logger_, result->error_string);
     }
+    goal_handle->abort(result);
     RCLCPP_ERROR_STREAM(logger_, "Motion '" << goal->motion_name << "' could not be played.");
 
     /// @todo this must be done somehow in the handleGoal callback,

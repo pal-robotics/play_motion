@@ -375,6 +375,8 @@ bool PlayMotion::run(
       getMotionJoints(motion_name, motion_joints);
       groups = getMotionControllers(motion_joints);       // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
+    } catch (const PlayMotionException & e) {
+      throw e;
     } catch (const std::runtime_error & e) {
       throw PlayMotionException(e.what(), PlayMotionResult::OTHER_ERROR);
     }

@@ -47,6 +47,8 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
+using PlayMotionResult = play_motion_msgs::action::PlayMotion::Result;
+
 class PlayMotionTestClient : public rclcpp::Node
 {
   using PlayMotionAction = play_motion_msgs::action::PlayMotion;
@@ -172,22 +174,31 @@ TEST(PlayMotionTest, basicReachPose)
   runner.join();
 }
 
-#if 0
 TEST(PlayMotionTest, rejectSecondGoal)
 {
-  PlayMotionTestClient pmtc1;
-  PlayMotionTestClient pmtc2;
+  auto pmtc1 = std::make_shared<PlayMotionTestClient>();
+  auto pmtc2 = std::make_shared<PlayMotionTestClient>();
 
-  boost::thread t(boost::bind(&PlayMotionTestClient::playMotion, &pmtc1, "home", true));
-  ros::Duration(0.3).sleep();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(pmtc1);
+  executor.add_node(pmtc2);
+  auto runner = std::thread([&]() {executor.spin();});
 
-  pmtc2.playMotion("home", true);
-  pmtc2.shouldFailWithCode(PMR::CONTROLLER_BUSY);
+  std::thread play_thread([&]() {pmtc1->playMotion("home", true);});
 
-  t.join();
-  pmtc1.shouldSucceed();
+  std::this_thread::sleep_for(300ms);
+
+  pmtc2->playMotion("pose1", true);
+  pmtc2->shouldFailWithCode(PlayMotionResult::CONTROLLER_BUSY);
+
+  play_thread.join();
+  pmtc1->shouldSucceed();
+
+  executor.cancel();
+  runner.join();
 }
 
+#if 0
 TEST(PlayMotionTest, badMotionName)
 {
   PlayMotionTestClient pmtc;
