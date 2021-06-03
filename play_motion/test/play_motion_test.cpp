@@ -198,38 +198,42 @@ TEST(PlayMotionTest, rejectSecondGoal)
   runner.join();
 }
 
-#if 0
 TEST(PlayMotionTest, badMotionName)
 {
-  PlayMotionTestClient pmtc;
-  pmtc.playMotion("inexistant_motion", true);
-  pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
+  auto pmtc = std::make_shared<PlayMotionTestClient>();
 
-  pmtc.playMotion("", true);
-  pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(pmtc);
+  auto runner = std::thread([&]() {executor.spin();});
+
+  pmtc->playMotion("inexistant_motion", true);
+  pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+
+  pmtc->playMotion("", true);
+  pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+
+  executor.cancel();
+  runner.join();
 }
 
 TEST(PlayMotionTest, malformedPose)
 {
-  PlayMotionTestClient pmtc;
-  pmtc.playMotion("malformed_pose", true);
-  pmtc.shouldFailWithCode(PMR::OTHER_ERROR);
+  auto pmtc = std::make_shared<PlayMotionTestClient>();
+
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(pmtc);
+  auto runner = std::thread([&]() {executor.spin();});
+
+  pmtc->playMotion("malformed_pose", true);
+  /// @todo should be INVALID_MOTION
+  pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+
+  executor.cancel();
+  runner.join();
 }
-#endif
 
 int main(int argc, char ** argv)
 {
-//  testing::InitGoogleTest(&argc, argv);
-//  ros::init(argc, argv, "play_motion_test");
-
-//  ros::AsyncSpinner spinner(1);
-//  spinner.start();
-//  ros::Duration(2.0).sleep(); // wait a bit for the controllers to start
-//  int ret = RUN_ALL_TESTS();
-//  spinner.stop();
-//  ros::shutdown();
-//  return ret;
-
   testing::InitGoogleTest(&argc, argv);
   rclcpp::init(argc, argv);
 
