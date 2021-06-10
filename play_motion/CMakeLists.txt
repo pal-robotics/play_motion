@@ -110,6 +110,8 @@ if(BUILD_TESTING)
   # test configuration files
   install(
     FILES
+      test/play_motion.launch.py
+      test/play_motion_cfg.yaml
       test/play_motion_helpers_poses.yaml
       test/rrbot/controller_manager.yaml
       test/rrbot/controllers.launch.py

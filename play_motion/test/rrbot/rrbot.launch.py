@@ -43,6 +43,7 @@ def generate_launch_description():
         arguments=['-d', rviz_config_file]
     )
 
+    # @TODO rviz node should be optional
     return LaunchDescription([
         control_node,
         controllers,
