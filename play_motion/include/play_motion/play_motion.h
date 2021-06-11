@@ -50,9 +50,12 @@
 #include "play_motion_msgs/action/play_motion.hpp"
 
 #include "rclcpp/node.hpp"
+#include "rclcpp/service.hpp"
 #include "rclcpp/subscription.hpp"
 
 #include "sensor_msgs/msg/joint_state.hpp"
+
+#include "std_srvs/srv/trigger.hpp"
 
 namespace play_motion
 {
@@ -90,6 +93,7 @@ private:
   using MoveJointGroupPtr = std::shared_ptr<MoveJointGroup>;
   using ControllerList = std::list<MoveJointGroupPtr>;
   using Callback = std::function<void (const GoalHandle &)>;
+  using IsReadyService = std_srvs::srv::Trigger;
 
 public:
   class Goal
@@ -126,6 +130,10 @@ private:
     GoalHandle & gh,
     const Callback & cb);
 
+  void is_ready(
+    const IsReadyService::Request::SharedPtr request,
+    IsReadyService::Response::SharedPtr response);
+
 private:
   void jointStateCb(const sensor_msgs::msg::JointState::SharedPtr msg);
 
@@ -153,6 +161,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_sub_;
   ControllerUpdaterPtr ctrlr_updater_;
   ApproachPlannerPtr approach_planner_;
+  rclcpp::Service<IsReadyService>::SharedPtr is_ready_srv_;
 };
 }
 

@@ -156,7 +156,8 @@ namespace play_motion
 PlayMotion::PlayMotion()
   : rclcpp::Node("play_motion", get_pm_node_options()),
   ctrlr_updater_(nullptr),
-  approach_planner_(nullptr)
+  approach_planner_(nullptr),
+  is_ready_srv_(nullptr)
 {
 }
 
@@ -169,6 +170,11 @@ void PlayMotion::init()
 
   joint_states_sub_ = create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 10, std::bind(&PlayMotion::jointStateCb, this, _1));
+
+  is_ready_srv_ =
+    create_service<IsReadyService>(
+    std::string(get_name()) + "/is_ready",
+    std::bind(&PlayMotion::is_ready, this, _1, _2));
 }
 
 PlayMotion::Goal::Goal(const Callback & cbk)
@@ -438,4 +444,12 @@ bool PlayMotion::run(
   }
   return true;
 }
+
+void PlayMotion::is_ready(const IsReadyService::Request::SharedPtr /*request*/,
+                          IsReadyService::Response::SharedPtr response)
+{
+  /// @warning care concurrency?
+  response->success = !move_joint_groups_.empty();
+}
+
 }

@@ -65,8 +65,10 @@ PlayMotionServer::PlayMotionServer(const PlayMotionPtr & pm)
     std::bind(&PlayMotionServer::handleCancel, this, _1),
     std::bind(&PlayMotionServer::handleAccepted, this, _1));
 
-  list_motions_srv_ = pm_->create_service<play_motion_msgs::srv::ListMotions>(
-    "list_motions", std::bind(&PlayMotionServer::listMotions, this, _1, _2));
+  list_motions_srv_ =
+    pm_->create_service<play_motion_msgs::srv::ListMotions>(
+    std::string(pm_->get_name()) + "/list_motions",
+    std::bind(&PlayMotionServer::listMotions, this, _1, _2));
 
   diagnostic_pub_ = pm_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("diagnostics", 1);
   diagnostic_timer_ =

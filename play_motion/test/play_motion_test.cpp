@@ -39,10 +39,12 @@
 #include "rclcpp/executors.hpp"
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
+#include "rclcpp/service.hpp"
 #include "rclcpp/subscription.hpp"
 #include "rclcpp_action/create_client.hpp"
 
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -55,6 +57,7 @@ class PlayMotionTestClient : public rclcpp::Node
   using ActionClientPtr = rclcpp_action::Client<PlayMotionAction>::SharedPtr;
   using ActionGoal = play_motion_msgs::action::PlayMotion_Goal;
   using ActionGoalResult = rclcpp_action::ResultCode;
+  using IsReadyService = std_srvs::srv::Trigger;
 
 public:
   PlayMotionTestClient()
@@ -64,13 +67,43 @@ public:
 
     js_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
       "/joint_states", 10, std::bind(&PlayMotionTestClient::jsCb, this, _1));
+
+    is_ready_client_ = create_client<IsReadyService>("/play_motion/is_ready");
   }
 
-  void playMotion(const std::string & motion_name, bool skip_planning)
+  bool is_ready()
   {
-    if (!ac_->wait_for_action_server()) {
+    if (!is_ready_client_->wait_for_service()) {
+      RCLCPP_ERROR_STREAM(get_logger(), "play_motion 'is_ready' service not available");
+      return false;
+    }
+
+    auto request = std::make_shared<IsReadyService::Request>();
+    for (auto i = 0u; i < 5; ++i) {
+      auto result = is_ready_client_->async_send_request(request);
+      if(result.wait_for(1s) == std::future_status::ready)
+      {
+        if (result.get()->success) {
+          RCLCPP_INFO_STREAM(get_logger(), "play_motion is ready");
+          return true;
+        }
+      }
+      std::this_thread::sleep_for(1s);
+    }
+
+    RCLCPP_ERROR_STREAM(get_logger(), "play_motion not ready after 5 tries");
+    return false;
+  }
+
+  bool playMotion(const std::string & motion_name, bool skip_planning)
+  {
+    if (!ac_->wait_for_action_server(10s)) {
       RCLCPP_ERROR_STREAM(get_logger(), "play_motion server not available");
-      rclcpp::shutdown();
+      return false;
+    }
+
+    if (!is_ready()) {
+      return false;
     }
 
     bool is_goal_completed = false;
@@ -105,10 +138,12 @@ public:
     auto goal_future = ac_->async_send_goal(goal, goal_options);
 
     RCLCPP_INFO_STREAM(get_logger(), "Wait for goal to complete");
+    /// @todo add timeout here?
     while (!is_goal_completed) {
       std::this_thread::sleep_for(500ms);
     }
     RCLCPP_INFO_STREAM(get_logger(), "Goal completed");
+    return true;
   }
 
   double getJointPos(const std::string & joint_name)
@@ -155,6 +190,7 @@ private:
   ActionClientPtr ac_;
   sensor_msgs::msg::JointState js_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr js_sub_;
+  rclcpp::Client<IsReadyService>::SharedPtr is_ready_client_;
 };
 
 TEST(PlayMotionTest, basicReachPose)
@@ -165,10 +201,13 @@ TEST(PlayMotionTest, basicReachPose)
   executor.add_node(pmtc);
   auto runner = std::thread([&]() {executor.spin();});
 
-  pmtc->playMotion("pose1", true);
-  pmtc->shouldSucceed();
-  double final_pos = pmtc->getJointPos("joint1");
-  EXPECT_NEAR(final_pos, 1.8, 0.01);
+  auto result = pmtc->playMotion("pose1", true);
+  EXPECT_TRUE(result);
+  if (result) {
+    pmtc->shouldSucceed();
+    double final_pos = pmtc->getJointPos("joint1");
+    EXPECT_NEAR(final_pos, 1.8, 0.01);
+  }
 
   executor.cancel();
   runner.join();
@@ -184,15 +223,22 @@ TEST(PlayMotionTest, rejectSecondGoal)
   executor.add_node(pmtc2);
   auto runner = std::thread([&]() {executor.spin();});
 
-  std::thread play_thread([&]() {pmtc1->playMotion("home", true);});
+  bool result1;
+  std::thread play_thread([&]() {result1 = pmtc1->playMotion("home", true);});
 
   std::this_thread::sleep_for(300ms);
 
-  pmtc2->playMotion("pose1", true);
-  pmtc2->shouldFailWithCode(PlayMotionResult::CONTROLLER_BUSY);
+  auto result2 = pmtc2->playMotion("pose1", true);
+  EXPECT_TRUE(result2);
+  if (result2) {
+    pmtc2->shouldFailWithCode(PlayMotionResult::CONTROLLER_BUSY);
+  }
 
   play_thread.join();
-  pmtc1->shouldSucceed();
+  EXPECT_TRUE(result1);
+  if (result1) {
+    pmtc1->shouldSucceed();
+  }
 
   executor.cancel();
   runner.join();
@@ -206,11 +252,17 @@ TEST(PlayMotionTest, badMotionName)
   executor.add_node(pmtc);
   auto runner = std::thread([&]() {executor.spin();});
 
-  pmtc->playMotion("inexistant_motion", true);
-  pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+  auto result = pmtc->playMotion("inexistant_motion", true);
+  EXPECT_TRUE(result);
+  if (result) {
+    pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+  }
 
-  pmtc->playMotion("", true);
-  pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+  result = pmtc->playMotion("", true);
+  EXPECT_TRUE(result);
+  if (result) {
+    pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+  }
 
   executor.cancel();
   runner.join();
@@ -224,9 +276,12 @@ TEST(PlayMotionTest, malformedPose)
   executor.add_node(pmtc);
   auto runner = std::thread([&]() {executor.spin();});
 
-  pmtc->playMotion("malformed_pose", true);
-  /// @todo should be INVALID_MOTION
-  pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+  auto result = pmtc->playMotion("malformed_pose", true);
+  EXPECT_TRUE(result);
+  if (result) {
+    /// @todo should be INVALID_MOTION
+    pmtc->shouldFailWithCode(PlayMotionResult::MOTION_NOT_FOUND);
+  }
 
   executor.cancel();
   runner.join();
@@ -238,5 +293,8 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
 
   int ret = RUN_ALL_TESTS();
+
+  rclcpp::shutdown();
+
   return ret;
 }
