@@ -44,7 +44,7 @@
 
 #include "controller_manager_msgs/srv/list_controllers.hpp"
 
-#include "play_motion/datatypes.h"
+#include "play_motion/datatypes.hpp"
 
 #include "rclcpp/logger.hpp"
 #include "rclcpp/node.hpp"

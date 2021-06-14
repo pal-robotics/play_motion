@@ -34,7 +34,7 @@
 
 /** \author Paul Mathieu. */
 
-#include "play_motion/play_motion_server.h"
+#include "play_motion/play_motion_server.hpp"
 
 #include <chrono>
 #include <functional>
@@ -42,8 +42,8 @@
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_updater/diagnostic_status_wrapper.hpp"
 
-#include "play_motion/play_motion.h"
-#include "play_motion/play_motion_helpers.h"
+#include "play_motion/play_motion.hpp"
+#include "play_motion/play_motion_helpers.hpp"
 
 #include "rclcpp_action/create_server.hpp"
 #include "rclcpp/logger.hpp"

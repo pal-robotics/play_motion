@@ -36,7 +36,7 @@
 
 #include <chrono>
 
-#include "play_motion/controller_updater.h"
+#include "play_motion/controller_updater.hpp"
 
 #include "controller_manager_msgs/srv/list_controllers.hpp"
 

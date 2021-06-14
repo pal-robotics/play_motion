@@ -36,7 +36,7 @@
 /** \author Victor Lopez. */
 /** \author Bence Magyar. */
 
-#include "play_motion/play_motion_helpers.h"
+#include "play_motion/play_motion_helpers.hpp"
 
 #include <cassert>
 #include <exception>

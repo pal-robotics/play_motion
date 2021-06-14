@@ -37,8 +37,8 @@
 
 #include <memory>
 
-#include "play_motion/play_motion_server.h"
-#include "play_motion/play_motion.h"
+#include "play_motion/play_motion_server.hpp"
+#include "play_motion/play_motion.hpp"
 
 #include "rclcpp/executors.hpp"
 #include "rclcpp/utilities.hpp"

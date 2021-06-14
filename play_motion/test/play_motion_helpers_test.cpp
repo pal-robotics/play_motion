@@ -33,7 +33,7 @@
 
 #include "gtest/gtest.h"
 
-#include "play_motion/play_motion_helpers.h"
+#include "play_motion/play_motion_helpers.hpp"
 
 #include "rcl/allocator.h"
 

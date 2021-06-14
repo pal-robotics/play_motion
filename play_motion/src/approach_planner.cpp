@@ -47,7 +47,7 @@
 #include "rclcpp/exceptions.hpp"
 #include "rclcpp/logging.hpp"
 
-#include "play_motion/approach_planner.h"
+#include "play_motion/approach_planner.hpp"
 
 namespace
 {

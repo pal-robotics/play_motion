@@ -42,7 +42,7 @@
 
 #include <string>
 
-#include "play_motion/datatypes.h"
+#include "play_motion/datatypes.hpp"
 
 #include "rclcpp/duration.hpp"
 #include "rclcpp/node.hpp"

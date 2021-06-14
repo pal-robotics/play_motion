@@ -44,7 +44,7 @@
 
 #include "control_msgs/action/follow_joint_trajectory.hpp"
 
-#include "play_motion/datatypes.h"
+#include "play_motion/datatypes.hpp"
 
 #include "rclcpp_action/client.hpp"
 #include "rclcpp/logger.hpp"

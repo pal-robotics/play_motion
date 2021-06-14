@@ -45,7 +45,7 @@
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 
-#include "play_motion/play_motion.h"
+#include "play_motion/play_motion.hpp"
 #include "play_motion_msgs/action/play_motion.hpp"
 #include "play_motion_msgs/srv/list_motions.hpp"
 

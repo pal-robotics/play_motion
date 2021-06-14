@@ -45,8 +45,8 @@
 #include <map>
 #include <string>
 
-#include "play_motion/datatypes.h"
-#include "play_motion/controller_updater.h"
+#include "play_motion/datatypes.hpp"
+#include "play_motion/controller_updater.hpp"
 #include "play_motion_msgs/action/play_motion.hpp"
 
 #include "rclcpp/node.hpp"

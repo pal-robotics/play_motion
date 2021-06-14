@@ -34,7 +34,7 @@
 
 /** \author Paul Mathieu. */
 
-#include "play_motion/play_motion.h"
+#include "play_motion/play_motion.hpp"
 
 #include <cassert>
 #include <functional>
@@ -45,9 +45,9 @@
 #include "control_msgs/action/follow_joint_trajectory.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
-#include "play_motion/approach_planner.h"
-#include "play_motion/move_joint_group.h"
-#include "play_motion/play_motion_helpers.h"
+#include "play_motion/approach_planner.hpp"
+#include "play_motion/move_joint_group.hpp"
+#include "play_motion/play_motion_helpers.hpp"
 
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node_options.hpp"

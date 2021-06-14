@@ -38,7 +38,7 @@
 #include <functional>
 
 #include "play_motion_msgs/action/play_motion.hpp"
-#include "play_motion/move_joint_group.h"
+#include "play_motion/move_joint_group.hpp"
 
 #include "rclcpp_action/create_client.hpp"
 #include "rclcpp/logging.hpp"
