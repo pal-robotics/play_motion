@@ -39,17 +39,6 @@
   <test_depend>rcl_yaml_param_parser</test_depend>
   <test_depend>rclcpp_action</test_depend>
 
-  <!--
-  <test_depend>controller_manager</test_depend>
-  <test_depend>joint_state_controller</test_depend>
-  <test_depend>robot_state_publisher</test_depend>
-  <test_depend>hardware_interface</test_depend>
-  <test_depend>controller_manager</test_depend>
-  <test_depend>xacro</test_depend>
-  <test_depend>position_controllers</test_depend>
-  <test_depend>joint_trajectory_controller</test_depend>
-  -->
-
   <export>
     <build_type>ament_cmake</build_type>
   </export>

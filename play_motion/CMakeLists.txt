@@ -74,9 +74,11 @@ install(TARGETS play_motion
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
+# migrate this? used at all?
 #install (PROGRAMS scripts/is_already_there.py
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-#
+
+# migrate this? used at all?
 #install(PROGRAMS scripts/move_joint
 #    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
