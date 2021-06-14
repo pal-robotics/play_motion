@@ -160,24 +160,8 @@ if(BUILD_TESTING)
     play_motion_helpers
   )
 
-
-  #  find_package(controller_manager REQUIRED)
-  #
-  #  include_directories(SYSTEM ${controller_manager_INCLUDE_DIRS}
-  #    ${joint_trajectory_controller_INCLUDE_DIRS})
-  #
-  #  add_executable(pm_rrbot test/rrbot.cpp)
-  #  target_link_libraries(pm_rrbot ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
-  #
-  #  add_dependencies(tests pm_rrbot)
-  #
-  #  add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
-  #  add_dependencies(play_motion_test play_motion joint_trajectory_controller)
-  #  target_link_libraries(play_motion_test ${catkin_LIBRARIES})
-
-  # play_motion_test
-  # @TODO this should be a launch test that also runs the rrbot
-  ament_add_gtest(play_motion_test
+  # gtest test for play_motion_test
+  ament_add_gtest_executable(play_motion_test
     test/play_motion_test.cpp
   )
   ament_target_dependencies(play_motion_test
@@ -185,6 +169,16 @@ if(BUILD_TESTING)
     rclcpp
     rclcpp_action
     sensor_msgs
+    std_srvs
+  )
+  install(
+    TARGETS play_motion_test
+    DESTINATION lib/play_motion
+  )
+
+  # play_motion_test
+  add_launch_test(
+    test/play_motion_test.launch.py
   )
 
 endif()
