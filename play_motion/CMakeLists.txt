@@ -74,19 +74,10 @@ install(TARGETS play_motion
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-
-# add_executable(run_motion src/run_motion_node.cpp)
-# target_link_libraries(run_motion ${catkin_LIBRARIES})
-# add_dependencies(run_motion ${catkin_EXPORTED_TARGETS})
-
-#install(TARGETS run_motion
-#        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#)
-#
 #install (PROGRAMS scripts/is_already_there.py
 #  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 #
-#install(PROGRAMS scripts/move_joint scripts/run_motion_python_node.py
+#install(PROGRAMS scripts/move_joint
 #    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
