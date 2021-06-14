@@ -173,7 +173,7 @@ if(BUILD_TESTING)
   )
   install(
     TARGETS play_motion_test
-    DESTINATION lib/play_motion
+    DESTINATION share/play_motion/test
   )
 
   # play_motion_test

@@ -5,7 +5,6 @@ import launch_testing
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -30,11 +29,10 @@ def generate_test_description():
             os.path.join(get_package_share_directory('play_motion'),
                          'test', 'play_motion.launch.py')))
 
-    play_motion_test = Node(
-        package='play_motion',
-        executable='play_motion_test',
-        output='screen'
-    )
+    play_motion_test = launch_testing.actions.GTest(
+        path=os.path.join(get_package_share_directory('play_motion'),
+                          'test', 'play_motion_test'),
+        output='screen')
 
     return LaunchDescription(declared_arguments + [
         rrbot,
