@@ -43,7 +43,7 @@
 #include "rclcpp/executors.hpp"
 #include "rclcpp/utilities.hpp"
 
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 

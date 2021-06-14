@@ -82,7 +82,9 @@ void generateErrorCode(GoalHandle goal_hdl, int error_code, int8_t /*ctrl_state*
   //TODO: add handling for controller state
 }
 
-void controllerCb(rclcpp::Logger & logger, int error_code, GoalHandle goal_hdl, const MoveJointGroupWeakPtr & weak_ctrl)
+void controllerCb(
+  rclcpp::Logger & logger, int error_code, GoalHandle goal_hdl,
+  const MoveJointGroupWeakPtr & weak_ctrl)
 {
   // If we don't use a weak ptr, using a boost::bind on controllerCb keeps a copy
   // of the shared ptr and keeps it alive.
@@ -95,7 +97,8 @@ void controllerCb(rclcpp::Logger & logger, int error_code, GoalHandle goal_hdl, 
     goal_hdl->controllers.begin(),
     goal_hdl->controllers.end(), ctrl);
   if (it == goal_hdl->controllers.end()) {
-    RCLCPP_ERROR_STREAM(logger,
+    RCLCPP_ERROR_STREAM(
+      logger,
       "Something is wrong in the controller callback handling. " <<
         ctrl->getName() << " called a goal callback while no "
         "motion goal was alive for it.");
@@ -103,7 +106,8 @@ void controllerCb(rclcpp::Logger & logger, int error_code, GoalHandle goal_hdl, 
   }
   goal_hdl->controllers.erase(it);
 
-  RCLCPP_DEBUG_STREAM(logger,
+  RCLCPP_DEBUG_STREAM(
+    logger,
     "Return from joint group " << ctrl->getName() << ", " <<
       goal_hdl->controllers.size() << " active controllers, "
       "error: " << error_code);
@@ -143,18 +147,18 @@ bool hasNonNullIntersection(const std::vector<T> & v1, const std::vector<T> & v2
 
 namespace play_motion
 {
-  using namespace std::placeholders;
+using namespace std::placeholders;
 
-  rclcpp::NodeOptions get_pm_node_options()
-  {
-    rclcpp::NodeOptions node_options;
-    node_options.allow_undeclared_parameters(true);
-    node_options.automatically_declare_parameters_from_overrides(true);
-    return node_options;
-  }
+rclcpp::NodeOptions get_pm_node_options()
+{
+  rclcpp::NodeOptions node_options;
+  node_options.allow_undeclared_parameters(true);
+  node_options.automatically_declare_parameters_from_overrides(true);
+  return node_options;
+}
 
 PlayMotion::PlayMotion()
-  : rclcpp::Node("play_motion", get_pm_node_options()),
+: rclcpp::Node("play_motion", get_pm_node_options()),
   ctrlr_updater_(nullptr),
   approach_planner_(nullptr),
   is_ready_srv_(nullptr)
@@ -209,8 +213,7 @@ void PlayMotion::updateControllersCb(
   typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
 
   RCLCPP_INFO_STREAM(get_logger(), "Controllers have changed, cancelling all active goals");
-  for(MoveJointGroupPtr mjg : move_joint_groups_)
-  {
+  for (MoveJointGroupPtr mjg : move_joint_groups_) {
     // Deleting the groups isn't enough, because they are referenced by
     // the goalhandles. They will only be destroyed when the action ends,
     // which will crash because you cannot destroy actionclient from within a callback
@@ -218,8 +221,7 @@ void PlayMotion::updateControllersCb(
     mjg->abort();
   }
   move_joint_groups_.clear();
-  for(const auto & p : states)
-  {
+  for (const auto & p : states) {
     if (p.second != ControllerUpdater::RUNNING) {
       continue;
     }
@@ -229,7 +231,8 @@ void PlayMotion::updateControllersCb(
           shared_from_this(),
           p.first,
           joints.at(p.first))));
-    RCLCPP_INFO_STREAM(get_logger(),
+    RCLCPP_INFO_STREAM(
+      get_logger(),
       "Controller '" << p.first << "' with " << joints.at(
         p.first).size() << " joints.");
   }
@@ -255,22 +258,25 @@ bool PlayMotion::getGroupTraj(
   traj_group.clear();
   traj_group.reserve(motion_points.size());
 
-  for(const std::string & jn : group_joint_names)
-  {
+  for (const std::string & jn : group_joint_names) {
     // store the index of this joint in the given motion
-    int index = static_cast<int>(std::find(motion_joints.begin(), motion_joints.end(), jn) - motion_joints.begin());
+    int index =
+      static_cast<int>(std::find(
+        motion_joints.begin(), motion_joints.end(),
+        jn) - motion_joints.begin());
     joint_index[jn] = index;
 
     // retrieve joint state,  we should have it from the joint_states subscriber
     if (joint_states_.find(jn) == joint_states_.end()) {
-      RCLCPP_ERROR_STREAM(get_logger(), "Could not get current position of joint \'" << jn << "\'.");
+      RCLCPP_ERROR_STREAM(
+        get_logger(),
+        "Could not get current position of joint \'" << jn << "\'.");
       return false;
     }
     joint_states.push_back(joint_states_[jn]);
   }
 
-  for(const TrajPoint & p : motion_points)
-  {
+  for (const TrajPoint & p : motion_points) {
     bool has_velocities = !p.velocities.empty();
     bool has_accelerations = !p.accelerations.empty();
     TrajPoint point;
@@ -329,19 +335,18 @@ ControllerList PlayMotion::getMotionControllers(const JointNames & motion_joints
 {
   // Populate list of controllers containing at least one motion joint,...
   ControllerList ctrlr_list;
-  for(MoveJointGroupPtr move_joint_group : move_joint_groups_)
-  {
+  for (MoveJointGroupPtr move_joint_group : move_joint_groups_) {
     if (hasNonNullIntersection(motion_joints, move_joint_group->getJointNames())) {
       ctrlr_list.push_back(move_joint_group);
     }
   }
 
   // ...check that all motion joints are contained in this list...
-  for(const std::string & jn : motion_joints)
-  {
-    for(MoveJointGroupPtr ctrlr : ctrlr_list)
-    if (ctrlr->isControllingJoint(jn)) {
-      goto next_joint;
+  for (const std::string & jn : motion_joints) {
+    for (MoveJointGroupPtr ctrlr : ctrlr_list) {
+      if (ctrlr->isControllingJoint(jn)) {
+        goto next_joint;
+      }
     }
 
     throw PlayMotionException(
@@ -351,11 +356,11 @@ next_joint:;
   }
 
   // ...and that no controller in the list is busy executing another goal
-  for(MoveJointGroupPtr move_joint_group : ctrlr_list)
-  {
+  for (MoveJointGroupPtr move_joint_group : ctrlr_list) {
     if (!move_joint_group->isIdle()) {
       throw PlayMotionException(
-              "Controller '" + move_joint_group->getName() + "' is busy", PlayMotionResult::CONTROLLER_BUSY);
+              "Controller '" + move_joint_group->getName() + "' is busy",
+              PlayMotionResult::CONTROLLER_BUSY);
     }
   }
 
@@ -410,8 +415,7 @@ bool PlayMotion::run(
     }
 
     // Seed target pose with current joint state
-    for(MoveJointGroupPtr move_joint_group : groups)
-    {
+    for (MoveJointGroupPtr move_joint_group : groups) {
       if (!getGroupTraj(
           move_joint_group, motion_joints, motion_points_safe,
           joint_group_traj[move_joint_group]))
@@ -426,11 +430,13 @@ bool PlayMotion::run(
       throw PlayMotionException("Nothing to send to controllers");
     }
 
-    // Send pose commands    
-    for(const auto & p : joint_group_traj)
-    {
+    // Send pose commands
+    for (const auto & p : joint_group_traj) {
       goal_hdl->addController(p.first);
-      p.first->setCallback(std::bind(controllerCb, get_logger(), _1, goal_hdl, MoveJointGroupWeakPtr(p.first)));
+      p.first->setCallback(
+        std::bind(
+          controllerCb, get_logger(), _1, goal_hdl,
+          MoveJointGroupWeakPtr(p.first)));
       if (!p.first->sendGoal(p.second)) {
         throw PlayMotionException(
                 "Controller '" + p.first->getName() + "' did not accept trajectory, "
@@ -445,8 +451,9 @@ bool PlayMotion::run(
   return true;
 }
 
-void PlayMotion::is_ready(const IsReadyService::Request::SharedPtr /*request*/,
-                          IsReadyService::Response::SharedPtr response)
+void PlayMotion::is_ready(
+  const IsReadyService::Request::SharedPtr /*request*/,
+  IsReadyService::Response::SharedPtr response)
 {
   /// @warning care concurrency?
   response->success = !move_joint_groups_.empty();

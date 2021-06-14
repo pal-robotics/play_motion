@@ -53,42 +53,43 @@
 
 namespace play_motion
 {
-  /** Keeps track of controller statuses by polling the controller manager.
- * The service call happens in a separate thread to not disrupt the main code.
- */
-  class ControllerUpdater
+/** Keeps track of controller statuses by polling the controller manager.
+* The service call happens in a separate thread to not disrupt the main code.
+*/
+class ControllerUpdater
+{
+public:
+  enum ControllerState
   {
-  public:
-    enum ControllerState
-    {
-      RUNNING,
-      STOPPED
-    };
-
-    using ControllerStates = std::map<std::string, ControllerState>;
-    using ControllerJoints = std::map<std::string, JointNames>;
-
-  private:
-    using Callback = std::function<void(const ControllerStates& states, const ControllerJoints& joints)>;
-    using ListControllers = controller_manager_msgs::srv::ListControllers;
-
-  public:
-    ControllerUpdater(const rclcpp::Node::SharedPtr & node);
-    virtual ~ControllerUpdater();
-
-    void registerUpdateCb(const Callback& cb) { update_cb_ = cb; }
-
-  private:
-    void mainLoop();
-
-    rclcpp::Node::SharedPtr node_;
-    rclcpp::Logger logger_;
-    rclcpp::TimerBase::SharedPtr update_timer_;
-    std::thread      main_thread_;
-    Callback           update_cb_;
-    rclcpp::Client<ListControllers>::SharedPtr cm_client_;
-    ControllerStates   last_cstates_;
+    RUNNING,
+    STOPPED
   };
+
+  using ControllerStates = std::map<std::string, ControllerState>;
+  using ControllerJoints = std::map<std::string, JointNames>;
+
+private:
+  using Callback = std::function<void (const ControllerStates & states,
+      const ControllerJoints & joints)>;
+  using ListControllers = controller_manager_msgs::srv::ListControllers;
+
+public:
+  ControllerUpdater(const rclcpp::Node::SharedPtr & node);
+  virtual ~ControllerUpdater();
+
+  void registerUpdateCb(const Callback & cb) {update_cb_ = cb;}
+
+private:
+  void mainLoop();
+
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Logger logger_;
+  rclcpp::TimerBase::SharedPtr update_timer_;
+  std::thread main_thread_;
+  Callback update_cb_;
+  rclcpp::Client<ListControllers>::SharedPtr cm_client_;
+  ControllerStates last_cstates_;
+};
 
 }
 #endif

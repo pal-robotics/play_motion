@@ -81,8 +81,7 @@ public:
     auto request = std::make_shared<IsReadyService::Request>();
     for (auto i = 0u; i < 5; ++i) {
       auto result = is_ready_client_->async_send_request(request);
-      if(result.wait_for(1s) == std::future_status::ready)
-      {
+      if (result.wait_for(1s) == std::future_status::ready) {
         if (result.get()->success) {
           RCLCPP_INFO_STREAM(get_logger(), "play_motion is ready");
           return true;

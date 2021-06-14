@@ -57,42 +57,46 @@
 
 namespace play_motion
 {
-  class PlayMotionServer
-  {
-  private:
-    using PlayMotionAction = play_motion_msgs::action::PlayMotion;
-    using GoalHandlePlayMotionAction = rclcpp_action::ServerGoalHandle<PlayMotionAction>;
+class PlayMotionServer
+{
+private:
+  using PlayMotionAction = play_motion_msgs::action::PlayMotion;
+  using GoalHandlePlayMotionAction = rclcpp_action::ServerGoalHandle<PlayMotionAction>;
 
-    using PlayMotionPtr = std::shared_ptr<PlayMotion>;
+  using PlayMotionPtr = std::shared_ptr<PlayMotion>;
 
-  public:
-    PlayMotionServer(const PlayMotionPtr& pm);
-    virtual ~PlayMotionServer();
+public:
+  PlayMotionServer(const PlayMotionPtr & pm);
+  virtual ~PlayMotionServer();
 
-  private:
-    void playMotionCb(const PlayMotion::GoalHandle& goal_hdl);
+private:
+  void playMotionCb(const PlayMotion::GoalHandle & goal_hdl);
 
-    rclcpp_action::GoalResponse handleGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const PlayMotionAction::Goal> goal);
-    rclcpp_action::CancelResponse handleCancel(const std::shared_ptr<GoalHandlePlayMotionAction> goal_handle);
-    void handleAccepted(const std::shared_ptr<GoalHandlePlayMotionAction> goal_handle);
+  rclcpp_action::GoalResponse handleGoal(
+    const rclcpp_action::GoalUUID & uuid,
+    std::shared_ptr<const PlayMotionAction::Goal> goal);
+  rclcpp_action::CancelResponse handleCancel(
+    const std::shared_ptr<GoalHandlePlayMotionAction> goal_handle);
+  void handleAccepted(const std::shared_ptr<GoalHandlePlayMotionAction> goal_handle);
 
-    bool findGoalId(const GoalHandlePlayMotionAction & gh, PlayMotion::GoalHandle& goal_id);
+  bool findGoalId(const GoalHandlePlayMotionAction & gh, PlayMotion::GoalHandle & goal_id);
 
-    bool listMotions(const play_motion_msgs::srv::ListMotions::Request::SharedPtr req,
-                     play_motion_msgs::srv::ListMotions::Response::SharedPtr resp);
+  bool listMotions(
+    const play_motion_msgs::srv::ListMotions::Request::SharedPtr req,
+    play_motion_msgs::srv::ListMotions::Response::SharedPtr resp);
 
-    void publishDiagnostics() const;
+  void publishDiagnostics() const;
 
-    std::vector<std::string>                               clist_;
-    PlayMotionPtr                                          pm_;
-    rclcpp::Logger logger_;
-    rclcpp_action::Server<PlayMotionAction>::SharedPtr al_server_;
-    std::map<PlayMotion::GoalHandle, std::shared_ptr<GoalHandlePlayMotionAction>> al_goals_;
-    rclcpp::Service<play_motion_msgs::srv::ListMotions>::SharedPtr list_motions_srv_;
+  std::vector<std::string> clist_;
+  PlayMotionPtr pm_;
+  rclcpp::Logger logger_;
+  rclcpp_action::Server<PlayMotionAction>::SharedPtr al_server_;
+  std::map<PlayMotion::GoalHandle, std::shared_ptr<GoalHandlePlayMotionAction>> al_goals_;
+  rclcpp::Service<play_motion_msgs::srv::ListMotions>::SharedPtr list_motions_srv_;
 
-    rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostic_pub_;
-    rclcpp::TimerBase::SharedPtr diagnostic_timer_;
-  };
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostic_pub_;
+  rclcpp::TimerBase::SharedPtr diagnostic_timer_;
+};
 }
 
 #endif

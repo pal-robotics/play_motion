@@ -59,10 +59,12 @@ public:
     registerInterface(&jnt_state_interface_);
 
     // Connect and register the joint position interface
-    hardware_interface::JointHandle pos_handle_1(jnt_state_interface_.getHandle("joint1"), &cmd_[0]);
+    hardware_interface::JointHandle pos_handle_1(jnt_state_interface_.getHandle("joint1"),
+      &cmd_[0]);
     jnt_pos_interface_.registerHandle(pos_handle_1);
 
-    hardware_interface::JointHandle pos_handle_2(jnt_state_interface_.getHandle("joint2"), &cmd_[1]);
+    hardware_interface::JointHandle pos_handle_2(jnt_state_interface_.getHandle("joint2"),
+      &cmd_[1]);
     jnt_pos_interface_.registerHandle(pos_handle_2);
 
     registerInterface(&jnt_pos_interface_);
@@ -80,17 +82,16 @@ public:
   void write()
   {
     const double smoothing = *(smoothing_.readFromRT());
-    for (unsigned int i = 0; i < 2; ++i)
-    {
+    for (unsigned int i = 0; i < 2; ++i) {
       vel_[i] = (cmd_[i] - pos_[i]) / getPeriod().toSec();
 
-      const double next_pos = smoothing * pos_[i] +  (1.0 - smoothing) * cmd_[i];
+      const double next_pos = smoothing * pos_[i] + (1.0 - smoothing) * cmd_[i];
       pos_[i] = next_pos;
     }
   }
 
 private:
-  hardware_interface::JointStateInterface    jnt_state_interface_;
+  hardware_interface::JointStateInterface jnt_state_interface_;
   hardware_interface::PositionJointInterface jnt_pos_interface_;
   double cmd_[2];
   double pos_[2];
@@ -98,12 +99,12 @@ private:
   double eff_[2];
 
   realtime_tools::RealtimeBuffer<double> smoothing_;
-  void smoothingCB(const std_msgs::Float64& smoothing) {smoothing_.writeFromNonRT(smoothing.data);}
+  void smoothingCB(const std_msgs::Float64 & smoothing) {smoothing_.writeFromNonRT(smoothing.data);}
 
   ros::Subscriber smoothing_sub_;
 };
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   ros::init(argc, argv, "rrbot");
   ros::NodeHandle nh;
@@ -114,8 +115,7 @@ int main(int argc, char **argv)
   ros::Rate rate(1.0 / robot.getPeriod().toSec());
   ros::AsyncSpinner spinner(1);
   spinner.start();
-  while (ros::ok())
-  {
+  while (ros::ok()) {
     robot.read();
     cm.update(robot.getTime(), robot.getPeriod());
     robot.write();

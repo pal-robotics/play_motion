@@ -78,7 +78,9 @@ PlayMotionServer::PlayMotionServer(const PlayMotionPtr & pm)
 PlayMotionServer::~PlayMotionServer()
 {}
 
-bool PlayMotionServer::findGoalId(const GoalHandlePlayMotionAction & gh, PlayMotion::GoalHandle & goal_hdl)
+bool PlayMotionServer::findGoalId(
+  const GoalHandlePlayMotionAction & gh,
+  PlayMotion::GoalHandle & goal_hdl)
 {
   for (const auto & p : al_goals_) {
     if (p.second->get_goal_id() == gh.get_goal_id()) {
@@ -119,7 +121,9 @@ rclcpp_action::GoalResponse PlayMotionServer::handleGoal(
   const rclcpp_action::GoalUUID & /*uuid*/,
   std::shared_ptr<const PlayMotionAction::Goal> goal)
 {
-  RCLCPP_INFO_STREAM(logger_, "Received goal request with motion name '" << goal->motion_name << "'");
+  RCLCPP_INFO_STREAM(
+    logger_,
+    "Received goal request with motion name '" << goal->motion_name << "'");
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
 
