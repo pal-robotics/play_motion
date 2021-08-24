@@ -1,6 +1,6 @@
 <launch>
   <!-- Load RRbot model -->
-  <param name="robot_description" command="$(find xacro)/xacro.py '$(find play_motion)/test/rrbot.xacro'" />
+  <param name="robot_description" command="xacro '$(find play_motion)/test/rrbot.xacro'" />
 
   <!-- load robot poses -->
   <rosparam file="$(find play_motion)/test/rrbot_poses.yaml" command="load" />
