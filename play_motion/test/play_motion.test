@@ -14,7 +14,7 @@
   <node name="rrbot" pkg="play_motion" type="pm_rrbot"/>
 
   <!-- robot state publisher -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
   <!-- Load controller config -->
   <rosparam command="load" file="$(find play_motion)/test/rrbot_controllers.yaml" />
