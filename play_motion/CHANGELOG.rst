@@ -2,6 +2,26 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'gallium-fixes' into 'erbium-devel'
+  Fix tests for gallium
+  See merge request app-tools/play_motion!7
+* Use robot_state_publisher instead of deprecated state_publisher
+* Use xacro instead of deprecated xacro.py
+* Merge branch 'revert_wait_for_server' into 'erbium-devel'
+  Revert "Added waitForServer to the joint trajectory controller action client"
+  Reverted because the waitForServer always fails since the Action Clients have no dedicated thread.
+  This can cause that sending a goal right after controllers are changed or read for the first time, the goal will abort.
+  See merge request app-tools/play_motion!8
+* Revert "Added waitForServer to the joint trajectory controller action client"
+  This reverts commit 24bff740e6e79723aedd618428cfda2daf0e58a5.
+* Merge branch 'move_joint_wait_for_server' into 'erbium-devel'
+  Added waitForServer to the joint trajectory controller action client
+  See merge request app-tools/play_motion!6
+* Added waitForServer to the joint trajectory controller action client
+* Contributors: Jordan Palacios, Sai Kishor Kothakota, saikishor, victor
+
 0.4.8 (2019-09-09)
 ------------------
 * Fixes for shadowed variables
