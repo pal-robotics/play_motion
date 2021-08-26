@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.9 (2021-08-26)
+------------------
 * Merge branch 'gallium-fixes' into 'erbium-devel'
   Fix tests for gallium
   See merge request app-tools/play_motion!7
