@@ -53,6 +53,7 @@ public:
   {
     ac_.reset(new ActionClient("/play_motion"));
     js_sub_ = nh_.subscribe("/joint_states", 10, &PlayMotionTestClient::jsCb, this);
+    ac_->waitForServer();
   }
 
   int playMotion(const std::string& motion_name, bool skip_planning)
@@ -61,8 +62,10 @@ public:
     goal.motion_name = motion_name;
     goal.skip_planning = skip_planning;
 
-    ac_->waitForServer();
+    ROS_INFO_STREAM("Sending goal " << motion_name);
+
     gs_.reset(new ActionGoalState(ac_->sendGoalAndWait(goal)));
+    ROS_INFO_STREAM("Done goal " << motion_name);
     ret_ = ac_->getResult()->error_code;
     return ret_;
   }
