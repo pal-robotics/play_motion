@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.10 (2021-09-17)
+-------------------
 * Fix test race condition
 * Contributors: Victor Lopez
 
