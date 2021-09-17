@@ -2,6 +2,11 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix test race condition
+* Contributors: Victor Lopez
+
 0.4.9 (2021-08-26)
 ------------------
 * Merge branch 'gallium-fixes' into 'erbium-devel'
