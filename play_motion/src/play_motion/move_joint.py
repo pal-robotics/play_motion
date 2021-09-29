@@ -115,7 +115,7 @@ def move_joint():
     try:
         wait_for_clock()
         client = play_motion_client(play_motion_ns)
-    except MoveJointException, e:
+    except MoveJointException as e:
         print_err(str(e))
 
     def cancel(signum, frame):
