@@ -107,7 +107,6 @@ def execute_motion(args):
 
     play_motion_ns = 'play_motion' # TODO: How to resolve names?
     motion_ns      = play_motion_ns + '/motions'
-
     try:
         wait_for_clock()
         rospy.loginfo("Client is created")
@@ -130,7 +129,6 @@ def execute_motion(args):
     unload_motion(motion_ns, motion_data.motion_name)
     al_res = client.get_state()
     pm_res = client.get_result()
-    rospy.loginfo(f"al_res = {al_res}")
 
     if al_res != GoalStatus.SUCCEEDED or pm_res.error_code != PlayMotionResult.SUCCEEDED:
         print_err("Execution failed with status {}. {}".format(GoalStatus.to_string(al_res), pm_res.error_string))
