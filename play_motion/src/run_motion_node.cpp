@@ -94,7 +94,7 @@ int main(int argc, char** argv)
   client.sendGoal(goal);
 
   ROS_INFO("Waiting for result ...");
-  bool actionOk = client.waitForResult(ros::Duration(100.0));
+  bool actionOk = client.waitForResult(ros::Duration(30.0));
 
   actionlib::SimpleClientGoalState state = client.getState();
 
