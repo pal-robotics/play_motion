@@ -1,0 +1,30 @@
+<launch>
+  <!-- Load RRbot model -->
+  <param name="robot_description" command="xacro '$(find play_motion)/test/rrbot.xacro'" />
+
+  <!-- load robot poses -->
+  <rosparam file="$(find play_motion)/test/rrbot_poses.yaml" command="load" />
+
+
+
+  <!-- Start RRbot -->
+  <node name="rrbot" pkg="play_motion" type="pm_rrbot"/>
+
+  <!-- robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+  <!-- Load controller config -->
+  <rosparam command="load" file="$(find play_motion)/test/rrbot_controllers.yaml" />
+  <!-- Joint state controller -->
+  <rosparam command="load" file="$(find joint_state_controller)/joint_state_controller.yaml" />
+
+  <!-- Spawn controllers -->
+<!--   <node name="controller_spawner"
+        pkg="controller_manager" type="spawner" output="screen"
+        args="rrbot_controller_joint1
+              rrbot_controller_joint2
+              joint_state_controller" /> -->
+
+  <!-- move_joint test -->
+  <test test-name="move_joint_test" pkg="play_motion" type="move_joint_test.py"/>
+</launch>

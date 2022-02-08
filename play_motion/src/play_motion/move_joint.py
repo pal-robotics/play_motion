@@ -98,12 +98,8 @@ def active_cb():
         msg += ' in ' + bold(str(motion_data.duration)) + 's'
     print(msg)
 
-def move_joint():
+def execute_motion(args):
     global motion_data
-
-    args = parse_args(rospy.myargv()[1:])
-    rospy.init_node('move_joint', anonymous=True)
-
     motion_data.motion_name = args.name + '_' + uuid4().hex
     motion_data.joint_name  = args.name
     motion_data.position    = args.position
@@ -114,8 +110,10 @@ def move_joint():
 
     try:
         wait_for_clock()
+        rospy.loginfo("Client is created")
         client = play_motion_client(play_motion_ns)
-    except MoveJointException, e:
+    except MoveJointException as e:
+        rospy.loginfo("Client is not created")
         print_err(str(e))
 
     def cancel(signum, frame):
@@ -125,15 +123,24 @@ def move_joint():
 
     load_motion(motion_ns, motion_data)
     goal = PlayMotionGoal(motion_name = motion_data.motion_name, skip_planning = True)
+    rospy.loginfo("Send goal")
     client.send_goal(goal, None, active_cb)
     client.wait_for_result()
 
     unload_motion(motion_ns, motion_data.motion_name)
     al_res = client.get_state()
     pm_res = client.get_result()
+    rospy.loginfo(f"al_res = {al_res}")
+
     if al_res != GoalStatus.SUCCEEDED or pm_res.error_code != PlayMotionResult.SUCCEEDED:
         print_err("Execution failed with status {}. {}".format(GoalStatus.to_string(al_res), pm_res.error_string))
         sys.exit(1)
+
+def move_joint():
+    print(rospy.myargv()[0])
+    args = parse_args(rospy.myargv()[1:])
+    rospy.init_node('move_joint', anonymous=True)
+    execute_motion(args)
 
 if __name__ == "__main__":
     move_joint()

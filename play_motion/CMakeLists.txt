@@ -76,7 +76,7 @@ if(CATKIN_ENABLE_TESTING)
   add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
   add_dependencies(play_motion_test play_motion joint_trajectory_controller)
   target_link_libraries(play_motion_test ${catkin_LIBRARIES})
-
+  add_rostest(test/move_joint.test)
   add_rostest_gtest(play_motion_helpers_test test/play_motion_helpers.test test/play_motion_helpers_test.cpp)
   target_link_libraries(play_motion_helpers_test play_motion_helpers ${catkin_LIBRARIES})
 endif()
