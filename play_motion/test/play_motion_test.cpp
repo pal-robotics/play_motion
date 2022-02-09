@@ -56,7 +56,7 @@ public:
     ac_->waitForServer();
   }
 
-  int playMotion(const std::string& motion_name, bool skip_planning)
+  int playMotion(const std::string & motion_name, bool skip_planning)
   {
     ActionGoal goal;
     goal.motion_name = motion_name;
@@ -70,13 +70,13 @@ public:
     return ret_;
   }
 
-  double getJointPos(const std::string& joint_name)
+  double getJointPos(const std::string & joint_name)
   {
     unsigned int i;
-    for (i = 0; i < js_.name.size(); ++i)
-    {
-      if (js_.name[i] == joint_name)
+    for (i = 0; i < js_.name.size(); ++i) {
+      if (js_.name[i] == joint_name) {
         return js_.position[i];
+      }
     }
 
     return std::numeric_limits<double>::quiet_NaN();
@@ -98,9 +98,8 @@ public:
     shouldFinishWith(PMR::SUCCEEDED, GS::SUCCEEDED);
   }
 
-
 protected:
-  void jsCb(const sensor_msgs::JointStatePtr& js) { js_ = *js; }
+  void jsCb(const sensor_msgs::JointStatePtr & js) {js_ = *js;}
 
 private:
   int ret_;
@@ -144,6 +143,7 @@ TEST(PlayMotionTest, badMotionName)
   pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
 
   pmtc.playMotion("", true);
+
   pmtc.shouldFailWithCode(PMR::MOTION_NOT_FOUND);
 }
 
@@ -154,8 +154,11 @@ TEST(PlayMotionTest, malformedPose)
   pmtc.shouldFailWithCode(PMR::OTHER_ERROR);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
+//  testing::GTEST_FLAG(testing::FLAGS_gtest_repeat);
+  // testing::FLAGS_gtest_repeat = 10;
+ // testing::FLAGS_gtest_throw_on_failure = true;
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "play_motion_test");
 
@@ -167,4 +170,3 @@ int main(int argc, char** argv)
   ros::shutdown();
   return ret;
 }
-

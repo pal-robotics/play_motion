@@ -126,6 +126,8 @@ def main(argv):
     elif argv[0] == 'abort':
         play_motion_server.succeed = False
         rostest.rosrun(PKG, TEST, TestMoveJointAbort)
+    else:
+        rospy.loginfo("Input argument is incorrect, should be 'abort' or 'success'.")
 
     rospy.signal_shutdown("Test finished")
 
