@@ -9,18 +9,16 @@ Tests move_joint
 import rospy
 import sys
 import unittest
-import rosunit
 import rostest
 import actionlib
 from uuid import uuid4
-from play_motion_msgs.msg import PlayMotionAction, PlayMotionResult, PlayMotionFeedback
+from play_motion_msgs.msg import PlayMotionAction, PlayMotionResult
 import play_motion
 
 
 PKG = 'play_motion'
 TEST = 'move_joint_test'
 PLAY_MOTION_ACTION = "play_motion"
-
 
 
 class MockActionServer(object):
@@ -60,8 +58,6 @@ class MockActionServer(object):
             self._server.start()
             self._isactive = True
 
-
-
     def end_server(self):
         self._isactive = False
         rospy.signal_shutdown("Test end")
@@ -74,18 +70,15 @@ class TestMoveJointSucceed(unittest.TestCase):
         self._mock_args = play_motion.parse_args(['arm_2_joint', '-0.1', '5'])
 
     def test_server_successtest(self):
+
+        play_motion.execute_motion(self._mock_args)
+
         self.assertTrue(True)
 
-        try:
-            play_motion.execute_motion(self._mock_args)
-
-            self.assertTrue(True)
-        except SystemExit:
-
-            self.assertTrue(False)
 
     def test_clear_params(self):
         """get parameters"""
+
         # Set motiondata
         motion_namespace = 'motion_ns_test'
         motion_data = play_motion.MotionData()
@@ -119,118 +112,21 @@ class TestMoveJointAbort(unittest.TestCase):
         self._mock_args = play_motion.parse_args(['arm_2_joint', '-0.1', '5'])
 
     def test_server_abort(self):
-
-        try:
-            play_motion.execute_motion(self._mock_args)
-
-            self.assertTrue(False)
-        except SystemExit:
-
-            self.assertTrue(True)
-
-
-# class TestMoveJoint2(unittest.TestCase):
-#     def __init__(self, *args):
-#         super(TestMoveJoint2, self).__init__(*args)
-#         # play_motion_server = MockActionServer(PLAY_MOTION_ACTION,
-#         #                           PlayMotionAction, motion_succes)
-#         self._result = PlayMotionResult()
-#         self._mock_args = play_motion.parse_args(['arm_2_joint', '-0.1', '5'])
-
-#     def test_clear_params(self):
-#         """get parameters"""
-#         # Set motiondata
-#         rospy.loginfo("Run TestMoveJoint2")
-#         self.assertTrue(True)
-
-
-
-# class TestMoveJoint(unittest.TestCase):
-#     def __init__(self, *args):
-#         super(TestMoveJoint, self).__init__(*args)
-#         # play_motion_server = MockActionServer(PLAY_MOTION_ACTION,
-#         #                           PlayMotionAction, motion_succes)
-#         self._result = PlayMotionResult()
-#         self._mock_args = play_motion.parse_args(['arm_2_joint', '-0.1', '5'])
-
-#     # def test_server_success(self):
-#     #     PLAY_MOTION_SERVER.succeed = True
-#     #     PLAY_MOTION_SERVER.start_server()
-#     #     try:
-#     #         play_motion.execute_motion(self._mock_args)
-
-#     #         self.assertTrue(True)
-#     #     except SystemExit:
-
-#     #         self.assertTrue(False)
-
-#     # def test_server_aborted(self):
-#     #     PLAY_MOTION_SERVER.succeed = False
-
-#     #     PLAY_MOTION_SERVER.start_server()
-#     #     try:
-#     #         play_motion.execute_motion(self._mock_args)
-
-#     #         self.assertTrue(False)
-#     #     except SystemExit:
-
-#     #         self.assertTrue(True)
-
-#     def test_clear_params(self):
-#         """get parameters"""
-#         # Set motiondata
-#         motion_namespace = 'motion_ns_test'
-#         motion_data = play_motion.MotionData()
-#         motion_data.motion_name = 'arm_joint_2' + '_' + uuid4().hex
-#         motion_data.joint_name = 'arm_joint_2'
-#         motion_data.position = '-0.1'
-#         motion_data.duration = '1'
-
-#         # Load motion in parameterspace
-#         play_motion.load_motion(motion_namespace, motion_data)
-#         motion_param = motion_namespace + '/' + motion_data.motion_name
-#         # Check if paramspace is correct
-#         self.assertEqual(motion_data.joint_name,
-#                          rospy.get_param(motion_param + '/joints')[0])
-#         self.assertEqual(motion_data.position,
-#                          rospy.get_param(motion_param + '/points')
-#                          [0]['positions'][0])
-#         self.assertEqual(motion_data.duration,
-#                          rospy.get_param(motion_param + '/points')
-#                          [0]['time_from_start'][0])
-#         # Unload paramspace
-#         play_motion.unload_motion(motion_namespace, motion_data.motion_name)
-#         # Check if unload is successful
-#         self.assertFalse(rospy.has_param(motion_param))
-
-
-
-
+            
+        self.assertRaises(SystemExit, play_motion.execute_motion, self._mock_args)
 
 def main(argv):
     rospy.init_node("move_joint_test")
     # rostest.unitrun(PKG, TEST, TestMoveJoint.)
     play_motion_server = MockActionServer(PLAY_MOTION_ACTION,
-                                      PlayMotionAction)
+                                          PlayMotionAction)
     if argv[0] == 'success':
         play_motion_server.succeed = True
         rostest.rosrun(PKG, TEST, TestMoveJointSucceed)
     elif argv[0] == 'abort':
         play_motion_server.succeed = False
         rostest.rosrun(PKG, TEST, TestMoveJointAbort)
-    # play_motion_server.succeed = False
 
-    # rostest.rosrun(PKG, TEST, TestMoveJointAbort)
-    
-
-    # rostest.rosrun(PKG, "test_2", TestMoveJointAbort)
-
-    # rostest.rosrun(PKG, TEST, TestMoveJoinAbort)
-
-    # elif len(argv) == 1 and argv[0] == 'success':
-    #     rosunit.unitrun(PKG, TEST, TestMoveJoint.test_server_success)
-
-    # rospy.spin()
     rospy.signal_shutdown("Test finished")
 
 

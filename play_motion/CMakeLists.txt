@@ -64,7 +64,7 @@ install(DIRECTORY include/
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   find_package(controller_manager REQUIRED)
-
+  find_package(gflags REQUIRED)
   include_directories(SYSTEM ${controller_manager_INCLUDE_DIRS}
     ${joint_trajectory_controller_INCLUDE_DIRS})
 
@@ -72,8 +72,9 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(pm_rrbot ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
 
   add_dependencies(tests pm_rrbot)
-
+  # SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread --gtest_repeat=-1")
   add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
+  # catkin_add_executable_with_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
   add_dependencies(play_motion_test play_motion joint_trajectory_controller)
   target_link_libraries(play_motion_test ${catkin_LIBRARIES})
   add_rostest(test/move_joint.test)
