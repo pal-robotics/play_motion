@@ -34,20 +34,24 @@
 
 #include "play_motion/play_motion_helpers.h"
 
-TEST(PlayMotionHelpersTest, getMotions)
-{
+TEST(PlayMotionHelpersTest, getMotions) {
   play_motion::MotionNames motion_names;
   ros::NodeHandle nh("play_motion");
   play_motion::getMotionIds(nh, motion_names);
   EXPECT_EQ(4, motion_names.size());
-  EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "arms_t"));
-  EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "bow"));
-  EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "five_joint_motion"));
-  EXPECT_NE(motion_names.end(), std::find(motion_names.begin(), motion_names.end(), "three_point_motion"));
+  EXPECT_NE(motion_names.end(),
+            std::find(motion_names.begin(), motion_names.end(), "arms_t"));
+  EXPECT_NE(motion_names.end(),
+            std::find(motion_names.begin(), motion_names.end(), "bow"));
+  EXPECT_NE(
+      motion_names.end(),
+      std::find(motion_names.begin(), motion_names.end(), "five_joint_motion"));
+  EXPECT_NE(motion_names.end(),
+            std::find(motion_names.begin(), motion_names.end(),
+                      "three_point_motion"));
 }
 
-TEST(PlayMotionHelpersTest, getMotionJoints)
-{
+TEST(PlayMotionHelpersTest, getMotionJoints) {
   ros::NodeHandle nh("play_motion");
   play_motion::JointNames names;
   play_motion::getMotionJoints(nh, "bow", names);
@@ -56,9 +60,7 @@ TEST(PlayMotionHelpersTest, getMotionJoints)
   EXPECT_EQ(5, names.size());
 }
 
-
-TEST(PlayMotionHelpersTest, getMotionPoints)
-{
+TEST(PlayMotionHelpersTest, getMotionPoints) {
   ros::NodeHandle nh("play_motion");
   play_motion::Trajectory traj;
   play_motion::getMotionPoints(nh, "arms_t", traj);
@@ -68,8 +70,7 @@ TEST(PlayMotionHelpersTest, getMotionPoints)
   EXPECT_EQ(3, traj.size());
 }
 
-TEST(PlayMotionHelpersTest, getMotionDuration)
-{
+TEST(PlayMotionHelpersTest, getMotionDuration) {
   ros::NodeHandle nh("play_motion");
   ros::Duration d = play_motion::getMotionDuration(nh, "arms_t");
   EXPECT_NEAR(0.0, d.toSec(), 0.01);
@@ -77,8 +78,7 @@ TEST(PlayMotionHelpersTest, getMotionDuration)
   EXPECT_NEAR(6.5, d.toSec(), 0.01);
 }
 
-TEST(PlayMotionHelpersTest, isAlreadyThere)
-{
+TEST(PlayMotionHelpersTest, isAlreadyThere) {
   ros::NodeHandle nh("play_motion");
 
   play_motion::JointNames sourceJoints;
@@ -86,58 +86,54 @@ TEST(PlayMotionHelpersTest, isAlreadyThere)
   play_motion::getMotionJoints(nh, "bow", sourceJoints);
   play_motion::getMotionPoints(nh, "bow", sourceTraj);
 
-
   /// Same position
   EXPECT_TRUE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0],
-              sourceJoints, sourceTraj[0]));
+                                          sourceJoints, sourceTraj[0]));
 
   /// Different position
   EXPECT_FALSE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0],
-               sourceJoints, sourceTraj[1]));
+                                           sourceJoints, sourceTraj[1]));
 
   /// Different position but with  360º tolerance
   EXPECT_TRUE(play_motion::isAlreadyThere(sourceJoints, sourceTraj[0],
-              sourceJoints, sourceTraj[1], M_2_PI));
+                                          sourceJoints, sourceTraj[1], M_2_PI));
 
   play_motion::JointNames differentJoints;
   play_motion::getMotionJoints(nh, "bow", differentJoints);
   differentJoints[0] = "made_up_joint";
   /// Same position but different joint names
   EXPECT_FALSE(play_motion::isAlreadyThere(differentJoints, sourceTraj[0],
-               sourceJoints, sourceTraj[0]));
-
+                                           sourceJoints, sourceTraj[0]));
 
   differentJoints.clear();
   EXPECT_THROW(play_motion::isAlreadyThere(differentJoints, sourceTraj[0],
-               sourceJoints, sourceTraj[0]), ros::Exception);
+                                           sourceJoints, sourceTraj[0]),
+               ros::Exception);
 }
 
-TEST(PlayMotionHelpersTest, getMotionOk)
-{
+TEST(PlayMotionHelpersTest, getMotionOk) {
   ros::NodeHandle nh("play_motion");
   play_motion::MotionInfo info;
   play_motion::getMotion(nh, "arms_t", info);
   EXPECT_EQ("arms_t", info.id);
   EXPECT_EQ("Arms T", info.name);
   EXPECT_EQ("posture", info.usage);
-  EXPECT_EQ("Both arms set straight pointing sideways at 45 degrees.", info.description);
+  EXPECT_EQ("Both arms set straight pointing sideways at 45 degrees.",
+            info.description);
 }
 
-TEST(PlayMotionHelpersTest, getMotionKo)
-{
+TEST(PlayMotionHelpersTest, getMotionKo) {
   ros::NodeHandle nh("play_motion");
   play_motion::MotionInfo info;
-  EXPECT_THROW(play_motion::getMotion(nh, "",          info), ros::Exception);
-  EXPECT_THROW(play_motion::getMotion(nh, "bad_name",  info), ros::Exception);
+  EXPECT_THROW(play_motion::getMotion(nh, "", info), ros::Exception);
+  EXPECT_THROW(play_motion::getMotion(nh, "bad_name", info), ros::Exception);
   EXPECT_THROW(play_motion::getMotion(nh, "~bad_name", info), ros::Exception);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "play_motion_helpers_test");
 
   int ret = RUN_ALL_TESTS();
   return ret;
 }
-
