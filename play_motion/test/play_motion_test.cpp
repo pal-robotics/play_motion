@@ -101,7 +101,8 @@ public:
 
     // set up goal options
     auto goal_options = rclcpp_action::Client<PlayMotionAction>::SendGoalOptions();
-    goal_options.goal_response_callback = [&](auto future)
+    goal_options.goal_response_callback =
+      [&](std::shared_future<rclcpp_action::ClientGoalHandle<PlayMotionAction>::SharedPtr> future)
       {
         auto goal_handle = future.get();
         if (!goal_handle) {
