@@ -26,13 +26,10 @@
 namespace play_motion
 {
 
-hardware_interface::return_type RRBotSystem::configure(
+CallbackReturn RRBotSystem::on_init(
   const hardware_interface::HardwareInfo & info)
 {
-  if (configure_default(info) != hardware_interface::return_type::OK) {
-    return hardware_interface::return_type::ERROR;
-  }
-
+  info_ = info;
   position_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   velocity_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
   position_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
@@ -42,9 +39,9 @@ hardware_interface::return_type RRBotSystem::configure(
     if (joint.command_interfaces.size() != 1) {
       RCLCPP_FATAL(
         rclcpp::get_logger("rrbot_system"),
-        "Joint '%s' has %d command interfaces found. 1 expected.",
+        "Joint '%s' has %ld command interfaces found. 1 expected.",
         joint.name.c_str(), joint.command_interfaces.size());
-      return hardware_interface::return_type::ERROR;
+      return CallbackReturn::ERROR;
     }
 
     if (joint.command_interfaces[0].name != hardware_interface::HW_IF_POSITION) {
@@ -53,15 +50,15 @@ hardware_interface::return_type RRBotSystem::configure(
         "Joint '%s' have %s command interfaces found. '%s' expected.",
         joint.name.c_str(), joint.command_interfaces[0].name.c_str(),
         hardware_interface::HW_IF_POSITION);
-      return hardware_interface::return_type::ERROR;
+      return CallbackReturn::ERROR;
     }
 
     if (joint.state_interfaces.size() != 1) {
       RCLCPP_FATAL(
         rclcpp::get_logger("rrbot_system"),
-        "Joint '%s' has %d state interface. 1 expected.",
+        "Joint '%s' has %ld state interface. 1 expected.",
         joint.name.c_str(), joint.state_interfaces.size());
-      return hardware_interface::return_type::ERROR;
+      return CallbackReturn::ERROR;
     }
 
     if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION) {
@@ -70,13 +67,24 @@ hardware_interface::return_type RRBotSystem::configure(
         "Joint '%s' have %s state interface. '%s' expected.",
         joint.name.c_str(), joint.state_interfaces[0].name.c_str(),
         hardware_interface::HW_IF_POSITION);
-      return hardware_interface::return_type::ERROR;
+      return CallbackReturn::ERROR;
     }
   }
 
-  status_ = hardware_interface::status::CONFIGURED;
+  // set some default values when starting the first time
+  for (uint i = 0; i < position_states_.size(); i++) {
+    if (std::isnan(position_states_[i])) {
+      position_states_[i] = 0;
+      velocity_states_[i] = 0;
+      position_commands_[i] = 0;
+    } else {
+      position_commands_[i] = position_states_[i];
+    }
+  }
+
+//  status_ = hardware_interface::status::CONFIGURED;
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rrbot_system"), "rrbot_system configured");
-  return hardware_interface::return_type::OK;
+  return CallbackReturn::SUCCESS;
 }
 
 std::vector<hardware_interface::StateInterface>
@@ -91,6 +99,7 @@ RRBotSystem::export_state_interfaces()
     state_interfaces.emplace_back(
       hardware_interface::StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[i]));
+
   }
   return state_interfaces;
 }
@@ -107,30 +116,6 @@ RRBotSystem::export_command_interfaces()
   return command_interfaces;
 }
 
-hardware_interface::return_type RRBotSystem::start()
-{
-  // set some default values when starting the first time
-  for (uint i = 0; i < position_states_.size(); i++) {
-    if (std::isnan(position_states_[i])) {
-      position_states_[i] = 0;
-      velocity_states_[i] = 0;
-      position_commands_[i] = 0;
-    } else {
-      position_commands_[i] = position_states_[i];
-    }
-  }
-
-  status_ = hardware_interface::status::STARTED;
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("rrbot_system"), "rrbot_system started");
-  return hardware_interface::return_type::OK;
-}
-
-hardware_interface::return_type RRBotSystem::stop()
-{
-  status_ = hardware_interface::status::STOPPED;
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("rrbot_system"), "rrbot_system stopped");
-  return hardware_interface::return_type::OK;
-}
 
 hardware_interface::return_type RRBotSystem::read()
 {
