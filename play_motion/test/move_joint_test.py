@@ -19,7 +19,7 @@ import play_motion
 PKG = 'play_motion'
 TEST = 'move_joint_test'
 PLAY_MOTION_ACTION = "play_motion"
-
+CORRECT_JOINT_NAME = "arm_2_joint"
 
 class MockActionServer(object):
 
@@ -30,49 +30,32 @@ class MockActionServer(object):
                                                     execute_cb=self.execute_cb,
                                                     auto_start=False)
         self._server.start()
-        self._last_goal = None
-        self._result = PlayMotionResult()
-        self._isactive = False
-
-        self.succeed = True
-
         rospy.loginfo("Starting server for action: " + self._action_name)
 
-    def __del__(self):
-        pass
 
     def execute_cb(self, goal):
 
         # if !PLAY_MOTION_SERVER._server.
         rospy.loginfo("Goal Received in execute_play_motion\n" + str(goal))
-
-        if self.succeed:
-            self._result.error_code = PlayMotionResult.SUCCEEDED
-            self._server.set_succeeded(self._result)
+        result = PlayMotionResult()
+        if CORRECT_JOINT_NAME in goal.motion_name:
+            result.error_code = PlayMotionResult.SUCCEEDED
+            self._server.set_succeeded(result)
         else:
-            self._result.error_code = PlayMotionResult.OTHER_ERROR
-            self._server.set_aborted(self._result)
-
-    def start_server(self):
-        if not self._isactive:
-            self._server.start()
-            self._isactive = True
-
-    def end_server(self):
-        self._isactive = False
-        rospy.signal_shutdown("Test end")
+            result.error_code = PlayMotionResult.OTHER_ERROR
+            self._server.set_aborted(result)
 
 
-class TestMoveJointSucceed(unittest.TestCase):
+
+class TestMoveJoint(unittest.TestCase):
     def __init__(self, *args):
-        super(TestMoveJointSucceed, self).__init__(*args)
-        self._result = PlayMotionResult()
-        self._mock_args = play_motion.parse_args(['arm_2_joint', '-0.1', '5'])
+        super(TestMoveJoint, self).__init__(*args)
+
 
     def test_server_successtest(self):
+        mock_args = play_motion.parse_args([CORRECT_JOINT_NAME, '-0.1', '5'])
 
-        play_motion.execute_motion(self._mock_args)
-
+        play_motion.execute_motion(mock_args)
         self.assertTrue(True)
 
 
@@ -104,35 +87,23 @@ class TestMoveJointSucceed(unittest.TestCase):
         # Check if unload is successful
         self.assertFalse(rospy.has_param(motion_param))
 
+    def test_server_abort(self):   
+        mock_args = play_motion.parse_args(['incorrect_joint_name', '-0.1', '5'])
+        self.assertRaises(SystemExit, play_motion.execute_motion, mock_args)
 
-class TestMoveJointAbort(unittest.TestCase):
-    def __init__(self, *args):
-        super(TestMoveJointAbort, self).__init__(*args)
-        self._result = PlayMotionResult()
-        self._mock_args = play_motion.parse_args(['arm_2_joint', '-0.1', '5'])
 
-    def test_server_abort(self):
-            
-        self.assertRaises(SystemExit, play_motion.execute_motion, self._mock_args)
 
 def main(argv):
     rospy.init_node("move_joint_test")
     # rostest.unitrun(PKG, TEST, TestMoveJoint.)
     play_motion_server = MockActionServer(PLAY_MOTION_ACTION,
                                           PlayMotionAction)
-    if argv[0] == 'success':
-        play_motion_server.succeed = True
-        rostest.rosrun(PKG, TEST, TestMoveJointSucceed)
-    elif argv[0] == 'abort':
-        play_motion_server.succeed = False
-        rostest.rosrun(PKG, TEST, TestMoveJointAbort)
-    else:
-        rospy.loginfo("Input argument is incorrect, should be 'abort' or 'success'.")
+
+    rostest.rosrun(PKG, TEST, TestMoveJoint)
 
     rospy.signal_shutdown("Test finished")
 
 
 if __name__ == '__main__':
-    # import rostest
 
     main(sys.argv[1:2])

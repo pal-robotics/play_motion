@@ -1,7 +1,5 @@
 <launch>
   <!-- move_joint test -->
-  <!-- Abort/success argument added because tests can not be run parallel. Multiple actionservers would be created and interfere with eachother-->
-  <test test-name="move_joint_test_abort" pkg="play_motion" type="move_joint_test.py" args='abort'/>
-  <test test-name="move_joint_test_succes" pkg="play_motion" type="move_joint_test.py" args='success'/>
+  <test test-name="move_joint_test" pkg="play_motion" type="move_joint_test.py"/>
 
 </launch>
