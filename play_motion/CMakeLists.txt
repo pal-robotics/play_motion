@@ -64,6 +64,7 @@ install(DIRECTORY include/
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   find_package(controller_manager REQUIRED)
+
   include_directories(SYSTEM ${controller_manager_INCLUDE_DIRS}
     ${joint_trajectory_controller_INCLUDE_DIRS})
 
@@ -71,10 +72,13 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(pm_rrbot ${catkin_LIBRARIES} ${controller_manager_LIBRARIES})
 
   add_dependencies(tests pm_rrbot)
+
   add_rostest_gtest(play_motion_test test/play_motion.test test/play_motion_test.cpp)
   add_dependencies(play_motion_test play_motion joint_trajectory_controller)
   target_link_libraries(play_motion_test ${catkin_LIBRARIES})
-  add_rostest(test/move_joint.test)
+  add_rostest(move_joint_test test/move_joint.test test/move_joint_test.py)
+  target_link_libraries(move_joint_test ${catkin_LIBRARIES})
+
   add_rostest_gtest(play_motion_helpers_test test/play_motion_helpers.test test/play_motion_helpers_test.cpp)
   target_link_libraries(play_motion_helpers_test play_motion_helpers ${catkin_LIBRARIES})
 endif()
