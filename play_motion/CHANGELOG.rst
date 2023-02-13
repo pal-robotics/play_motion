@@ -2,6 +2,18 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update tests
+* clean merge request
+* update code style
+* cleaned code
+* updated move_joint_test.py
+* removed printf statements
+* remove redundant launch in move_joint.test
+* Add tests
+* Contributors: David ter Kuile
+
 0.4.10 (2021-09-17)
 -------------------
 * Fix test race condition
