@@ -2,6 +2,14 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'scale_approach_trajectory' into 'erbium-devel'
+  Scale the approach trajectory to the given time, when the approach trajectory...
+  See merge request app-tools/play_motion!11
+* Scale the approach trajectory to the given time, when the approach trajectory is faster than expected
+* Contributors: Jordan Palacios, Sai Kishor Kothakota
+
 0.4.11 (2023-02-13)
 -------------------
 * Update tests
