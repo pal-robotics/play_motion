@@ -2,6 +2,9 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.4.12 (2023-04-21)
 -------------------
 * Merge branch 'scale_approach_trajectory' into 'erbium-devel'
