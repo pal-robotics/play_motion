@@ -251,6 +251,30 @@ bool ApproachPlanner::prependApproach(const JointNames&        joint_names,
                                              current_pos,
                                              traj_in.front().positions,
                                              approach);
+
+    // If the first waypoint specifies non-zero time from start and if it is more than the
+    // trajectory time then try to scale up the way points to fit the requested trajectory
+    // time
+    // https://github.com/ros-planning/moveit_ros/issues/368#issuecomment-29717359
+    if (!approach.points.empty() && !traj_in.front().time_from_start.isZero())
+    {
+      const double min_time = traj_in.front().time_from_start.toSec();
+      const double factor = min_time / approach.points.back().time_from_start.toSec();
+      // Only scale the trajectory if it is faster than expected
+      if (factor > 1.0)
+      {
+        for (trajectory_msgs::JointTrajectoryPoint& waypoint : approach.points)
+        {
+          waypoint.time_from_start.fromSec(waypoint.time_from_start.toSec() * factor);
+          for (size_t i = 0; i < waypoint.velocities.size(); i++)
+          {
+            waypoint.velocities[i] /= factor;
+            waypoint.accelerations[i] /= factor * factor;
+          }
+        }
+      }
+    }
+
     if (!approach_ok) {return false;}
 
     // No approach is required
