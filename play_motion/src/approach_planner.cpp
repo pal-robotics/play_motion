@@ -487,7 +487,7 @@ void ApproachPlanner::combineTrajectories(const JointNames&                  joi
   // ...otherwise, append input_trajectory after approach:
 
   // Time offset to apply to input trajectory (approach duration)
-  const ros::Duration offset = traj_out.back().time_from_start;
+  const ros::Duration offset = traj_out.back().time_from_start - traj_in.front().time_from_start;
 
   // Remove duplicate waypoint: Position of last approach point coincides with the input's first point
   traj_out.pop_back();
