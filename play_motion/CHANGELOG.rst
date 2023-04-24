@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.14 (2023-04-24)
+-------------------
 * Merge branch 'fix_time_offset_for_multi_waypoints' into 'erbium-devel'
   fix the trajectory ofsetting that delays the trajectory
   See merge request app-tools/play_motion!12

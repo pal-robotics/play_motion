@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>play_motion</name>
-  <version>0.4.13</version>
+  <version>0.4.14</version>
   <description>Plays a pre-recorded motion on a robot</description>
 
   <maintainer email="victor.lopez@pal-robotics.com">Victor Lopez</maintainer>
