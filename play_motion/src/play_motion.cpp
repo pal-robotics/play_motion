@@ -200,6 +200,7 @@ namespace play_motion
 
   void PlayMotion::jointStateCb(const sensor_msgs::JointStatePtr& msg)
   {
+    last_joint_state_timestamp_ = msg->header.stamp;
     joint_states_.clear();
     for (uint32_t i=0; i < msg->name.size(); ++i)
       joint_states_[msg->name[i]] = msg->position[i];
@@ -351,9 +352,21 @@ next_joint:;
       ControllerList groups = getMotionControllers(motion_joints); // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
 
-      std::vector<double> curr_pos; // Current position of motion joints
-      foreach(const std::string& motion_joint, motion_joints)
-        curr_pos.push_back(joint_states_[motion_joint]); // TODO: What if motion joint does not exist?
+      if ((ros::Time::now() - last_joint_state_timestamp_).toSec() > 0.5)
+      {
+        throw PMException("Unable to update the current state of the motion joints! Last joint state is older than 0.5sec!",
+                          PMR::OTHER_ERROR);
+      }
+      std::vector<double> curr_pos;  // Current position of motion joints
+      foreach (const std::string& motion_joint, motion_joints)
+      {
+        if (joint_states_.count(motion_joint) == 0)
+          throw PMException("Error playing the motion : " + motion_name +
+                                "!. Couldn't find the joint : " + motion_joint +
+                                " in the joint states!",
+                            PMR::OTHER_ERROR);
+        curr_pos.push_back(joint_states_[motion_joint]);  // TODO: What if motion joint does not exist?
+      }
 
       // Approach trajectory
       Trajectory motion_points_safe;
