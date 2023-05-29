@@ -2,8 +2,8 @@
 Changelog for package play_motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.15 (2023-05-29)
+-------------------
 * Merge branch 'fix_invalid_initial_state' into 'erbium-devel'
   check for a valid initial state of the trajectory before executing the motion
   See merge request app-tools/play_motion!13
