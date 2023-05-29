@@ -154,6 +154,13 @@ TEST(PlayMotionTest, malformedPose)
   pmtc.shouldFailWithCode(PMR::OTHER_ERROR);
 }
 
+TEST(PlayMotionTest, unknownJointInMotion)
+{
+  PlayMotionTestClient pmtc;
+  pmtc.playMotion("unknown_joint_pose", true);
+  pmtc.shouldFailWithCode(PMR::OTHER_ERROR);
+}
+
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);

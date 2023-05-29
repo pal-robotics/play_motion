@@ -141,6 +141,7 @@ namespace play_motion
     ros::NodeHandle                  nh_;
     ControllerList                   move_joint_groups_;
     std::map<std::string, double>    joint_states_;
+    ros::Time                        last_joint_state_timestamp_;
     ros::Subscriber                  joint_states_sub_;
     ControllerUpdater                ctrlr_updater_;
     ApproachPlannerPtr               approach_planner_;
