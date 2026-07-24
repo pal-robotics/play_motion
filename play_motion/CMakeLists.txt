@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(play_motion)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-
 find_package(catkin REQUIRED COMPONENTS actionlib control_msgs controller_manager_msgs
   play_motion_msgs moveit_ros_planning_interface roscpp sensor_msgs
   diagnostic_msgs diagnostic_updater)
