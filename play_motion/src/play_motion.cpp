@@ -88,7 +88,7 @@ namespace
     if (weak_ctrl.expired())
     {
       ROS_ERROR_STREAM("Got callback on expired MoveJointGroup, ignoring it");
-      return;      
+      return;
     }
     MoveJointGroupPtr ctrl = weak_ctrl.lock();
     ControllerList::iterator it = std::find(goal_hdl->controllers.begin(),
@@ -147,6 +147,7 @@ namespace play_motion
     ctrlr_updater_.registerUpdateCb(boost::bind(&PlayMotion::updateControllersCb, this, _1, _2));
 
     ros::NodeHandle private_nh("~");
+    private_nh.param("max_joint_state_delay", max_joint_state_delay_, 0.5);
     approach_planner_.reset(new ApproachPlanner(private_nh));
   }
 
@@ -178,7 +179,7 @@ namespace play_motion
                                        const ControllerUpdater::ControllerJoints& joints)
   {
     typedef std::pair<std::string, ControllerUpdater::ControllerState> ctrlr_state_pair_t;
-    
+
     ROS_INFO_STREAM("Controllers have changed, cancelling all active goals");
     foreach (MoveJointGroupPtr mjg, move_joint_groups_)
     {
@@ -352,9 +353,10 @@ next_joint:;
       ControllerList groups = getMotionControllers(motion_joints); // Checks many preconditions
       getMotionPoints(motion_name, motion_points);
 
-      if ((ros::Time::now() - last_joint_state_timestamp_).toSec() > 0.5)
+      if ((ros::Time::now() - last_joint_state_timestamp_).toSec() > max_joint_state_delay_)
       {
-        throw PMException("Unable to update the current state of the motion joints! Last joint state is older than 0.5sec!",
+        throw PMException("Unable to update the current state of the motion joints! Last joint state is older than "
+                          + std::to_string(max_joint_state_delay_) + "sec!",
                           PMR::OTHER_ERROR);
       }
       std::vector<double> curr_pos;  // Current position of motion joints

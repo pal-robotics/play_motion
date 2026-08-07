@@ -142,6 +142,7 @@ namespace play_motion
     ControllerList                   move_joint_groups_;
     std::map<std::string, double>    joint_states_;
     ros::Time                        last_joint_state_timestamp_;
+    double                           max_joint_state_delay_;
     ros::Subscriber                  joint_states_sub_;
     ControllerUpdater                ctrlr_updater_;
     ApproachPlannerPtr               approach_planner_;
